@@ -1,0 +1,7 @@
+[package]
+name = "panda_db"
+version = "0.1.0"
+authors = ["Ryan Beatty <rvbeatty@email.wm.edu>"]
+edition = "2018"
+
+[dependencies]
