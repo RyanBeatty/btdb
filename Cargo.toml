@@ -8,4 +8,12 @@ edition = "2018"
 name = "panda_db"
 path = "src/panda_db.rs"
 
+[[test]]
+name = "integration"
+path = "tests/integration/integration.rs"
+
+[[test]]
+name = "perf"
+path = "tests/perf/perf.rs"
+
 [dependencies]
