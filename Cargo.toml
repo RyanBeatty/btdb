@@ -17,3 +17,4 @@ name = "perf"
 path = "tests/perf/perf.rs"
 
 [dependencies]
+csv = "1"
