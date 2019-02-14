@@ -1,10 +1,29 @@
+use rand::prelude::*;
 
+use panda_db;
 
-fn main() {
+fn main() -> std::io::Result<()> {
+    println!("Starting perf run!");
+    const CHARSET: &[u8] =  b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+    abcdefghijklmnopqrstuvwxyz\
+    0123456789)(*&^%$#@!~";
 
-    for i in 1..30 {
-        std::thread::sleep(std::time::Duration::from_secs(1));
+    let mut rng = rand::thread_rng();
+    let mut words = Vec::new();
+    for _i in 1..10000000 {
+        let s: Option<String> = (0..30)
+        .map(|_| Some(*CHARSET.choose(&mut rng)? as char))
+        .collect();
+        words.push(s.unwrap());
     }
 
-    println!("helo, foo!");
+    let start = std::time::SystemTime::now();
+    let mut db = panda_db::DB::new();
+    for entry in words {
+        db.set(entry.to_string(), entry.to_string());
+    }
+
+    let elapsed = start.elapsed().unwrap();
+    println!("Finished perf run: {}", elapsed.as_secs());
+    return Ok(());
 }
