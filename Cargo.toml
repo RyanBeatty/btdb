@@ -1,5 +1,5 @@
 [package]
-name = "panda_db"
+name = "btdb"
 version = "0.1.0"
 authors = ["Ryan Beatty <rvbeatty@email.wm.edu>"]
 edition = "2018"

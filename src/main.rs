@@ -6,7 +6,8 @@ mod panda_db;
 enum Command {
     Unknown,
     Quit,
-    Insert{ key: String, val: String},
+    Insert{id: u64, foo: String},
+    Select{id: u64},
 }
 
 fn main() {
@@ -37,7 +38,18 @@ fn main() {
             if line.starts_with("insert") {
                 let splt : Vec<&str> = line.split(" ").collect();
                 if splt.len() == 3 {
-                    command = Command::Insert{key: splt[1].to_string(), val: splt[2].to_string()};
+                    match splt[1].parse() {
+                        Err(e) => println!("Parse int error: {}", e),
+                        Ok(id) => command = Command::Insert{id: id, foo: splt[2].to_string()},
+                    }
+                }
+            } else if line.starts_with("select") {
+                let splt : Vec<&str> = line.split(" ").collect();
+                if splt.len() == 2 {
+                    match splt[1].parse() {
+                        Err(e) => println!("Parse int error: {}", e),
+                        Ok(id) => command = Command::Select{id: id},
+                    }
                 }
             }
         }
@@ -45,7 +57,8 @@ fn main() {
         match command {
             Command::Unknown => println!("Unknown Command: {}", line),
             Command::Quit    => break,
-            Command::Insert{key, val}  => println!("Insert command key={} val={}", key, val),
+            Command::Insert{id, foo}  => println!("Insert command id={} foo={}", id, foo),
+            Command::Select{id} => println!("Select command id={}", id),
         }
     }
 }
