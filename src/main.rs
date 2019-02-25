@@ -87,12 +87,16 @@ fn main() {
                 println!("Inserted");
             }
             Ok(Command::Select { id }) => {
-                let results: Vec<prettytable::Row> = db.iter().filter(|&tuple| tuple.id == id).map(|tuple| row![tuple.id, tuple.foo]).collect();
+                let results: Vec<prettytable::Row> = db
+                    .iter()
+                    .filter(|&tuple| tuple.id == id)
+                    .map(|tuple| row![tuple.id, tuple.foo])
+                    .collect();
                 let mut table = prettytable::Table::init(results);
                 table.set_titles(row!["id", "foo"]);
                 print!("{}", table);
                 println!("({} rows)\n", table.len());
-            },
+            }
         }
     }
 }
