@@ -1,7 +1,8 @@
 #[macro_use]
+extern crate prettytable;
+#[macro_use]
 extern crate quick_error;
 
-use std::error;
 use std::io::Write;
 
 mod panda_db;
@@ -85,9 +86,12 @@ fn main() {
                 db.push(Tuple { id: id, foo: foo });
                 println!("Inserted");
             }
-            Ok(Command::Select { id }) => match db.iter().find(|&tuple| tuple.id == id) {
-                None => (),
-                Some(row) => (),
+            Ok(Command::Select { id }) => {
+                let results: Vec<prettytable::Row> = db.iter().filter(|&tuple| tuple.id == id).map(|tuple| row![tuple.id, tuple.foo]).collect();
+                let mut table = prettytable::Table::init(results);
+                table.set_titles(row!["id", "foo"]);
+                print!("{}", table);
+                println!("({} rows)\n", table.len());
             },
         }
     }
