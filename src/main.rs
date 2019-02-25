@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate quick_error;
+
 use std::error;
 use std::io::Write;
 
@@ -8,6 +11,44 @@ enum Command {
     Quit,
     Insert{id: u64, foo: String},
     Select{id: u64},
+}
+
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ParseCommandError {
+        // TODO: Take error as param.
+        ParseInt {}
+    }
+}
+
+fn parse_command(line : &str) -> Result<Command, ParseCommandError> {
+    if line.starts_with("\\") {
+        return match line.as_ref() {
+            "\\q" => Ok(Command::Quit),
+            _     => Ok(Command::Unknown),
+        }
+    } else {
+        if line.starts_with("insert") {
+            let splt : Vec<&str> = line.split(" ").collect();
+            if splt.len() == 3 {
+                return match splt[1].parse() {
+                    Err(e) => Err(ParseCommandError::ParseInt),
+                    Ok(id) => Ok(Command::Insert{id: id, foo: splt[2].to_string()}),
+                }
+            }
+        } else if line.starts_with("select") {
+            let splt : Vec<&str> = line.split(" ").collect();
+            if splt.len() == 2 {
+                return match splt[1].parse() {
+                    Err(e) => Err(ParseCommandError::ParseInt),
+                    Ok(id) => Ok(Command::Select{id: id}),
+                }
+            }
+        }
+    }
+
+    Ok(Command::Unknown)
 }
 
 fn main() {
@@ -27,38 +68,12 @@ fn main() {
         }
 
         let line = buffer.trim_end();
-
-        let mut command = Command::Unknown;
-        if line.starts_with("\\") {
-            match line.as_ref() {
-                "\\q" => command = Command::Quit,
-                _     => (),
-            }
-        } else {
-            if line.starts_with("insert") {
-                let splt : Vec<&str> = line.split(" ").collect();
-                if splt.len() == 3 {
-                    match splt[1].parse() {
-                        Err(e) => println!("Parse int error: {}", e),
-                        Ok(id) => command = Command::Insert{id: id, foo: splt[2].to_string()},
-                    }
-                }
-            } else if line.starts_with("select") {
-                let splt : Vec<&str> = line.split(" ").collect();
-                if splt.len() == 2 {
-                    match splt[1].parse() {
-                        Err(e) => println!("Parse int error: {}", e),
-                        Ok(id) => command = Command::Select{id: id},
-                    }
-                }
-            }
-        }
-
-        match command {
-            Command::Unknown => println!("Unknown Command: {}", line),
-            Command::Quit    => break,
-            Command::Insert{id, foo}  => println!("Insert command id={} foo={}", id, foo),
-            Command::Select{id} => println!("Select command id={}", id),
+        match parse_command(line) {
+            Err(err) => println!("Error: {}", err),
+            Ok(Command::Unknown)  => println!("Uknown command"),
+            Ok(Command::Quit)    => break,
+            Ok(Command::Insert{id, foo})  => println!("Insert command id={} foo={}", id, foo),
+            Ok(Command::Select{id}) => println!("Select command id={}", id),
         }
     }
 }
