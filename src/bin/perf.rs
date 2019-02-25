@@ -4,7 +4,7 @@ use panda_db;
 
 fn main() -> std::io::Result<()> {
     println!("Starting perf run!");
-    const CHARSET: &[u8] =  b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
     abcdefghijklmnopqrstuvwxyz\
     0123456789)(*&^%$#@!~";
 
@@ -12,8 +12,8 @@ fn main() -> std::io::Result<()> {
     let mut words = Vec::new();
     for _i in 1..10000000 {
         let s: Option<String> = (0..30)
-        .map(|_| Some(*CHARSET.choose(&mut rng)? as char))
-        .collect();
+            .map(|_| Some(*CHARSET.choose(&mut rng)? as char))
+            .collect();
         words.push(s.unwrap());
     }
 

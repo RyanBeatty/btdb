@@ -18,5 +18,6 @@ path = "tests/perf/perf.rs"
 
 [dependencies]
 csv = "1"
+prettytable-rs = "^0.8"
 rand = "0.6.5"
 quick-error = "1.2.2"

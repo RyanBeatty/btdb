@@ -6,7 +6,7 @@ fn get_and_set_works() {
     let input = vec![
         (String::from("hello"), String::from("world")),
         (String::from("1234"), String::from("4321")),
-        (String::from("the quick"), String::from("brown fox"))
+        (String::from("the quick"), String::from("brown fox")),
     ];
 
     for (key, val) in input.iter() {
