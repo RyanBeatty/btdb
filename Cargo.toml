@@ -5,8 +5,8 @@ authors = ["Ryan Beatty <rvbeatty@email.wm.edu>"]
 edition = "2018"
 
 [lib]
-name = "panda_db"
-path = "src/panda_db.rs"
+name = "btdb"
+path = "src/btdb/lib.rs"
 
 [[test]]
 name = "integration"

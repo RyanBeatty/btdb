@@ -5,8 +5,6 @@ extern crate quick_error;
 
 use std::io::Write;
 
-mod panda_db;
-
 enum Command {
     Unknown,
     Quit,
@@ -44,7 +42,7 @@ fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
             let splt: Vec<&str> = line.split(" ").collect();
             if splt.len() == 2 {
                 return match splt[1].parse() {
-                    Err(e) => Err(ParseCommandError::ParseInt),
+                    Err(_) => Err(ParseCommandError::ParseInt),
                     Ok(id) => Ok(Command::Select { id: id }),
                 };
             }
@@ -54,15 +52,39 @@ fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
     Ok(Command::Unknown)
 }
 
-#[derive(Debug)]
-struct Tuple {
+#[derive(Debug, Clone)]
+pub struct Tuple {
     id: u64,
     foo: String,
 }
 
+mod btdb {
+
+    #[derive(Debug)]
+    pub struct DB {
+        storage: Vec<super::Tuple>,
+    }
+
+    impl DB {
+        pub fn new() -> DB {
+            return DB {
+                storage: Vec::new(),
+            };
+        }
+
+        pub fn insert(&mut self, tpl: super::Tuple) {
+            self.storage.push(tpl);
+        }
+
+        pub fn select(&self, id: u64) -> Vec<super::Tuple> {
+            return self.storage.iter().filter(|tuple| tuple.id == id).cloned().collect();
+        }
+    }
+}
+
 fn main() {
     println!("BTDB Version 0.1.0");
-    let mut db = Vec::<Tuple>::new();
+    let mut db = btdb::DB::new();
     let mut buffer = String::new();
     loop {
         print!("btdb> ");
@@ -83,13 +105,11 @@ fn main() {
             Ok(Command::Unknown) => println!("Uknown command"),
             Ok(Command::Quit) => break,
             Ok(Command::Insert { id, foo }) => {
-                db.push(Tuple { id: id, foo: foo });
+                db.insert(Tuple { id: id, foo: foo });
                 println!("Inserted");
             }
             Ok(Command::Select { id }) => {
-                let results: Vec<prettytable::Row> = db
-                    .iter()
-                    .filter(|&tuple| tuple.id == id)
+                let results: Vec<prettytable::Row> = db.select(id).iter()
                     .map(|tuple| row![tuple.id, tuple.foo])
                     .collect();
                 let mut table = prettytable::Table::init(results);
