@@ -52,39 +52,48 @@ fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
     Ok(Command::Unknown)
 }
 
-#[derive(Debug, Clone)]
-pub struct Tuple {
-    id: u64,
-    foo: String,
-}
-
 mod btdb {
+
+    use bincode;
+    use serde::{Serialize, Deserialize};
+
+    use std::fs::File;
+    use std::io::{Result, Write};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Tuple {
+        pub id: u64,
+        pub foo: String,
+    }
 
     #[derive(Debug)]
     pub struct DB {
-        storage: Vec<super::Tuple>,
+        storage: File,
     }
 
     impl DB {
-        pub fn new() -> DB {
-            return DB {
-                storage: Vec::new(),
-            };
+        pub fn new() -> Result<DB> {
+            let file = File::create("data/database.btdb")?;
+            return Ok(DB {
+                storage: file,
+            });
         }
 
-        pub fn insert(&mut self, tpl: super::Tuple) {
-            self.storage.push(tpl);
+        pub fn insert(&mut self, tpl: Tuple) -> Result<()> {
+            return Ok(bincode::serialize_into(&mut self.storage, &tpl).unwrap());
         }
 
-        pub fn select(&self, id: u64) -> Vec<super::Tuple> {
-            return self.storage.iter().filter(|tuple| tuple.id == id).cloned().collect();
+        pub fn select(&self, id: u64) -> Result<Vec<Tuple>> {
+            panic!("select unimplemented for now");
+            return Ok(Vec::new());
+            //return self.storage.iter().filter(|tuple| tuple.id == id).cloned().collect();
         }
     }
 }
 
 fn main() {
     println!("BTDB Version 0.1.0");
-    let mut db = btdb::DB::new();
+    let mut db = btdb::DB::new().unwrap();
     let mut buffer = String::new();
     loop {
         print!("btdb> ");
@@ -105,11 +114,11 @@ fn main() {
             Ok(Command::Unknown) => println!("Uknown command"),
             Ok(Command::Quit) => break,
             Ok(Command::Insert { id, foo }) => {
-                db.insert(Tuple { id: id, foo: foo });
+                db.insert(btdb::Tuple { id: id, foo: foo }).unwrap();
                 println!("Inserted");
             }
             Ok(Command::Select { id }) => {
-                let results: Vec<prettytable::Row> = db.select(id).iter()
+                let results: Vec<prettytable::Row> = db.select(id).unwrap().iter()
                     .map(|tuple| row![tuple.id, tuple.foo])
                     .collect();
                 let mut table = prettytable::Table::init(results);

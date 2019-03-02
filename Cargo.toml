@@ -17,7 +17,9 @@ name = "perf"
 path = "tests/perf/perf.rs"
 
 [dependencies]
+bincode = "1.1.2"
 csv = "1"
 prettytable-rs = "^0.8"
 rand = "0.6.5"
+serde = { version = "1.0", features = ["derive"] }
 quick-error = "1.2.2"
