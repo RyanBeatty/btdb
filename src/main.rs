@@ -55,10 +55,9 @@ fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
 mod btdb {
 
     use bincode;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     use std::fs::File;
-    use std::io::{Result, Write};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Tuple {
@@ -71,19 +70,42 @@ mod btdb {
         storage: File,
     }
 
+    pub mod error {
+        pub type Result<T> = std::result::Result<T, Error>;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                IO(err: std::io::Error) {}
+                Serialize(err: bincode::Error) {}
+            }
+        }
+
+        impl From<std::io::Error> for Error {
+            fn from(error: std::io::Error) -> Self {
+                return Error::IO(error);
+            }
+        }
+
+        impl From<bincode::Error> for Error {
+            fn from(error: bincode::Error) -> Self {
+                return Error::Serialize(error);
+            }
+        }
+    }
+
     impl DB {
-        pub fn new() -> Result<DB> {
+        pub fn new() -> error::Result<DB> {
             let file = File::create("data/database.btdb")?;
-            return Ok(DB {
-                storage: file,
-            });
+            return Ok(DB { storage: file });
         }
 
-        pub fn insert(&mut self, tpl: Tuple) -> Result<()> {
-            return Ok(bincode::serialize_into(&mut self.storage, &tpl).unwrap());
+        pub fn insert(&mut self, tpl: Tuple) -> error::Result<()> {
+            bincode::serialize_into(&mut self.storage, &tpl)?;
+            return Ok(());
         }
 
-        pub fn select(&self, id: u64) -> Result<Vec<Tuple>> {
+        pub fn select(&self, id: u64) -> error::Result<Vec<Tuple>> {
             panic!("select unimplemented for now");
             return Ok(Vec::new());
             //return self.storage.iter().filter(|tuple| tuple.id == id).cloned().collect();
@@ -118,7 +140,10 @@ fn main() {
                 println!("Inserted");
             }
             Ok(Command::Select { id }) => {
-                let results: Vec<prettytable::Row> = db.select(id).unwrap().iter()
+                let results: Vec<prettytable::Row> = db
+                    .select(id)
+                    .unwrap()
+                    .iter()
                     .map(|tuple| row![tuple.id, tuple.foo])
                     .collect();
                 let mut table = prettytable::Table::init(results);
