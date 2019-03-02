@@ -136,8 +136,10 @@ fn main() {
             Ok(Command::Unknown) => println!("Uknown command"),
             Ok(Command::Quit) => break,
             Ok(Command::Insert { id, foo }) => {
-                db.insert(btdb::Tuple { id: id, foo: foo }).unwrap();
-                println!("Inserted");
+                match db.insert(btdb::Tuple { id: id, foo: foo }) {
+                    Err(e) => println!("Error: {}", e),
+                    Ok(_)  => println!("Inserted"),
+                }
             }
             Ok(Command::Select { id }) => {
                 let results: Vec<prettytable::Row> = db
