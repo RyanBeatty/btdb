@@ -58,6 +58,7 @@ mod btdb {
     use serde::{Deserialize, Serialize};
 
     use std::fs::File;
+    use std::io::{Read, Seek, SeekFrom};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Tuple {
@@ -96,7 +97,12 @@ mod btdb {
 
     impl DB {
         pub fn new() -> error::Result<DB> {
-            let file = File::create("data/database.btdb")?;
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open("data/database.btdb")?;
             return Ok(DB { storage: file });
         }
 
@@ -105,10 +111,33 @@ mod btdb {
             return Ok(());
         }
 
-        pub fn select(&self, id: u64) -> error::Result<Vec<Tuple>> {
-            panic!("select unimplemented for now");
-            return Ok(Vec::new());
-            //return self.storage.iter().filter(|tuple| tuple.id == id).cloned().collect();
+        pub fn select(&mut self, id: u64) -> error::Result<Vec<Tuple>> {
+            let current_pos = self.storage.seek(SeekFrom::Current(0))?;
+
+            self.storage.seek(SeekFrom::Start(0)).or_else(|err| {
+                self.storage.seek(SeekFrom::Start(current_pos))?;
+                return Err(err);
+            })?;
+            let mut buffer = Vec::new();
+            self.storage.read_to_end(&mut buffer).or_else(|err| {
+                self.storage.seek(SeekFrom::Start(current_pos))?;
+                return Err(err);
+            })?;
+
+            let len = buffer.len();
+            let mut result = Vec::new();
+            let mut cursor = std::io::Cursor::new(buffer);
+            while (cursor.position() as usize) < len - 1 {
+                let tuple: Tuple = bincode::deserialize_from(&mut cursor).or_else(|err| {
+                    self.storage.seek(SeekFrom::Start(current_pos))?;
+                    return Err(err);
+                })?;
+                if tuple.id == id {
+                    result.push(tuple);
+                }
+            }
+
+            return Ok(result);
         }
     }
 }
@@ -135,12 +164,10 @@ fn main() {
             Err(err) => println!("Error: {}", err),
             Ok(Command::Unknown) => println!("Uknown command"),
             Ok(Command::Quit) => break,
-            Ok(Command::Insert { id, foo }) => {
-                match db.insert(btdb::Tuple { id: id, foo: foo }) {
-                    Err(e) => println!("Error: {}", e),
-                    Ok(_)  => println!("Inserted"),
-                }
-            }
+            Ok(Command::Insert { id, foo }) => match db.insert(btdb::Tuple { id: id, foo: foo }) {
+                Err(e) => println!("Error: {}", e),
+                Ok(_) => println!("Inserted"),
+            },
             Ok(Command::Select { id }) => {
                 let results: Vec<prettytable::Row> = db
                     .select(id)
