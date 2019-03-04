@@ -20,6 +20,8 @@ quick_error! {
     }
 }
 
+// TODO: This function is a mess, but good enough for now. Should switch
+// over to a lib that can parse sql already for me.
 fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
     if line.starts_with("\\") {
         return match line.as_ref() {
