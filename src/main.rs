@@ -101,7 +101,7 @@ mod btdb {
     }
 
     impl DB {
-        pub fn new() -> error::Result<DB> {
+        pub fn open_db() -> error::Result<DB> {
             let file = std::fs::OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -189,7 +189,7 @@ mod btdb {
 
 fn main() {
     println!("BTDB Version 0.1.0");
-    let mut db = btdb::DB::new().unwrap();
+    let mut db = btdb::DB::open_db().unwrap();
     let mut buffer = String::new();
     loop {
         print!("btdb> ");
