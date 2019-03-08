@@ -9,6 +9,30 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 
+pub mod storage {
+    const PAGE_SIZE: u16 = 4096;
+    const NUM_PAGES: u16 = 1;
+
+    struct BufferPool {
+        pages: Vec<u8>,
+    }
+
+    impl BufferPool {
+        fn new() -> BufferPool {
+            let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
+            let mut pages = Vec::with_capacity(capacity);
+            // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
+            for _ in 0..capacity {
+                pages.push(0);
+            }
+
+            return BufferPool {
+                pages: pages
+            }
+        }
+    }
+}
+
 static PAGE_SIZE: u16 = 4096;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
