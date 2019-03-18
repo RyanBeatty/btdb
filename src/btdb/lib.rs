@@ -80,6 +80,14 @@ struct PageHeader {
 }
 
 impl PageHeader {
+    fn new() -> PageHeader {
+        return PageHeader {
+            free_start: PAGE_SIZE,
+            free_end: 5,
+            entries: Vec::new(),
+        };
+    }
+
     fn from_bytes(buffer: &[u8]) -> Option<PageHeader> {
         if buffer.len() != From::from(PAGE_SIZE) {
             return None;
