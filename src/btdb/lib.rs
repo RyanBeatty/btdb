@@ -49,6 +49,66 @@ impl BufferPool {
     }
 }
 
+struct Page<'a> {
+    page: &'a mut [u8],
+}
+
+impl<'a> Page<'a> {
+    fn new(page: &'a mut [u8]) -> Page<'a> {
+        return Page {
+            page: page,
+        }
+    }
+
+    fn add_tuple(&self, tuple: &[u8]) {
+
+    }
+
+    fn get_tuple(&self, tuple_id: usize) -> Option<&[u8]> {
+        return None;
+    }
+
+    fn is_full(&self) -> bool {
+        return false;
+    }
+}
+
+struct PageHeader {
+    free_start: u16,
+    free_end: u16,
+    entries: Vec<(u16, u16)>,
+}
+
+impl PageHeader {
+    fn from_bytes(buffer: &[u8]) -> Option<PageHeader> {
+        if buffer.len() != From::from(PAGE_SIZE) {
+            return None;
+        }
+
+        // TODO: Probably a better way then direct indexing.
+        let free_start = u16::from_le_bytes([buffer[0], buffer[1]]);
+        let free_end = u16::from_le_bytes([buffer[1], buffer[2]]);
+        let num_entries = u16::from_le_bytes([buffer[3], buffer[4]]);
+        let mut entries = Vec::new();
+        let entry_list_offset: usize = 5;
+        let mut count: usize = 0;
+        while count < From::from(num_entries) {
+            let entry_offset = u16::from_le_bytes([buffer[entry_list_offset + count], buffer[entry_list_offset + count + 1]]);
+            let entry_size = u16::from_le_bytes([buffer[entry_list_offset + count + 2], buffer[entry_list_offset + count + 3]]);
+            entries.push((entry_offset, entry_size));
+            count += 1;
+        } 
+        return Some(PageHeader{
+            free_start: free_start,
+            free_end: free_end,
+            entries: entries,
+        });
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        return Vec::new();
+    }
+}
 
 // static PAGE_SIZE: u16 = 4096;
 
