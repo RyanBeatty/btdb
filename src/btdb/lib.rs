@@ -88,6 +88,7 @@ impl PageHeader {
         // TODO: Probably a better way then direct indexing.
         let free_start = u16::from_le_bytes([buffer[0], buffer[1]]);
         let free_end = u16::from_le_bytes([buffer[1], buffer[2]]);
+
         let num_entries = u16::from_le_bytes([buffer[3], buffer[4]]);
         let mut entries = Vec::new();
         let entry_list_offset: usize = 5;
@@ -106,7 +107,16 @@ impl PageHeader {
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        return Vec::new();
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.free_start.to_le_bytes());
+        buffer.extend_from_slice(&self.free_end.to_le_bytes());
+        let num_entries = self.entries.len() as u16;
+        buffer.extend_from_slice(&num_entries.to_le_bytes());
+        for (offset, size) in self.entries.iter() {
+            buffer.extend_from_slice(&offset.to_le_bytes());
+            buffer.extend_from_slice(&size.to_le_bytes());
+        }
+        return buffer;
     }
 }
 
