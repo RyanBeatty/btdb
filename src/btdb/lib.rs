@@ -6,51 +6,49 @@ extern crate quick_error;
 use bincode;
 use serde::{Deserialize, Serialize};
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 
 type PageId = u64;
 
-pub mod storage {
-    use std::collections::HashMap;
+const PAGE_SIZE: u16 = 4096;
+// Number of frames the buffer pool should contain.
+const BUFFER_POOL_SIZE: u16 = 3;
 
-    const PAGE_SIZE: u16 = 4096;
-    // Number of frames the buffer pool should contain.
-    const BUFFER_POOL_SIZE: u16 = 3;
+struct BufferPool {
+    buffer: Vec<u8>,
+    page_table: HashMap<PageId, usize>
+}
 
-    struct BufferPool {
-        buffer: Vec<u8>,
-        page_table: HashMap<super::PageId, usize>
+impl BufferPool {
+    fn new() -> BufferPool {
+        let capacity = (PAGE_SIZE * BUFFER_POOL_SIZE) as usize;
+        let mut buffer = Vec::with_capacity(capacity);
+        // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
+        for _ in 0..capacity {
+            buffer.push(0);
+        }
+
+        let mut page_table = HashMap::<PageId, usize>::new();
+        page_table.insert(0, 0);
+        page_table.insert(1, From::from(PAGE_SIZE));
+        // TODO: fix cast.
+        page_table.insert(2, 2 * (PAGE_SIZE as usize));
+
+        return BufferPool {
+            buffer: buffer,
+            page_table: page_table,
+        }
     }
 
-    impl BufferPool {
-        fn new() -> BufferPool {
-            let capacity = (PAGE_SIZE * BUFFER_POOL_SIZE) as usize;
-            let mut buffer = Vec::with_capacity(capacity);
-            // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
-            for _ in 0..capacity {
-                buffer.push(0);
-            }
-
-            let mut page_table = HashMap::<super::PageId, usize>::new();
-            page_table.insert(0, 0);
-            page_table.insert(1, From::from(PAGE_SIZE));
-            // TODO: fix cast.
-            page_table.insert(2, 2 * (PAGE_SIZE as usize));
-
-            return BufferPool {
-                buffer: buffer,
-                page_table: page_table,
-            }
-        }
-
-        // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
-        fn get_page(&mut self, page_id: super::PageId) -> Option<&mut [u8]> {
-            let offset = *self.page_table.get(&page_id)?;
-            return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)])
-        }
+    // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
+    fn get_page(&mut self, page_id: PageId) -> Option<&mut [u8]> {
+        let offset = *self.page_table.get(&page_id)?;
+        return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)])
     }
 }
+
 
 // static PAGE_SIZE: u16 = 4096;
 
