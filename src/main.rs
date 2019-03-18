@@ -7,93 +7,93 @@ use std::io::Write;
 
 use btdb;
 
-enum Command {
-    Unknown,
-    Quit,
-    Insert { id: u64, foo: String },
-    Select { id: u64 },
-}
+// enum Command {
+//     Unknown,
+//     Quit,
+//     Insert { id: u64, foo: String },
+//     Select { id: u64 },
+// }
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum ParseCommandError {
-        // TODO: Take error as param.
-        ParseInt {}
-    }
-}
+// quick_error! {
+//     #[derive(Debug)]
+//     pub enum ParseCommandError {
+//         // TODO: Take error as param.
+//         ParseInt {}
+//     }
+// }
 
-// TODO: This function is a mess, but good enough for now. Should switch
-// over to a lib that can parse sql already for me.
-fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
-    if line.starts_with("\\") {
-        return match line.as_ref() {
-            "\\q" => Ok(Command::Quit),
-            _ => Ok(Command::Unknown),
-        };
-    } else {
-        if line.starts_with("insert") {
-            let splt: Vec<&str> = line.split(" ").collect();
-            if splt.len() == 3 {
-                return match splt[1].parse() {
-                    Err(e) => Err(ParseCommandError::ParseInt),
-                    Ok(id) => Ok(Command::Insert {
-                        id: id,
-                        foo: splt[2].to_string(),
-                    }),
-                };
-            }
-        } else if line.starts_with("select") {
-            let splt: Vec<&str> = line.split(" ").collect();
-            if splt.len() == 2 {
-                return match splt[1].parse() {
-                    Err(_) => Err(ParseCommandError::ParseInt),
-                    Ok(id) => Ok(Command::Select { id: id }),
-                };
-            }
-        }
-    }
+// // TODO: This function is a mess, but good enough for now. Should switch
+// // over to a lib that can parse sql already for me.
+// fn parse_command(line: &str) -> Result<Command, ParseCommandError> {
+//     if line.starts_with("\\") {
+//         return match line.as_ref() {
+//             "\\q" => Ok(Command::Quit),
+//             _ => Ok(Command::Unknown),
+//         };
+//     } else {
+//         if line.starts_with("insert") {
+//             let splt: Vec<&str> = line.split(" ").collect();
+//             if splt.len() == 3 {
+//                 return match splt[1].parse() {
+//                     Err(e) => Err(ParseCommandError::ParseInt),
+//                     Ok(id) => Ok(Command::Insert {
+//                         id: id,
+//                         foo: splt[2].to_string(),
+//                     }),
+//                 };
+//             }
+//         } else if line.starts_with("select") {
+//             let splt: Vec<&str> = line.split(" ").collect();
+//             if splt.len() == 2 {
+//                 return match splt[1].parse() {
+//                     Err(_) => Err(ParseCommandError::ParseInt),
+//                     Ok(id) => Ok(Command::Select { id: id }),
+//                 };
+//             }
+//         }
+//     }
 
-    Ok(Command::Unknown)
-}
+//     Ok(Command::Unknown)
+// }
 
 fn main() {
-    println!("BTDB Version 0.1.0");
-    let mut db = btdb::DB::open_db().unwrap();
-    let mut buffer = String::new();
-    loop {
-        print!("btdb> ");
-        std::io::stdout().flush().unwrap();
+    // println!("BTDB Version 0.1.0");
+    // let mut db = btdb::DB::open_db().unwrap();
+    // let mut buffer = String::new();
+    // loop {
+    //     print!("btdb> ");
+    //     std::io::stdout().flush().unwrap();
 
-        buffer.clear();
-        match std::io::stdin().read_line(&mut buffer) {
-            Err(error) => {
-                println!("Error reading input: {}", error);
-                continue;
-            }
-            _ => (),
-        }
+    //     buffer.clear();
+    //     match std::io::stdin().read_line(&mut buffer) {
+    //         Err(error) => {
+    //             println!("Error reading input: {}", error);
+    //             continue;
+    //         }
+    //         _ => (),
+    //     }
 
-        let line = buffer.trim_end();
-        match parse_command(line) {
-            Err(err) => println!("Error: {}", err),
-            Ok(Command::Unknown) => println!("Uknown command"),
-            Ok(Command::Quit) => break,
-            Ok(Command::Insert { id, foo }) => match db.insert(btdb::Tuple { id: id, foo: foo }) {
-                Err(e) => println!("Error: {}", e),
-                Ok(_) => println!("Inserted"),
-            },
-            Ok(Command::Select { id }) => {
-                let results: Vec<prettytable::Row> = db
-                    .select(id)
-                    .unwrap()
-                    .iter()
-                    .map(|tuple| row![tuple.id, tuple.foo])
-                    .collect();
-                let mut table = prettytable::Table::init(results);
-                table.set_titles(row!["id", "foo"]);
-                print!("{}", table);
-                println!("({} rows)\n", table.len());
-            }
-        }
-    }
+    //     let line = buffer.trim_end();
+    //     match parse_command(line) {
+    //         Err(err) => println!("Error: {}", err),
+    //         Ok(Command::Unknown) => println!("Uknown command"),
+    //         Ok(Command::Quit) => break,
+    //         Ok(Command::Insert { id, foo }) => match db.insert(btdb::Tuple { id: id, foo: foo }) {
+    //             Err(e) => println!("Error: {}", e),
+    //             Ok(_) => println!("Inserted"),
+    //         },
+    //         Ok(Command::Select { id }) => {
+    //             let results: Vec<prettytable::Row> = db
+    //                 .select(id)
+    //                 .unwrap()
+    //                 .iter()
+    //                 .map(|tuple| row![tuple.id, tuple.foo])
+    //                 .collect();
+    //             let mut table = prettytable::Table::init(results);
+    //             table.set_titles(row!["id", "foo"]);
+    //             print!("{}", table);
+    //             println!("({} rows)\n", table.len());
+    //         }
+    //     }
+    // }
 }
