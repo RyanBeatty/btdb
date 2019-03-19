@@ -115,6 +115,8 @@ impl<'a> Page<'a> {
     }
 }
 
+const ENTRY_METADATA_SIZE: usize = std::mem::size_of::<u16>() * 2;
+
 struct PageHeader {
     free_start: u16,
     free_end: u16,
@@ -125,7 +127,7 @@ impl PageHeader {
     fn new() -> PageHeader {
         return PageHeader {
             free_start: PAGE_SIZE,
-            free_end: 5,
+            free_end: 6,
             entries: Vec::new(),
         };
     }
@@ -167,6 +169,20 @@ impl PageHeader {
             buffer.extend_from_slice(&size.to_le_bytes());
         }
         return buffer;
+    }
+
+    // TODO: Buffer underflow/overflow check?
+    fn add_entry(&mut self, entry_size: u16) -> Option<u16> {
+        let new_free_end = self.free_end + (ENTRY_METADATA_SIZE as u16);
+        let new_free_start = self.free_start - entry_size;
+        if new_free_end <= new_free_start {
+            return None;
+        }
+
+        self.free_end = new_free_end;
+        self.free_start = new_free_start;
+        self.entries.push((new_free_start, entry_size));
+        return Some(new_free_start);
     }
 }
 
