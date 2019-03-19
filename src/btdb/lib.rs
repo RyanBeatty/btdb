@@ -189,13 +189,63 @@ impl PageHeader {
     }
 }
 
-// static PAGE_SIZE: u16 = 4096;
+struct Cursor {
+    buffer_pool: BufferPool,
+}
 
-// #[derive(Debug, Clone, Serialize, Deserialize)]
-// pub struct Tuple {
-//     pub id: u64,
-//     pub foo: String,
-// }
+impl Cursor {
+    fn new(buffer_pool: BufferPool) -> Cursor {
+        return Cursor {
+            buffer_pool: buffer_pool,
+        }
+    }
+
+    fn add_tuple(&mut self, tuple: &Tuple) -> Option<()> {
+        return Some(());
+    }
+
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tuple {
+    pub id: u64,
+    pub foo: String,
+    pub bar: i32,
+}
+
+impl Tuple {
+    fn new(id: u64, foo: String, bar: i32) -> Tuple {
+        return Tuple {
+            id: id,
+            foo: foo,
+            bar: bar,
+        }
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.id.to_le_bytes());
+        buffer.extend_from_slice(&self.foo.len().to_le_bytes());
+        buffer.extend_from_slice(self.foo.as_bytes());
+        buffer.extend_from_slice(&self.bar.to_le_bytes());
+        return buffer;
+    }
+
+    fn from_bytes<R: Read>(buffer: &mut R) -> error::Result<Tuple> {
+        let mut id_buffer = [0; std::mem::size_of::<u64>()];
+        buffer.read_exact(&mut id_buffer)?;
+        let id = u64::from_le_bytes(id_buffer);
+        let mut foo_len_buffer = [0; std::mem::size_of::<usize>()];
+        buffer.read_exact(&mut foo_len_buffer)?;
+        let mut foo_buffer = Vec::with_capacity(usize::from_le_bytes(foo_len_buffer));
+        buffer.read_exact(&mut foo_buffer);
+        let foo = String::from_utf8(foo_buffer)?;
+        let mut bar_buffer = [0; std::mem::size_of::<i32>()];
+        buffer.read_exact(&mut bar_buffer)?;
+        let bar = i32::from_le_bytes(bar_buffer);
+        return Ok(Tuple::new(id, foo, bar));
+    }
+}
 
 // #[derive(Debug, Serialize, Deserialize)]
 // struct BlockHeader {
@@ -297,6 +347,7 @@ pub mod error {
         pub enum Error {
             IO(err: std::io::Error) {}
             Serialize(err: bincode::Error) {}
+            FromUtf8Error(err: std::string::FromUtf8Error) {}
         }
     }
 
@@ -309,6 +360,12 @@ pub mod error {
     impl From<bincode::Error> for Error {
         fn from(error: bincode::Error) -> Self {
             return Error::Serialize(error);
+        }
+    }
+
+    impl From<std::string::FromUtf8Error> for Error {
+        fn from(error: std::string::FromUtf8Error) -> Self {
+            return Error::FromUtf8Error(error);
         }
     }
 }
