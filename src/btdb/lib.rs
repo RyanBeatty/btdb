@@ -124,6 +124,7 @@ impl<'a> Page<'a> {
         });
     }
 
+    // TODO: Need to write page header back.
     fn add_tuple(&mut self, tuple: &[u8]) -> Option<()> {
         let offset = self.header.add_entry(tuple.len() as u16)?;
         for (i, byte) in tuple.iter().enumerate() {
@@ -209,7 +210,7 @@ impl PageHeader {
 }
 
 struct Cursor {
-    buffer_pool: BufferPool,
+    buffer_pool: BufferPool
 }
 
 impl Cursor {
@@ -220,7 +221,15 @@ impl Cursor {
     }
 
     fn add_tuple(&mut self, tuple: &Tuple) -> Option<()> {
-        return Some(());
+        let tuple_bytes = tuple.to_bytes();
+        for page_id in 0.. {
+            let page_buffer = self.buffer_pool.get_page(page_id)?;
+            let mut cur_page = Page::from_buffer(page_buffer)?;
+            if cur_page.add_tuple(&tuple_bytes).is_some() {
+                return Some(());
+            }
+        }
+        return None;
     }
 
 }
