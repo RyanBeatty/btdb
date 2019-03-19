@@ -8,13 +8,46 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Write, Seek, SeekFrom};
 
 type PageId = u64;
 
 const PAGE_SIZE: u16 = 4096;
-// Number of frames the buffer pool should contain.
-const BUFFER_POOL_SIZE: u16 = 3;
+const NUM_PAGES: u16 = 3;
+
+struct DiskManager {
+}
+
+impl DiskManager {
+    fn new() -> error::Result<DiskManager> {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open("data/btdb/database.btdb")?;
+        // Initialize the empty pages.
+        // TODO: Deal with allocating more pages later.
+        file.set_len(From::from(PAGE_SIZE * NUM_PAGES))?;
+        for i in 0..NUM_PAGES {
+            let page_header = PageHeader::new();
+            file.seek(SeekFrom::Start(From::from(i * PAGE_SIZE)))?;
+            file.write_all(page_header.to_bytes().as_slice())?;
+        }
+        return Ok(DiskManager {
+        });
+    }
+
+    fn get_page(&self, page_id: PageId) -> error::Result<Vec<u8>> {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .open("data/btdb/database.btdb")?;
+        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)));
+        let mut buffer = Vec::<u8>::with_capacity(From::from(PAGE_SIZE));
+        file.read_exact(&mut buffer)?;
+        return Ok(buffer);
+    }
+}
 
 struct BufferPool {
     buffer: Vec<u8>,
@@ -23,7 +56,7 @@ struct BufferPool {
 
 impl BufferPool {
     fn new() -> BufferPool {
-        let capacity = (PAGE_SIZE * BUFFER_POOL_SIZE) as usize;
+        let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
         let mut buffer = Vec::with_capacity(capacity);
         // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
         for _ in 0..capacity {
@@ -54,7 +87,7 @@ struct Page<'a> {
 }
 
 impl<'a> Page<'a> {
-    fn new(page: &'a mut [u8]) -> Page<'a> {
+    fn from_buffer(page: &'a mut [u8]) -> Page<'a> {
         return Page {
             page: page,
         }
