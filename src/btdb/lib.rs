@@ -124,12 +124,17 @@ impl<'a> Page<'a> {
         });
     }
 
-    // TODO: Need to write page header back.
     fn add_tuple(&mut self, tuple: &[u8]) -> Option<()> {
         let offset = self.header.add_entry(tuple.len() as u16)?;
         for (i, byte) in tuple.iter().enumerate() {
             self.buffer[(offset + (i as u16)) as usize] = *byte;
         }
+
+        // Don't forget to write updated page header.
+        for (i, byte) in self.header.to_bytes().iter().enumerate() {
+            self.buffer[i] = *byte;
+        }
+
         return Some(());
     }
 
