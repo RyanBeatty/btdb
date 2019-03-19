@@ -92,26 +92,29 @@ impl BufferPool {
 }
 
 struct Page<'a> {
-    page: &'a mut [u8],
+    buffer: &'a mut [u8],
+    header: PageHeader,
 }
 
 impl<'a> Page<'a> {
-    fn from_buffer(page: &'a mut [u8]) -> Page<'a> {
-        return Page {
-            page: page,
-        }
+    fn from_buffer(buffer: &'a mut [u8]) -> Option<Page<'a>> {
+        let header = PageHeader::from_bytes(buffer)?;
+        return Some(Page {
+            buffer: buffer,
+            header: header,
+        });
     }
 
-    fn add_tuple(&self, tuple: &[u8]) {
-
+    fn add_tuple(&mut self, tuple: &[u8]) -> Option<()> {
+        let offset = self.header.add_entry(tuple.len() as u16)?;
+        for (i, byte) in tuple.iter().enumerate() {
+            self.buffer[(offset + (i as u16)) as usize] = *byte;
+        }
+        return Some(());
     }
 
     fn get_tuple(&self, tuple_id: usize) -> Option<&[u8]> {
         return None;
-    }
-
-    fn is_full(&self) -> bool {
-        return false;
     }
 }
 
