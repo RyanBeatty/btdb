@@ -47,11 +47,21 @@ impl DiskManager {
         file.read_exact(&mut buffer)?;
         return Ok(buffer);
     }
+
+    fn put_page(&self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .open("data/btdb/database.btdb")?;
+        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)));
+        file.write_all(buffer)?;
+        return Ok(());
+    }
 }
 
 struct BufferPool {
     buffer: Vec<u8>,
-    page_table: HashMap<PageId, usize>
+    page_table: HashMap<PageId, usize>,
+    disk_manager: DiskManager,
 }
 
 impl BufferPool {
@@ -81,6 +91,7 @@ impl BufferPool {
         return Ok(BufferPool {
             buffer: buffer,
             page_table: page_table,
+            disk_manager: disk_manager,
         })
     }
 
@@ -88,6 +99,14 @@ impl BufferPool {
     fn get_page(&mut self, page_id: PageId) -> Option<&mut [u8]> {
         let offset = *self.page_table.get(&page_id)?;
         return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)])
+    }
+
+    fn flush_pages(&mut self) -> error::Result<()> {
+        for (page_id, index) in self.page_table.iter() {
+            let page = &self.buffer[*index..*index + (PAGE_SIZE as usize)];
+            self.disk_manager.put_page(*page_id, page)?;
+        }
+        return Ok(());
     }
 }
 
@@ -348,6 +367,7 @@ pub mod error {
             IO(err: std::io::Error) {}
             Serialize(err: bincode::Error) {}
             FromUtf8Error(err: std::string::FromUtf8Error) {}
+            BTDB(msg: String) {}
         }
     }
 
