@@ -55,12 +55,21 @@ struct BufferPool {
 }
 
 impl BufferPool {
-    fn new() -> BufferPool {
+    fn new(disk_manager: DiskManager) -> error::Result<BufferPool> {
         let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
         let mut buffer = Vec::with_capacity(capacity);
         // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
         for _ in 0..capacity {
             buffer.push(0);
+        }
+
+        // Init pages from disk.
+        for i in 0..NUM_PAGES {
+            // TODO: akward copy here, but find a better way later.
+            let page = disk_manager.get_page(From::from(i))?;
+            for (j, byte) in page.iter().enumerate() {
+                buffer[(i * PAGE_SIZE + (j as u16)) as usize] = *byte;
+            }
         }
 
         let mut page_table = HashMap::<PageId, usize>::new();
@@ -69,10 +78,10 @@ impl BufferPool {
         // TODO: fix cast.
         page_table.insert(2, 2 * (PAGE_SIZE as usize));
 
-        return BufferPool {
+        return Ok(BufferPool {
             buffer: buffer,
             page_table: page_table,
-        }
+        })
     }
 
     // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
