@@ -239,6 +239,16 @@ impl Cursor {
 
 }
 
+struct QueryExecutor {
+
+}
+
+impl QueryExecutor {
+    fn insert(&mut self, tuple: &Tuple) -> error::Result<()> {
+        return Ok(());
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tuple {
     pub id: u64,
