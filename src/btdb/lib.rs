@@ -290,6 +290,38 @@ impl Tuple {
     }
 }
 
+pub mod error {
+    pub type Result<T> = std::result::Result<T, Error>;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            IO(err: std::io::Error) {}
+            Serialize(err: bincode::Error) {}
+            FromUtf8Error(err: std::string::FromUtf8Error) {}
+            BTDB(msg: String) {}
+        }
+    }
+
+    impl From<std::io::Error> for Error {
+        fn from(error: std::io::Error) -> Self {
+            return Error::IO(error);
+        }
+    }
+
+    impl From<bincode::Error> for Error {
+        fn from(error: bincode::Error) -> Self {
+            return Error::Serialize(error);
+        }
+    }
+
+    impl From<std::string::FromUtf8Error> for Error {
+        fn from(error: std::string::FromUtf8Error) -> Self {
+            return Error::FromUtf8Error(error);
+        }
+    }
+}
+
 // #[derive(Debug, Serialize, Deserialize)]
 // struct BlockHeader {
 //     //num_entries: u64,
@@ -381,35 +413,3 @@ impl Tuple {
 //         return Ok(0);
 //     }
 // }
-
-pub mod error {
-    pub type Result<T> = std::result::Result<T, Error>;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            IO(err: std::io::Error) {}
-            Serialize(err: bincode::Error) {}
-            FromUtf8Error(err: std::string::FromUtf8Error) {}
-            BTDB(msg: String) {}
-        }
-    }
-
-    impl From<std::io::Error> for Error {
-        fn from(error: std::io::Error) -> Self {
-            return Error::IO(error);
-        }
-    }
-
-    impl From<bincode::Error> for Error {
-        fn from(error: bincode::Error) -> Self {
-            return Error::Serialize(error);
-        }
-    }
-
-    impl From<std::string::FromUtf8Error> for Error {
-        fn from(error: std::string::FromUtf8Error) -> Self {
-            return Error::FromUtf8Error(error);
-        }
-    }
-}
