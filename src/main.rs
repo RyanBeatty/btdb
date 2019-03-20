@@ -70,11 +70,11 @@ fn main() {
         if buffer.trim() == "\\q" {
             break;
         }
-        let ast = match Parser::parse_sql(&PostgreSqlDialect{}, buffer) {
+        let ast = match Parser::parse_sql(&PostgreSqlDialect {}, buffer) {
             Err(err) => {
                 println!("Failed to parse sql input: {:?}", err);
                 continue;
-            },
+            }
             Ok(ast) => ast,
         };
         println!("ast: {:?}", ast);

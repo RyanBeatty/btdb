@@ -8,15 +8,14 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Write, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 type PageId = u64;
 
 const PAGE_SIZE: u16 = 4096;
 const NUM_PAGES: u16 = 3;
 
-struct DiskManager {
-}
+struct DiskManager {}
 
 impl DiskManager {
     fn new() -> error::Result<DiskManager> {
@@ -34,8 +33,7 @@ impl DiskManager {
             file.seek(SeekFrom::Start(From::from(i * PAGE_SIZE)))?;
             file.write_all(page_header.to_bytes().as_slice())?;
         }
-        return Ok(DiskManager {
-        });
+        return Ok(DiskManager {});
     }
 
     fn get_page(&self, page_id: PageId) -> error::Result<Vec<u8>> {
@@ -92,13 +90,13 @@ impl BufferPool {
             buffer: buffer,
             page_table: page_table,
             disk_manager: disk_manager,
-        })
+        });
     }
 
     // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
     fn get_page(&mut self, page_id: PageId) -> Option<&mut [u8]> {
         let offset = *self.page_table.get(&page_id)?;
-        return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)])
+        return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)]);
     }
 
     fn flush_pages(&mut self) -> error::Result<()> {
@@ -174,12 +172,18 @@ impl PageHeader {
         let entry_list_offset: usize = 5;
         let mut count: usize = 0;
         while count < From::from(num_entries) {
-            let entry_offset = u16::from_le_bytes([buffer[entry_list_offset + count], buffer[entry_list_offset + count + 1]]);
-            let entry_size = u16::from_le_bytes([buffer[entry_list_offset + count + 2], buffer[entry_list_offset + count + 3]]);
+            let entry_offset = u16::from_le_bytes([
+                buffer[entry_list_offset + count],
+                buffer[entry_list_offset + count + 1],
+            ]);
+            let entry_size = u16::from_le_bytes([
+                buffer[entry_list_offset + count + 2],
+                buffer[entry_list_offset + count + 3],
+            ]);
             entries.push((entry_offset, entry_size));
             count += 1;
-        } 
-        return Some(PageHeader{
+        }
+        return Some(PageHeader {
             free_start: free_start,
             free_end: free_end,
             entries: entries,
@@ -215,14 +219,14 @@ impl PageHeader {
 }
 
 struct Cursor<'a> {
-    buffer_pool: &'a mut BufferPool
+    buffer_pool: &'a mut BufferPool,
 }
 
 impl<'a> Cursor<'a> {
     fn new(buffer_pool: &'a mut BufferPool) -> Cursor<'a> {
         return Cursor {
             buffer_pool: buffer_pool,
-        }
+        };
     }
 
     fn add_tuple(&mut self, tuple: &Tuple) -> Option<()> {
@@ -236,23 +240,24 @@ impl<'a> Cursor<'a> {
         }
         return None;
     }
-
 }
 
 struct QueryExecutor {
-    buffer_pool: BufferPool
+    buffer_pool: BufferPool,
 }
 
 impl QueryExecutor {
     fn new(buffer_pool: BufferPool) -> QueryExecutor {
         return QueryExecutor {
             buffer_pool: buffer_pool,
-        }
+        };
     }
 
     fn insert(&mut self, tuple: &Tuple) -> error::Result<()> {
         let mut cursor = Cursor::new(&mut self.buffer_pool);
-        cursor.add_tuple(tuple).ok_or(error::Error::BTDB(String::from("Failed to insert tuple")))?;
+        cursor
+            .add_tuple(tuple)
+            .ok_or(error::Error::BTDB(String::from("Failed to insert tuple")))?;
         return Ok(());
     }
 }
@@ -270,7 +275,7 @@ impl Tuple {
             id: id,
             foo: foo,
             bar: bar,
-        }
+        };
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -376,7 +381,7 @@ pub mod error {
 //             header: BlockHeader::new(),
 //         });
 //     }
-                        
+
 //     pub fn insert(&mut self, tuple: Tuple) -> error::Result<()> {
 //         let entry_size = bincode::serialized_size(&tuple)?;
 //         if entry_size >= 4096 {
