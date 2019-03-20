@@ -214,12 +214,12 @@ impl PageHeader {
     }
 }
 
-struct Cursor {
-    buffer_pool: BufferPool
+struct Cursor<'a> {
+    buffer_pool: &'a mut BufferPool
 }
 
-impl Cursor {
-    fn new(buffer_pool: BufferPool) -> Cursor {
+impl<'a> Cursor<'a> {
+    fn new(buffer_pool: &'a mut BufferPool) -> Cursor<'a> {
         return Cursor {
             buffer_pool: buffer_pool,
         }
@@ -240,11 +240,19 @@ impl Cursor {
 }
 
 struct QueryExecutor {
-
+    buffer_pool: BufferPool
 }
 
 impl QueryExecutor {
+    fn new(buffer_pool: BufferPool) -> QueryExecutor {
+        return QueryExecutor {
+            buffer_pool: buffer_pool,
+        }
+    }
+
     fn insert(&mut self, tuple: &Tuple) -> error::Result<()> {
+        let mut cursor = Cursor::new(&mut self.buffer_pool);
+        cursor.add_tuple(tuple).ok_or(error::Error::BTDB(String::from("Failed to insert tuple")))?;
         return Ok(());
     }
 }
