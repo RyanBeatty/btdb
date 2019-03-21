@@ -298,23 +298,35 @@ impl DB {
                     .ok_or(error::Error::BTDB(String::from("bar column not found")))?;
                 let mut executor = QueryExecutor::new(&mut self.buffer_pool);
                 for val in values.iter() {
-                    // let id = val.get(id_pos).ok_or(error::Error::BTDB(String::from(
-                    //     "id value not found in row to insert",
-                    // ))).and_then(|&s| s.parse::<u64>())?;
+                    let id = val
+                        .get(id_pos)
+                        .ok_or(error::Error::BTDB(String::from(
+                            "id value not found in row to insert",
+                        )))
+                        .and_then(|x| match x {
+                            ASTNode::SQLValue(Value::Long(n)) => Ok(n),
+                            _ => Err(error::Error::BTDB(String::from("Invalid sql ast"))),
+                        })?;
                     let foo = val
                         .get(foo_pos)
                         .ok_or(error::Error::BTDB(String::from(
                             "foo value not found in row to insert",
                         )))
                         .and_then(|x| match x {
+                            ASTNode::SQLValue(Value::SingleQuotedString(n)) => Ok(n),
+                            _ => Err(error::Error::BTDB(String::from("Invalid sql ast"))),
+                        })?;
+                    let bar = val
+                        .get(bar_pos)
+                        .ok_or(error::Error::BTDB(String::from(
+                            "bar value not found in row to insert",
+                        )))
+                        .and_then(|x| match x {
                             ASTNode::SQLValue(Value::Long(n)) => Ok(n),
                             _ => Err(error::Error::BTDB(String::from("Invalid sql ast"))),
                         })?;
-                    let bar = val.get(bar_pos).ok_or(error::Error::BTDB(String::from(
-                        "bar value not found in row to insert",
-                    )))?;
-                    // let tuple = Tuple::new(id, foo, bar);
-                    // executor.insert(&tuple);
+                    let tuple = Tuple::new(*id as u64, foo.to_string(), *bar as i32);
+                    executor.insert(&tuple)?;
                 }
             }
             _ => {
