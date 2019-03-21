@@ -42,7 +42,7 @@ impl DiskManager {
             .read(true)
             .open("data/btdb/database.btdb")?;
         file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)));
-        let mut buffer = Vec::<u8>::with_capacity(From::from(PAGE_SIZE));
+        let mut buffer = vec![0u8; From::from(PAGE_SIZE)];
         file.read_exact(&mut buffer)?;
         return Ok(buffer);
     }
