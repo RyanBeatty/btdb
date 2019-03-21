@@ -5,6 +5,7 @@ extern crate quick_error;
 
 use bincode;
 use serde::{Deserialize, Serialize};
+use sqlparser::{dialect::PostgreSqlDialect, sqlast::ASTNode, sqlast::Value, sqlparser as sqlp};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -242,12 +243,12 @@ impl<'a> Cursor<'a> {
     }
 }
 
-struct QueryExecutor {
-    buffer_pool: BufferPool,
+struct QueryExecutor<'a> {
+    buffer_pool: &'a mut BufferPool,
 }
 
-impl QueryExecutor {
-    fn new(buffer_pool: BufferPool) -> QueryExecutor {
+impl<'a> QueryExecutor<'a> {
+    fn new(buffer_pool: &'a mut BufferPool) -> QueryExecutor<'a> {
         return QueryExecutor {
             buffer_pool: buffer_pool,
         };
@@ -258,6 +259,70 @@ impl QueryExecutor {
         cursor
             .add_tuple(tuple)
             .ok_or(error::Error::BTDB(String::from("Failed to insert tuple")))?;
+        return Ok(());
+    }
+}
+
+struct DB {
+    buffer_pool: BufferPool,
+}
+
+impl DB {
+    fn new() -> error::Result<DB> {
+        let mut disk_manager = DiskManager::new()?;
+        let mut buffer_pool = BufferPool::new(disk_manager)?;
+        return Ok(DB {
+            buffer_pool: buffer_pool,
+        });
+    }
+
+    fn query(&mut self, query: String) -> error::Result<()> {
+        let ast = sqlp::Parser::parse_sql(&PostgreSqlDialect {}, query)?;
+        match ast {
+            ASTNode::SQLInsert {
+                table_name,
+                columns,
+                values,
+            } => {
+                let id_pos = columns
+                    .iter()
+                    .position(|c| c == "id")
+                    .ok_or(error::Error::BTDB(String::from("id column not found")))?;
+                let foo_pos = columns
+                    .iter()
+                    .position(|c| c == "foo")
+                    .ok_or(error::Error::BTDB(String::from("foo column not found")))?;
+                let bar_pos = columns
+                    .iter()
+                    .position(|c| c == "bar")
+                    .ok_or(error::Error::BTDB(String::from("bar column not found")))?;
+                let mut executor = QueryExecutor::new(&mut self.buffer_pool);
+                for val in values.iter() {
+                    // let id = val.get(id_pos).ok_or(error::Error::BTDB(String::from(
+                    //     "id value not found in row to insert",
+                    // ))).and_then(|&s| s.parse::<u64>())?;
+                    let foo = val
+                        .get(foo_pos)
+                        .ok_or(error::Error::BTDB(String::from(
+                            "foo value not found in row to insert",
+                        )))
+                        .and_then(|x| match x {
+                            ASTNode::SQLValue(Value::Long(n)) => Ok(n),
+                            _ => Err(error::Error::BTDB(String::from("Invalid sql ast"))),
+                        })?;
+                    let bar = val.get(bar_pos).ok_or(error::Error::BTDB(String::from(
+                        "bar value not found in row to insert",
+                    )))?;
+                    // let tuple = Tuple::new(id, foo, bar);
+                    // executor.insert(&tuple);
+                }
+            }
+            _ => {
+                return Err(error::Error::BTDB(String::from(
+                    "Unimplemented query method!",
+                )));
+            }
+        };
         return Ok(());
     }
 }
@@ -304,6 +369,8 @@ impl Tuple {
 }
 
 pub mod error {
+    use sqlparser::sqlparser::ParserError;
+
     pub type Result<T> = std::result::Result<T, Error>;
 
     quick_error! {
@@ -312,6 +379,7 @@ pub mod error {
             IO(err: std::io::Error) {}
             Serialize(err: bincode::Error) {}
             FromUtf8Error(err: std::string::FromUtf8Error) {}
+            SQLParser(err: ParserError) {}
             BTDB(msg: String) {}
         }
     }
@@ -331,6 +399,12 @@ pub mod error {
     impl From<std::string::FromUtf8Error> for Error {
         fn from(error: std::string::FromUtf8Error) -> Self {
             return Error::FromUtf8Error(error);
+        }
+    }
+
+    impl From<ParserError> for Error {
+        fn from(error: ParserError) -> Self {
+            return Error::SQLParser(error);
         }
     }
 }
