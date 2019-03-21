@@ -1,12 +1,4 @@
-#[macro_use]
-extern crate prettytable;
-#[macro_use]
-extern crate quick_error;
-
 use std::io::Write;
-
-use sqlparser::dialect::PostgreSqlDialect;
-use sqlparser::sqlparser::*;
 
 use btdb;
 
@@ -32,6 +24,5 @@ fn main() -> btdb::error::Result<()> {
     }
 
     db.close()?;
-
     return Ok(());
 }
