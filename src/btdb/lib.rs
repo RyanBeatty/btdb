@@ -29,10 +29,9 @@ impl DiskManager {
         // Initialize the empty pages.
         // TODO: Deal with allocating more pages later.
         file.set_len(From::from(PAGE_SIZE * NUM_PAGES))?;
-        for i in 0..NUM_PAGES {
-            let page_header = PageHeader::new();
-            file.seek(SeekFrom::Start(From::from(i * PAGE_SIZE)))?;
-            file.write_all(page_header.to_bytes().as_slice())?;
+        for _ in 0..NUM_PAGES {
+            let page = Page::new();
+            file.write_all(page.to_bytes().as_slice())?;
         }
         return Ok(DiskManager {});
     }
@@ -289,7 +288,7 @@ impl<'a> Cursor<'a> {
     fn add_tuple(&mut self, tuple: &Tuple) -> Option<()> {
         let tuple_bytes = tuple.to_bytes();
         for page_id in 0.. {
-            let mut cur_page = self.buffer_pool.get_page(page_id)?;
+            let cur_page = self.buffer_pool.get_page(page_id)?;
             if cur_page.add_tuple(&tuple_bytes).is_some() {
                 return Some(());
             }
