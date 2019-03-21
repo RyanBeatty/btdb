@@ -137,8 +137,9 @@ impl<'a> Page<'a> {
         return Some(());
     }
 
-    fn get_tuple(&self, tuple_id: usize) -> Option<&[u8]> {
-        return None;
+    fn get_tuple(&self, tuple_id: u16) -> Option<&[u8]> {
+        let (offset, size) = self.header.get_entry(tuple_id)?;
+        return Some(&self.buffer[From::from(*offset)..From::from(offset+size)]);
     }
 }
 
@@ -221,16 +222,28 @@ impl PageHeader {
         self.entries.push((new_free_start, entry_size));
         return Some(new_free_start);
     }
+
+    fn get_entry(&self, entry_id: u16) -> Option<&(u16, u16)> {
+        return self.entries.get(entry_id as usize);
+    }
+
+    fn num_entries(&self) -> u16 {
+        return self.entries.len() as u16;
+    }
 }
 
 struct Cursor<'a> {
     buffer_pool: &'a mut BufferPool,
+    cur_page_id: PageId,
+    cur_tuple_id: u16,
 }
 
 impl<'a> Cursor<'a> {
     fn new(buffer_pool: &'a mut BufferPool) -> Cursor<'a> {
         return Cursor {
             buffer_pool: buffer_pool,
+            cur_page_id: 0,
+            cur_tuple_id: 0,
         };
     }
 
@@ -243,6 +256,30 @@ impl<'a> Cursor<'a> {
                 return Some(());
             }
         }
+        return None;
+    }
+}
+
+impl<'a> Iterator for Cursor<'a> {
+    type Item = &'a[u8];
+
+    fn next(&mut self) -> Option<&'a[u8]> {
+        let page_buffer = self.buffer_pool.get_page(self.cur_page_id)?;
+        let cur_page = Page::from_buffer(page_buffer)?;
+        let next = cur_page.get_tuple(self.cur_tuple_id);
+        //     None => {
+        //         self.cur_page_id += 1;
+        //         self.cur_tuple_id = 0;
+        //         return self.next();
+        //     },
+        //     Some(next) => return Some(next)
+        // }
+        if next.is_none() {
+            self.cur_page_id += 1;
+            self.cur_tuple_id = 0;
+            return self.next();
+        }
+        // TODO: Return 'next' once I figure out lifetime issues.
         return None;
     }
 }
