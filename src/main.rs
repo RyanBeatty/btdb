@@ -15,7 +15,7 @@ fn main() -> btdb::error::Result<()> {
         if trimmed.starts_with("\\") {
             match trimmed {
                 "\\q" => break,
-                _     => println!("Unknown meta command!"),
+                _ => println!("Unknown meta command!"),
             }
         } else {
             let result = db.query(trimmed.to_string())?;

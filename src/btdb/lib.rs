@@ -97,8 +97,12 @@ impl BufferPool {
 
     fn flush_pages(&mut self) -> error::Result<()> {
         for (page_id, index) in self.page_table.iter() {
-            let page = self.frames.get(*index).ok_or(error::Error::BTDB(format!("Could not find frame for page_id={} index={}", page_id, index)))?;
-            self.disk_manager.put_page(page.get_page_id().unwrap(), page.to_bytes())?;
+            let page = self.frames.get(*index).ok_or(error::Error::BTDB(format!(
+                "Could not find frame for page_id={} index={}",
+                page_id, index
+            )))?;
+            self.disk_manager
+                .put_page(page.get_page_id().unwrap(), page.to_bytes())?;
         }
         return Ok(());
     }
@@ -108,7 +112,7 @@ struct Page {
     page_id: Option<PageId>,
     // TODO: Implement for more pages than buffer pool frames.
     // dirty: bool,
-    buffer: Vec<u8>,    
+    buffer: Vec<u8>,
     header: PageHeader,
 }
 
@@ -137,19 +141,25 @@ impl Page {
 
     fn replace(&mut self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
         if buffer.len() != From::from(PAGE_SIZE) {
-            return Err(error::Error::BTDB(format!("Invalid page size buffer: {}", buffer.len())));
+            return Err(error::Error::BTDB(format!(
+                "Invalid page size buffer: {}",
+                buffer.len()
+            )));
         }
 
         self.page_id = Some(page_id);
         for (i, byte) in buffer.iter().enumerate() {
             self.buffer[i] = *byte;
         }
-        self.header = PageHeader::from_bytes(&self.buffer).ok_or(error::Error::BTDB(format!("Failed to parse page header for page_id={}", page_id)))?;
+        self.header = PageHeader::from_bytes(&self.buffer).ok_or(error::Error::BTDB(format!(
+            "Failed to parse page header for page_id={}",
+            page_id
+        )))?;
         return Ok(());
     }
 
     fn to_bytes(&self) -> &Vec<u8> {
-        return &self.buffer
+        return &self.buffer;
     }
 
     fn add_tuple(&mut self, tuple: &[u8]) -> Option<()> {
@@ -168,7 +178,7 @@ impl Page {
 
     fn get_tuple(&self, tuple_id: u16) -> Option<&[u8]> {
         let (offset, size) = self.header.get_entry(tuple_id)?;
-        return Some(&self.buffer[From::from(*offset)..From::from(offset+size)]);
+        return Some(&self.buffer[From::from(*offset)..From::from(offset + size)]);
     }
 }
 
@@ -237,7 +247,7 @@ impl PageHeader {
     fn add_entry(&mut self, entry_size: u16) -> Option<u16> {
         // prevents underflow.
         if entry_size >= self.free_start {
-            return None
+            return None;
         }
         // I don't think overflow is possible here.
         let new_free_end = self.free_end + (ENTRY_METADATA_SIZE as u16);
@@ -289,9 +299,9 @@ impl<'a> Cursor<'a> {
 }
 
 impl<'a> Iterator for Cursor<'a> {
-    type Item = &'a[u8];
+    type Item = &'a [u8];
 
-    fn next(&mut self) -> Option<&'a[u8]> {
+    fn next(&mut self) -> Option<&'a [u8]> {
         let mut cur_page = self.buffer_pool.get_page(self.cur_page_id)?;
         let next = cur_page.get_tuple(self.cur_tuple_id);
         //     None => {
@@ -403,10 +413,15 @@ impl DB {
                     count += 1;
                 }
 
-                return Ok(QueryResult::InsertResult{ num_inserted: count });
+                return Ok(QueryResult::InsertResult {
+                    num_inserted: count,
+                });
             }
             _ => {
-                return Err(error::Error::BTDB(format!("Unimplimented query method: {:?}", ast)));
+                return Err(error::Error::BTDB(format!(
+                    "Unimplimented query method: {:?}",
+                    ast
+                )));
             }
         };
     }
@@ -454,16 +469,14 @@ impl Tuple {
 }
 
 pub enum QueryResult {
-    InsertResult {
-        num_inserted: u64,
-    },
+    InsertResult { num_inserted: u64 },
 }
 
 impl ToString for QueryResult {
     fn to_string(&self) -> String {
         return match self {
-            QueryResult::InsertResult{ num_inserted } => format!("INSERT 0 {}", num_inserted),
-        }
+            QueryResult::InsertResult { num_inserted } => format!("INSERT 0 {}", num_inserted),
+        };
     }
 }
 
