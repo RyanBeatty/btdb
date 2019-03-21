@@ -204,8 +204,12 @@ impl PageHeader {
         return buffer;
     }
 
-    // TODO: Buffer underflow/overflow check?
     fn add_entry(&mut self, entry_size: u16) -> Option<u16> {
+        // prevents underflow.
+        if entry_size >= self.free_start {
+            return None
+        }
+        // I don't think overflow is possible here.
         let new_free_end = self.free_end + (ENTRY_METADATA_SIZE as u16);
         let new_free_start = self.free_start - entry_size;
         if new_free_start <= new_free_end {
