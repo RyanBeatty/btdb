@@ -58,69 +58,108 @@ impl DiskManager {
 }
 
 struct BufferPool {
-    buffer: Vec<u8>,
+    // buffer: Vec<u8>,
+    frames: Vec<Page>,
     page_table: HashMap<PageId, usize>,
     disk_manager: DiskManager,
 }
 
 impl BufferPool {
     fn new(disk_manager: DiskManager) -> error::Result<BufferPool> {
-        let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
-        let mut buffer = Vec::with_capacity(capacity);
-        // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
-        for _ in 0..capacity {
-            buffer.push(0);
+        let mut frames = Vec::new();
+        for _ in 0..NUM_PAGES {
+            frames.push(Page::new());
         }
+        // let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
+        // let mut buffer = Vec::with_capacity(capacity);
+        // // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
+        // for _ in 0..capacity {
+        //     buffer.push(0);
+        // }
 
         // Init pages from disk.
         for i in 0..NUM_PAGES {
             // TODO: akward copy here, but find a better way later.
             let page = disk_manager.get_page(From::from(i))?;
-            for (j, byte) in page.iter().enumerate() {
-                buffer[(i * PAGE_SIZE + (j as u16)) as usize] = *byte;
-            }
+            frames[i as usize].replace(From::from(i), &page)?;
+            // for (j, byte) in page.iter().enumerate() {
+            //     buffer[(i * PAGE_SIZE + (j as u16)) as usize] = *byte;
+            // }
         }
 
         let mut page_table = HashMap::<PageId, usize>::new();
         page_table.insert(0, 0);
-        page_table.insert(1, From::from(PAGE_SIZE));
-        // TODO: fix cast.
-        page_table.insert(2, 2 * (PAGE_SIZE as usize));
+        page_table.insert(1, 1);
+        page_table.insert(2, 2);
 
         return Ok(BufferPool {
-            buffer: buffer,
+            frames: frames,
             page_table: page_table,
             disk_manager: disk_manager,
         });
     }
 
     // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
-    fn get_page(&mut self, page_id: PageId) -> Option<&mut [u8]> {
+    fn get_page(&mut self, page_id: PageId) -> Option<&mut Page> {
         let offset = *self.page_table.get(&page_id)?;
-        return Some(&mut self.buffer[offset..offset + (PAGE_SIZE as usize)]);
+        return Some(&mut self.frames[offset]);
     }
 
     fn flush_pages(&mut self) -> error::Result<()> {
         for (page_id, index) in self.page_table.iter() {
-            let page = &self.buffer[*index..*index + (PAGE_SIZE as usize)];
-            self.disk_manager.put_page(*page_id, page)?;
+            let page = self.frames.get(*index).ok_or(error::Error::BTDB(format!("Could not find frame for page_id={} index={}", page_id, index)))?;
+            self.disk_manager.put_page(page.get_page_id().unwrap(), page.to_bytes())?;
         }
         return Ok(());
     }
 }
 
-struct Page<'a> {
-    buffer: &'a mut [u8],
+struct Page {
+    page_id: Option<PageId>,
+    // TODO: Implement for more pages than buffer pool frames.
+    // dirty: bool,
+    buffer: Vec<u8>,    
     header: PageHeader,
 }
 
-impl<'a> Page<'a> {
-    fn from_buffer(buffer: &'a mut [u8]) -> Option<Page<'a>> {
-        let header = PageHeader::from_bytes(buffer)?;
-        return Some(Page {
+impl Page {
+    fn new() -> Page {
+        let capacity: usize = From::from(PAGE_SIZE);
+        let mut buffer = Vec::with_capacity(capacity);
+        // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
+        for _ in 0..capacity {
+            buffer.push(0);
+        }
+        let header = PageHeader::new();
+        for (i, byte) in header.to_bytes().iter().enumerate() {
+            buffer[i] = *byte;
+        }
+        return Page {
+            page_id: None,
             buffer: buffer,
             header: header,
-        });
+        };
+    }
+
+    fn get_page_id(&self) -> Option<PageId> {
+        return self.page_id;
+    }
+
+    fn replace(&mut self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
+        if buffer.len() != From::from(PAGE_SIZE) {
+            return Err(error::Error::BTDB(format!("Invalid page size buffer: {}", buffer.len())));
+        }
+
+        self.page_id = Some(page_id);
+        for (i, byte) in buffer.iter().enumerate() {
+            self.buffer[i] = *byte;
+        }
+        self.header = PageHeader::from_bytes(&self.buffer).ok_or(error::Error::BTDB(format!("Failed to parse page header for page_id={}", page_id)))?;
+        return Ok(());
+    }
+
+    fn to_bytes(&self) -> &Vec<u8> {
+        return &self.buffer
     }
 
     fn add_tuple(&mut self, tuple: &[u8]) -> Option<()> {
@@ -250,8 +289,7 @@ impl<'a> Cursor<'a> {
     fn add_tuple(&mut self, tuple: &Tuple) -> Option<()> {
         let tuple_bytes = tuple.to_bytes();
         for page_id in 0.. {
-            let page_buffer = self.buffer_pool.get_page(page_id)?;
-            let mut cur_page = Page::from_buffer(page_buffer)?;
+            let mut cur_page = self.buffer_pool.get_page(page_id)?;
             if cur_page.add_tuple(&tuple_bytes).is_some() {
                 return Some(());
             }
@@ -264,8 +302,7 @@ impl<'a> Iterator for Cursor<'a> {
     type Item = &'a[u8];
 
     fn next(&mut self) -> Option<&'a[u8]> {
-        let page_buffer = self.buffer_pool.get_page(self.cur_page_id)?;
-        let cur_page = Page::from_buffer(page_buffer)?;
+        let mut cur_page = self.buffer_pool.get_page(self.cur_page_id)?;
         let next = cur_page.get_tuple(self.cur_tuple_id);
         //     None => {
         //         self.cur_page_id += 1;
