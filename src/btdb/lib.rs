@@ -208,7 +208,7 @@ impl PageHeader {
     fn add_entry(&mut self, entry_size: u16) -> Option<u16> {
         let new_free_end = self.free_end + (ENTRY_METADATA_SIZE as u16);
         let new_free_start = self.free_start - entry_size;
-        if new_free_end <= new_free_start {
+        if new_free_start <= new_free_end {
             return None;
         }
 
