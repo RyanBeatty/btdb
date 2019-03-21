@@ -338,9 +338,7 @@ impl DB {
                 return Ok(QueryResult::InsertResult{ num_inserted: count });
             }
             _ => {
-                return Err(error::Error::BTDB(String::from(
-                    "Unimplemented query method!",
-                )));
+                return Err(error::Error::BTDB(format!("Unimplimented query method: {:?}", ast)));
             }
         };
     }
