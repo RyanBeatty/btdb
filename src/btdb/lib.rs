@@ -166,11 +166,11 @@ impl PageHeader {
 
         // TODO: Probably a better way then direct indexing.
         let free_start = u16::from_le_bytes([buffer[0], buffer[1]]);
-        let free_end = u16::from_le_bytes([buffer[1], buffer[2]]);
+        let free_end = u16::from_le_bytes([buffer[2], buffer[3]]);
 
-        let num_entries = u16::from_le_bytes([buffer[3], buffer[4]]);
+        let num_entries = u16::from_le_bytes([buffer[4], buffer[5]]);
         let mut entries = Vec::new();
-        let entry_list_offset: usize = 5;
+        let entry_list_offset: usize = 6;
         let mut count: usize = 0;
         while count < From::from(num_entries) {
             let entry_offset = u16::from_le_bytes([
