@@ -70,21 +70,11 @@ impl BufferPool {
         for _ in 0..NUM_PAGES {
             frames.push(Page::new());
         }
-        // let capacity = (PAGE_SIZE * NUM_PAGES) as usize;
-        // let mut buffer = Vec::with_capacity(capacity);
-        // // Initialize memory. See https://users.rust-lang.org/t/how-to-allocate-huge-byte-array-safely/18284/36.
-        // for _ in 0..capacity {
-        //     buffer.push(0);
-        // }
 
         // Init pages from disk.
         for i in 0..NUM_PAGES {
-            // TODO: akward copy here, but find a better way later.
             let page = disk_manager.get_page(From::from(i))?;
             frames[i as usize].replace(From::from(i), &page)?;
-            // for (j, byte) in page.iter().enumerate() {
-            //     buffer[(i * PAGE_SIZE + (j as u16)) as usize] = *byte;
-            // }
         }
 
         let mut page_table = HashMap::<PageId, usize>::new();
