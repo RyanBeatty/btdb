@@ -41,7 +41,7 @@ impl DiskManager {
         let mut file = std::fs::OpenOptions::new()
             .read(true)
             .open("data/btdb/database.btdb")?;
-        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)));
+        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)))?;
         let mut buffer = vec![0u8; From::from(PAGE_SIZE)];
         file.read_exact(&mut buffer)?;
         return Ok(buffer);
@@ -49,9 +49,9 @@ impl DiskManager {
 
     fn put_page(&self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
         let mut file = std::fs::OpenOptions::new()
-            .read(true)
+            .write(true)
             .open("data/btdb/database.btdb")?;
-        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)));
+        file.seek(SeekFrom::Start(page_id * (PAGE_SIZE as u64)))?;
         file.write_all(buffer)?;
         return Ok(());
     }
@@ -274,6 +274,10 @@ impl DB {
         return Ok(DB {
             buffer_pool: buffer_pool,
         });
+    }
+
+    pub fn close(&mut self) -> error::Result<()> {
+        return self.buffer_pool.flush_pages();
     }
 
     pub fn query(&mut self, query: String) -> error::Result<QueryResult> {

@@ -31,5 +31,7 @@ fn main() -> btdb::error::Result<()> {
         }
     }
 
+    db.close()?;
+
     return Ok(());
 }
