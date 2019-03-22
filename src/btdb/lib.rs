@@ -298,27 +298,30 @@ impl<'a> Cursor<'a> {
 }
 
 impl<'a> Iterator for Cursor<'a> {
-    type Item = &'a [u8];
+    type Item = Vec<u8>;
 
-    fn next(&mut self) -> Option<&'a [u8]> {
+    fn next(&mut self) -> Option<Self::Item> {
         let mut cur_page = self.buffer_pool.get_page(self.cur_page_id)?;
-        let next = cur_page.get_tuple(self.cur_tuple_id);
-        //     None => {
-        //         self.cur_page_id += 1;
-        //         self.cur_tuple_id = 0;
-        //         return self.next();
-        //     },
-        //     Some(next) => return Some(next)
-        // }
-        if next.is_none() {
-            self.cur_page_id += 1;
-            self.cur_tuple_id = 0;
-            return self.next();
+        match cur_page.get_tuple(self.cur_tuple_id) {
+            None => {
+                self.cur_page_id += 1;
+                self.cur_tuple_id = 0;
+                return self.next();
+            },
+            Some(next_tuple) => {
+                return Some(next_tuple.to_vec());
+            }
         }
-        // TODO: Return 'next' once I figure out lifetime issues.
-        return None;
     }
 }
+
+// impl<'a> IntoIterator for Cursor<'a> {
+//     type Item = Vec<u8>;
+//     type IntoIter = Cursor<'a>;
+//     fn into_iter(self) -> Self::IntoIter {
+
+//     }
+// }
 
 struct QueryExecutor<'a> {
     buffer_pool: &'a mut BufferPool,
@@ -337,6 +340,18 @@ impl<'a> QueryExecutor<'a> {
             .add_tuple(tuple)
             .ok_or(error::Error::BTDB(String::from("Failed to insert tuple")))?;
         return Ok(());
+    }
+
+    fn select(&mut self, id: u64) -> error::Result<Option<Tuple>> {
+        let mut cursor = Cursor::new(&mut self.buffer_pool);
+        for raw_tuple in cursor {
+            let tuple = Tuple::from_bytes(&mut raw_tuple.as_slice())?;
+            if tuple.id == id {
+                return Ok(Some(tuple));
+            }
+        }
+
+        return Ok(None);
     }
 }
 
