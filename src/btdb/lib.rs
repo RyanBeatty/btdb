@@ -488,7 +488,7 @@ impl Tuple {
         let id = u64::from_le_bytes(id_buffer);
         let mut foo_len_buffer = [0; std::mem::size_of::<usize>()];
         buffer.read_exact(&mut foo_len_buffer)?;
-        let mut foo_buffer = Vec::with_capacity(usize::from_le_bytes(foo_len_buffer));
+        let mut foo_buffer = vec![0; usize::from_le_bytes(foo_len_buffer)];
         buffer.read_exact(&mut foo_buffer);
         let foo = String::from_utf8(foo_buffer)?;
         let mut bar_buffer = [0; std::mem::size_of::<i32>()];
