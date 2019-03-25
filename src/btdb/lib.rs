@@ -309,6 +309,7 @@ impl<'a> Iterator for Cursor<'a> {
                 return self.next();
             },
             Some(next_tuple) => {
+                self.cur_tuple_id += 1;
                 return Some(next_tuple.to_vec());
             }
         }
@@ -342,16 +343,15 @@ impl<'a> QueryExecutor<'a> {
         return Ok(());
     }
 
-    fn select(&mut self, id: u64) -> error::Result<Option<Tuple>> {
+    fn select(&mut self) -> error::Result<Option<Vec<Tuple>>> {
+        let mut results = Vec::new();
         let mut cursor = Cursor::new(&mut self.buffer_pool);
         for raw_tuple in cursor {
             let tuple = Tuple::from_bytes(&mut raw_tuple.as_slice())?;
-            if tuple.id == id {
-                return Ok(Some(tuple));
-            }
+            results.push(tuple);
         }
 
-        return Ok(None);
+        return Ok(Some(results));
     }
 }
 
@@ -430,7 +430,23 @@ impl DB {
                 return Ok(QueryResult::InsertResult {
                     num_inserted: count,
                 });
-            }
+            },
+            ASTNode::SQLSelect{
+                projection: _,
+                relation: _,
+                joins: _,
+                selection: _,
+                order_by: _,
+                group_by: _,
+                having: _,
+                limit: _,
+            } => {
+                let mut executor = QueryExecutor::new(&mut self.buffer_pool);
+                let rows = executor.select()?;
+                return Ok(QueryResult::SelectResult{
+                    rows: rows.unwrap(),
+                })
+            },
             _ => {
                 return Err(error::Error::BTDB(format!(
                     "Unimplimented query method: {:?}",
@@ -484,12 +500,14 @@ impl Tuple {
 
 pub enum QueryResult {
     InsertResult { num_inserted: u64 },
+    SelectResult { rows: Vec<Tuple> },
 }
 
 impl ToString for QueryResult {
     fn to_string(&self) -> String {
         return match self {
             QueryResult::InsertResult { num_inserted } => format!("INSERT 0 {}", num_inserted),
+            QueryResult::SelectResult { rows } => format!("{:?}", rows),
         };
     }
 }
