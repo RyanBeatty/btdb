@@ -91,7 +91,16 @@ impl BufferPool {
     // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
     fn get_page(&mut self, page_id: PageId) -> Option<&mut Page> {
         let offset = *self.page_table.get(&page_id)?;
+        let mut page = &mut self.frames[offset];
+        page.pin();
         return Some(&mut self.frames[offset]);
+    }
+
+    fn unpin_page(&mut self, page_id: PageId, is_dirty: bool) {
+        let offset = *self.page_table.get(&page_id).unwrap();
+        let mut page = &mut self.frames[offset];
+        // TODO: Add to LRU replacer if no longer pinned.
+        page.unpin();
     }
 
     fn flush_pages(&mut self) -> error::Result<()> {
@@ -109,8 +118,8 @@ impl BufferPool {
 
 struct Page {
     page_id: Option<PageId>,
-    // TODO: Implement for more pages than buffer pool frames.
     // dirty: bool,
+    pinned: u64,
     buffer: Vec<u8>,
     header: PageHeader,
 }
@@ -129,6 +138,7 @@ impl Page {
         }
         return Page {
             page_id: None,
+            pinned: 0,
             buffer: buffer,
             header: header,
         };
@@ -136,6 +146,23 @@ impl Page {
 
     fn get_page_id(&self) -> Option<PageId> {
         return self.page_id;
+    }
+
+    fn is_pinned(&self) -> bool {
+        return self.pinned != 0;
+    }
+
+    fn pin(&mut self) {
+        self.pinned += 1;
+    }
+
+    fn unpin(&mut self) -> u64 {
+        if self.pinned == 0 {
+            panic!(format!("Tried to unpin on Page page_id={} which is already not pinned by any thread", unpin));
+        }
+
+        self.pinned -= 1;
+        return self.pinned;
     }
 
     fn replace(&mut self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
@@ -290,8 +317,10 @@ impl<'a> Cursor<'a> {
         for page_id in 0.. {
             let cur_page = self.buffer_pool.get_page(page_id)?;
             if cur_page.add_tuple(&tuple_bytes).is_some() {
+                self.buffer_pool.unpin_page(page_id, true);
                 return Some(());
             }
+            self.buffer_pool.unpin_page(page_id, false);
         }
         return None;
     }
@@ -304,6 +333,7 @@ impl<'a> Iterator for Cursor<'a> {
         let mut cur_page = self.buffer_pool.get_page(self.cur_page_id)?;
         match cur_page.get_tuple(self.cur_tuple_id) {
             None => {
+                self.buffer_pool.unpin_page(self.cur_page_id, false);
                 self.cur_page_id += 1;
                 self.cur_tuple_id = 0;
                 return self.next();
@@ -315,14 +345,6 @@ impl<'a> Iterator for Cursor<'a> {
         }
     }
 }
-
-// impl<'a> IntoIterator for Cursor<'a> {
-//     type Item = Vec<u8>;
-//     type IntoIter = Cursor<'a>;
-//     fn into_iter(self) -> Self::IntoIter {
-
-//     }
-// }
 
 struct QueryExecutor<'a> {
     buffer_pool: &'a mut BufferPool,
