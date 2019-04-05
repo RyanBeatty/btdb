@@ -100,7 +100,7 @@ impl BufferPool {
         let offset = *self.page_table.get(&page_id).unwrap();
         let mut page = &mut self.frames[offset];
         // TODO: Add to LRU replacer if no longer pinned.
-        page.unpin();
+        page.unpin(is_dirty);
     }
 
     fn flush_pages(&mut self) -> error::Result<()> {
@@ -118,7 +118,7 @@ impl BufferPool {
 
 struct Page {
     page_id: Option<PageId>,
-    // dirty: bool,
+    dirty: bool,
     pinned: u64,
     buffer: Vec<u8>,
     header: PageHeader,
@@ -139,6 +139,7 @@ impl Page {
         return Page {
             page_id: None,
             pinned: 0,
+            dirty: false,
             buffer: buffer,
             header: header,
         };
@@ -156,13 +157,18 @@ impl Page {
         self.pinned += 1;
     }
 
-    fn unpin(&mut self) -> u64 {
+    fn unpin(&mut self, dirty: bool) -> u64 {
         if self.pinned == 0 {
-            panic!(format!("Tried to unpin on Page page_id={} which is already not pinned by any thread", unpin));
+            panic!(format!("Tried to unpin on Page page_id={:?} which is already not pinned by any thread", self.page_id));
         }
 
         self.pinned -= 1;
+        self.dirty |= dirty;
         return self.pinned;
+    }
+
+    fn clean(&mut self) {
+        self.dirty = false;
     }
 
     fn replace(&mut self, page_id: PageId, buffer: &[u8]) -> error::Result<()> {
