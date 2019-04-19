@@ -7,7 +7,7 @@ use bincode;
 use serde::{Deserialize, Serialize};
 use sqlparser::{dialect::PostgreSqlDialect, sqlast::ASTNode, sqlast::Value, sqlparser as sqlp};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -113,6 +113,60 @@ impl BufferPool {
                 .put_page(page.get_page_id().unwrap(), page.to_bytes())?;
         }
         return Ok(());
+    }
+}
+
+// TODO: Not the fastest implementation, but focus on functionality for now.
+struct LRUReplacer {
+    queue: VecDeque<PageId>,
+}
+
+impl LRUReplacer {
+    fn new() -> LRUReplacer {
+        return LRUReplacer{
+            queue: VecDeque::new(),
+        };
+    }
+
+    fn insert(&mut self, id: PageId) {
+        if self.queue.contains(&id) {
+            let mut index = 0;
+            for (i, elem) in self.queue.iter().enumerate() {
+                if *elem == id {
+                    index = i;
+                }
+            }
+
+            self.queue.remove(index);
+            self.queue.push_back(id);
+        } else {
+            self.queue.push_back(id);
+        }
+    }
+
+    fn victim(&self) -> Option<&PageId> {
+        return self.queue.front();
+    }
+
+    // TODO: Some duplication here with insert, but fix later.
+    fn erase(&mut self, id: PageId) -> bool {
+        if self.queue.contains(&id) {
+            let mut index = 0;
+            for (i, elem) in self.queue.iter().enumerate() {
+                if *elem == id {
+                    index = i;
+                }
+            }
+
+            self.queue.remove(index);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    fn size(&self) -> usize {
+        return self.queue.len();
     }
 }
 
