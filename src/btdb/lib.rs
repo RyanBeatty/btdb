@@ -144,8 +144,8 @@ impl LRUReplacer {
         }
     }
 
-    fn victim(&self) -> Option<&PageId> {
-        return self.queue.front();
+    fn victim(&mut self) -> Option<PageId> {
+        return self.queue.pop_front();
     }
 
     // TODO: Some duplication here with insert, but fix later.
