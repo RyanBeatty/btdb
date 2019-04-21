@@ -82,8 +82,8 @@ impl BufferPool {
     fn get_page(&mut self, page_id: PageId) -> Option<&mut Page> {
         match self.page_table.get(&page_id) {
             None => {
-                // TODO: remove unwrap.
-                let buffer = self.disk_manager.get_page(page_id).unwrap();
+                // TODO: panic if theres a real error?
+                let buffer = self.disk_manager.get_page(page_id).ok()?;
                 for (index, page) in self.frames.iter_mut().enumerate() {
                     if page.get_page_id().is_none() {
                         page.replace(page_id, &buffer).unwrap();
