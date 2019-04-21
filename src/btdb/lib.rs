@@ -59,7 +59,6 @@ impl DiskManager {
 const NUM_FRAMES: u16 = 3;
 
 struct BufferPool {
-    // buffer: Vec<u8>,
     frames: Vec<Page>,
     page_table: HashMap<PageId, usize>,
     disk_manager: DiskManager,
