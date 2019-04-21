@@ -14,7 +14,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 type PageId = u64;
 
 const PAGE_SIZE: u16 = 4096;
-const NUM_PAGES: u16 = 3;
+const NUM_DISK_PAGES: u16 = 5;
 
 struct DiskManager {}
 
@@ -28,8 +28,8 @@ impl DiskManager {
             .open("data/btdb/database.btdb")?;
         // Initialize the empty pages.
         // TODO: Deal with allocating more pages later.
-        file.set_len(From::from(PAGE_SIZE * NUM_PAGES))?;
-        for _ in 0..NUM_PAGES {
+        file.set_len(From::from(PAGE_SIZE * NUM_DISK_PAGES))?;
+        for _ in 0..NUM_DISK_PAGES {
             let page = Page::new();
             file.write_all(page.to_bytes().as_slice())?;
         }
@@ -56,6 +56,8 @@ impl DiskManager {
     }
 }
 
+const NUM_FRAMES: u16 = 3;
+
 struct BufferPool {
     // buffer: Vec<u8>,
     frames: Vec<Page>,
@@ -67,7 +69,7 @@ struct BufferPool {
 impl BufferPool {
     fn new(disk_manager: DiskManager) -> error::Result<BufferPool> {
         let mut frames = Vec::new();
-        for _ in 0..NUM_PAGES {
+        for _ in 0..NUM_FRAMES {
             frames.push(Page::new());
         }
         return Ok(BufferPool {
