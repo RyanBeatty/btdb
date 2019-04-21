@@ -70,21 +70,9 @@ impl BufferPool {
         for _ in 0..NUM_PAGES {
             frames.push(Page::new());
         }
-
-        // Init pages from disk.
-        for i in 0..NUM_PAGES {
-            let page = disk_manager.get_page(From::from(i))?;
-            frames[i as usize].replace(From::from(i), &page)?;
-        }
-
-        let mut page_table = HashMap::<PageId, usize>::new();
-        page_table.insert(0, 0);
-        page_table.insert(1, 1);
-        page_table.insert(2, 2);
-
         return Ok(BufferPool {
             frames: frames,
-            page_table: page_table,
+            page_table: HashMap::new(),
             disk_manager: disk_manager,
             lru_replacer: LRUReplacer::new(),
         });
@@ -96,6 +84,14 @@ impl BufferPool {
             None => {
                 // TODO: remove unwrap.
                 let buffer = self.disk_manager.get_page(page_id).unwrap();
+                for (index, page) in self.frames.iter_mut().enumerate() {
+                    if page.get_page_id().is_none() {
+                        page.replace(page_id, &buffer).unwrap();
+                        page.pin();
+                        self.page_table.insert(page_id, index);
+                        return Some(&mut self.frames[index]);
+                    }
+                }
                 while let Some(victim_pid) = self.lru_replacer.victim() {
                     let index = *self.page_table.get(&victim_pid).unwrap();
                     let mut page = &mut self.frames[index];
