@@ -117,43 +117,43 @@ impl BufferPool {
 }
 
 // TODO: Not the fastest implementation, but focus on functionality for now.
-struct LRUReplacer {
-    queue: VecDeque<PageId>,
+struct LRUReplacer<T: PartialEq> {
+    queue: VecDeque<T>,
 }
 
-impl LRUReplacer {
-    fn new() -> LRUReplacer {
+impl<T: PartialEq> LRUReplacer<T> {
+    fn new() -> LRUReplacer<T> {
         return LRUReplacer{
             queue: VecDeque::new(),
         };
     }
 
-    fn insert(&mut self, id: PageId) {
-        if self.queue.contains(&id) {
+    fn insert(&mut self, data: T) {
+        if self.queue.contains(&data) {
             let mut index = 0;
             for (i, elem) in self.queue.iter().enumerate() {
-                if *elem == id {
+                if *elem == data {
                     index = i;
                 }
             }
 
             self.queue.remove(index);
-            self.queue.push_back(id);
+            self.queue.push_back(data);
         } else {
-            self.queue.push_back(id);
+            self.queue.push_back(data);
         }
     }
 
-    fn victim(&mut self) -> Option<PageId> {
+    fn victim(&mut self) -> Option<T> {
         return self.queue.pop_front();
     }
 
     // TODO: Some duplication here with insert, but fix later.
-    fn erase(&mut self, id: PageId) -> bool {
-        if self.queue.contains(&id) {
+    fn erase(&mut self, data: T) -> bool {
+        if self.queue.contains(&data) {
             let mut index = 0;
             for (i, elem) in self.queue.iter().enumerate() {
-                if *elem == id {
+                if *elem == data {
                     index = i;
                 }
             }
