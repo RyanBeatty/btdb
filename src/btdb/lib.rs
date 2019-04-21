@@ -105,7 +105,8 @@ impl BufferPool {
                     if page.is_dirty() {
                         // TODO: remove unwrap.
                         self.disk_manager
-                .put_page(page.get_page_id().unwrap(), page.to_bytes()).unwrap();
+                            .put_page(page.get_page_id().unwrap(), page.to_bytes())
+                            .unwrap();
                         page.clean();
                     }
                     // TODO: Remove unwrap.
@@ -117,7 +118,7 @@ impl BufferPool {
                 }
 
                 return None;
-            },
+            }
             Some(index) => {
                 let mut page = &mut self.frames[*index];
                 page.pin();
@@ -137,10 +138,13 @@ impl BufferPool {
 
     fn flush_pages(&mut self) -> error::Result<()> {
         for (page_id, index) in self.page_table.iter() {
-            let mut page = self.frames.get_mut(*index).ok_or(error::Error::BTDB(format!(
-                "Could not find frame for page_id={} index={}",
-                page_id, index
-            )))?;
+            let mut page = self
+                .frames
+                .get_mut(*index)
+                .ok_or(error::Error::BTDB(format!(
+                    "Could not find frame for page_id={} index={}",
+                    page_id, index
+                )))?;
             self.disk_manager
                 .put_page(page.get_page_id().unwrap(), page.to_bytes())?;
             page.clean();
@@ -157,7 +161,7 @@ struct LRUReplacer<T: PartialEq> {
 
 impl<T: PartialEq> LRUReplacer<T> {
     fn new() -> LRUReplacer<T> {
-        return LRUReplacer{
+        return LRUReplacer {
             queue: VecDeque::new(),
         };
     }
@@ -251,7 +255,10 @@ impl Page {
 
     fn unpin(&mut self, dirty: bool) -> u64 {
         if self.pinned == 0 {
-            panic!(format!("Tried to unpin on Page page_id={:?} which is already not pinned by any thread", self.page_id));
+            panic!(format!(
+                "Tried to unpin on Page page_id={:?} which is already not pinned by any thread",
+                self.page_id
+            ));
         }
 
         self.pinned -= 1;
@@ -435,7 +442,7 @@ impl<'a> Iterator for Cursor<'a> {
                 self.cur_page_id += 1;
                 self.cur_tuple_id = 0;
                 return self.next();
-            },
+            }
             Some(next_tuple) => {
                 self.cur_tuple_id += 1;
                 return Some(next_tuple.to_vec());
@@ -550,8 +557,8 @@ impl DB {
                 return Ok(QueryResult::InsertResult {
                     num_inserted: count,
                 });
-            },
-            ASTNode::SQLSelect{
+            }
+            ASTNode::SQLSelect {
                 projection: _,
                 relation: _,
                 joins: _,
@@ -563,10 +570,10 @@ impl DB {
             } => {
                 let mut executor = QueryExecutor::new(&mut self.buffer_pool);
                 let rows = executor.select()?;
-                return Ok(QueryResult::SelectResult{
+                return Ok(QueryResult::SelectResult {
                     rows: rows.unwrap(),
-                })
-            },
+                });
+            }
             _ => {
                 return Err(error::Error::BTDB(format!(
                     "Unimplimented query method: {:?}",
