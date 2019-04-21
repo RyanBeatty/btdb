@@ -61,6 +61,7 @@ struct BufferPool {
     frames: Vec<Page>,
     page_table: HashMap<PageId, usize>,
     disk_manager: DiskManager,
+    lru_replacer: LRUReplacer<PageId>,
 }
 
 impl BufferPool {
@@ -85,6 +86,7 @@ impl BufferPool {
             frames: frames,
             page_table: page_table,
             disk_manager: disk_manager,
+            lru_replacer: LRUReplacer::new(),
         });
     }
 
@@ -99,8 +101,10 @@ impl BufferPool {
     fn unpin_page(&mut self, page_id: PageId, is_dirty: bool) {
         let offset = *self.page_table.get(&page_id).unwrap();
         let mut page = &mut self.frames[offset];
-        // TODO: Add to LRU replacer if no longer pinned.
         page.unpin(is_dirty);
+        if !page.is_pinned() {
+            self.lru_replacer.insert(page_id);
+        }
     }
 
     fn flush_pages(&mut self) -> error::Result<()> {
