@@ -92,10 +92,38 @@ impl BufferPool {
 
     // TODO: Multiple borowwing won't work in multi-threaded env. Figure out how to do this. Rc<>?
     fn get_page(&mut self, page_id: PageId) -> Option<&mut Page> {
-        let offset = *self.page_table.get(&page_id)?;
-        let mut page = &mut self.frames[offset];
-        page.pin();
-        return Some(&mut self.frames[offset]);
+        match self.page_table.get(&page_id) {
+            None => {
+                // TODO: remove unwrap.
+                let buffer = self.disk_manager.get_page(page_id).unwrap();
+                while let Some(victim_pid) = self.lru_replacer.victim() {
+                    let index = *self.page_table.get(&victim_pid).unwrap();
+                    let mut page = &mut self.frames[index];
+                    if page.is_pinned() {
+                        continue;
+                    }
+                    if page.is_dirty() {
+                        // TODO: remove unwrap.
+                        self.disk_manager
+                .put_page(page.get_page_id().unwrap(), page.to_bytes()).unwrap();
+                        page.clean();
+                    }
+                    // TODO: Remove unwrap.
+                    page.replace(page_id, &buffer).unwrap();
+                    page.pin();
+                    self.page_table.remove(&victim_pid);
+                    self.page_table.insert(page_id, index);
+                    return Some(&mut self.frames[index]);
+                }
+
+                return None;
+            },
+            Some(index) => {
+                let mut page = &mut self.frames[*index];
+                page.pin();
+                return Some(&mut self.frames[*index]);
+            }
+        }
     }
 
     fn unpin_page(&mut self, page_id: PageId, is_dirty: bool) {
@@ -109,12 +137,14 @@ impl BufferPool {
 
     fn flush_pages(&mut self) -> error::Result<()> {
         for (page_id, index) in self.page_table.iter() {
-            let page = self.frames.get(*index).ok_or(error::Error::BTDB(format!(
+            let mut page = self.frames.get_mut(*index).ok_or(error::Error::BTDB(format!(
                 "Could not find frame for page_id={} index={}",
                 page_id, index
             )))?;
             self.disk_manager
                 .put_page(page.get_page_id().unwrap(), page.to_bytes())?;
+            page.clean();
+            self.lru_replacer.erase(*page_id);
         }
         return Ok(());
     }
@@ -205,6 +235,10 @@ impl Page {
 
     fn get_page_id(&self) -> Option<PageId> {
         return self.page_id;
+    }
+
+    fn is_dirty(&self) -> bool {
+        return self.dirty;
     }
 
     fn is_pinned(&self) -> bool {
