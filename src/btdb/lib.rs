@@ -30,7 +30,7 @@ impl DiskManager {
         // TODO: Deal with allocating more pages later.
         file.set_len(From::from(PAGE_SIZE * NUM_DISK_PAGES))?;
         for _ in 0..NUM_DISK_PAGES {
-            let page = Page::new();
+            let mut page = Page::new();
             file.write_all(page.to_bytes().as_slice())?;
         }
         return Ok(DiskManager {});
@@ -119,6 +119,7 @@ impl BufferPool {
             Some(index) => {
                 let mut page = &mut self.frames[*index];
                 page.pin();
+                self.lru_replacer.erase(page_id);
                 return Some(&mut self.frames[*index]);
             }
         }
@@ -286,7 +287,11 @@ impl Page {
         return Ok(());
     }
 
-    fn to_bytes(&self) -> &Vec<u8> {
+    fn to_bytes(&mut self) -> &Vec<u8> {
+        for (i, byte) in self.header.to_bytes().iter().enumerate() {
+            self.buffer[i] = *byte;
+        }
+
         return &self.buffer;
     }
 
@@ -312,6 +317,7 @@ impl Page {
 
 const ENTRY_METADATA_SIZE: usize = std::mem::size_of::<u16>() * 2;
 
+#[derive(Debug)]
 struct PageHeader {
     free_start: u16,
     free_end: u16,
@@ -338,19 +344,18 @@ impl PageHeader {
 
         let num_entries = u16::from_le_bytes([buffer[4], buffer[5]]);
         let mut entries = Vec::new();
-        let entry_list_offset: usize = 6;
-        let mut count: usize = 0;
-        while count < From::from(num_entries) {
+        let mut offset: usize = 6;
+        for _ in 0..num_entries {
             let entry_offset = u16::from_le_bytes([
-                buffer[entry_list_offset + count],
-                buffer[entry_list_offset + count + 1],
+                buffer[offset],
+                buffer[offset + 1],
             ]);
             let entry_size = u16::from_le_bytes([
-                buffer[entry_list_offset + count + 2],
-                buffer[entry_list_offset + count + 3],
+                buffer[offset + 2],
+                buffer[offset + 3],
             ]);
             entries.push((entry_offset, entry_size));
-            count += 1;
+            offset += 4;
         }
         return Some(PageHeader {
             free_start: free_start,
