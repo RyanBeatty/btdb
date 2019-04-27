@@ -153,6 +153,7 @@ impl BufferPool {
 }
 
 // TODO: Not the fastest implementation, but focus on functionality for now.
+#[derive(Debug)]
 struct LRUReplacer<T: PartialEq> {
     queue: VecDeque<T>,
 }
@@ -446,8 +447,10 @@ impl<'a> Iterator for Cursor<'a> {
                 return self.next();
             }
             Some(next_tuple) => {
+                let next = next_tuple.to_vec();
+                self.buffer_pool.unpin_page(self.cur_page_id, false);
                 self.cur_tuple_id += 1;
-                return Some(next_tuple.to_vec());
+                return Some(next);
             }
         }
     }
