@@ -8,42 +8,57 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <sstream>
+#include <string>
+
+struct QueryPlan {};
+
+std::unique_ptr<QueryPlan> parse_sql(const std::string& raw_text) {
+  std::vector<std::string> tokens;
+  std::istringstream iss(raw_text);
+  std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(),
+            std::back_inserter(tokens));
+
+  if (tokens.size() != 4) {
+    return nullptr;
+  }
+
+  if (tokens[0] != "select" || tokens[1] != "*" || tokens[2] != "from" ||
+      tokens[3] != "foo;") {
+    return nullptr;
+  }
+
+  return std::make_unique<QueryPlan>();
+}
 
 int main() {
   printf("Starting btdb\n");
 
-  struct addrinfo hints, *serv_info;
-  memset(&hints, 0, sizeof(hints));
-
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-
-  auto err = getaddrinfo("127.0.0.1", "3939", &hints, &serv_info);
-  if (err != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(err));
+  while (true) {
+    printf("btdb> ");
+    std::string line;
+    if (!std::getline(std::cin, line)) {
+      break;
+    }
+    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+    if (line == "\\q") {
+      break;
+    }
+    auto query_plan = parse_sql(line);
+    if (query_plan == nullptr) {
+      printf("Failed to parse sql\n");
+      continue;
+    }
+  }
+  if (std::cin.bad()) {
+    fprintf(stderr, "I/O Error\n");
     exit(EXIT_FAILURE);
   }
 
-  if (serv_info == nullptr) {
-    fprintf(stderr, "getaddrinfo returned an empty linked list");
-    exit(EXIT_FAILURE);
-  }
-
-  // TODO: Loop through results. Look at example in man 3 getaddrinfo.
-  auto fd = socket(serv_info->ai_family, serv_info->ai_socktype, serv_info->ai_protocol);
-  if (fd < 0) {
-    perror("Failed to create socket");
-    exit(EXIT_FAILURE);
-  }
-  auto opt = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
-    perror("Failed to set socket options");
-    exit(EXIT_FAILURE);
-  }
-  if (bind(fd, serv_info->ai_addr, serv_info->ai_addrlen) < 0) {
-    perror("Failed to bind socket to address");
-    exit(EXIT_FAILURE);
-  }
   printf("Shutting down btdb\n");
   return 0;
 }
