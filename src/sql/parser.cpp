@@ -1473,7 +1473,8 @@ yyreturn:
 }
 #line 38 "parser.y" /* yacc.c:1906  */
 
-int main(int argc, char **argv)
+
+int main()
 {
   yyparse();
 }

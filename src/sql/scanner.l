@@ -3,6 +3,8 @@
   #include "parser.hpp"
 %}
 
+%option noyywrap nounput noinput
+
 %%
 "+"    { return ADD; }
 "-"    { return SUB; }
