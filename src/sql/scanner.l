@@ -1,22 +1,16 @@
-/* just like Unix wc */
+/* recognize tokens for the calculator and print them out */
 %{
-int chars = 0;
-int words = 0;
-int lines = 0;
+  #include "parser.hpp"
 %}
 
 %%
-
-[a-zA-Z]+  { words++; chars += strlen(yytext); }
-\n         { chars++; lines++; }
-.          { chars++; }
-
+"+"    { return ADD; }
+"-"    { return SUB; }
+"*"    { return MUL; }
+"/"    { return DIV; }
+"|"    { return ABS; }
+[0-9]+ { yylval = atoi(yytext); return NUMBER; }
+\n     { return EOL; }
+[ \t]  { /* ignore whitespace */ }
+.      { printf("Mystery character %c\n", *yytext); }
 %%
-
-int main()
-{
-  yylex();
-  printf("hello worl\n");
-  printf("%8d%8d%8d\n", lines, words, chars);
-  return 0;
-}
