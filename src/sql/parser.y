@@ -1,43 +1,53 @@
 /* simplest version of calculator */
-%{
-#include <stdio.h>
+%skeleton "lalr1.cc"
+%require "3.4"
+%defines
 
-extern int yylex();
-extern int yyparse();
+%define api.token.constructor
+%define api.value.type variant
+%define parse.assert
 
-void yyerror(char *s)
-{
-  fprintf(stderr, "error: %s\n", s);
+%code requires {
+  struct ParserContext;
 }
-%}
 
-/* declare tokens */
-%token NUMBER
-%token ADD SUB MUL DIV ABS
-%token EOL
+%param {
+  ParserContext& ctx;
+}
+
+%code{
+#include <stdio.h>
+#include "context.hh"
+
+// extern int yylex();
+//extern int yyparse();
+
+// void yyerror(char *s)
+// {
+//   fprintf(stderr, "error: %s\n", s);
+// }
+    // yy::parser::symbol_type yylex (void);
+}
+
+//%locations
+
+//%define parse.trace
+//%define parse.error verbose
+
+%define api.token.prefix {TOK_}
+%token
+    EOF 0
+    HELLO
+;
 
 %%
+%start unit;
+unit: HELLO { printf("hello"); };
 
-calclist: /* nothing */
- | calclist exp EOL { printf("= %d\n", $2); }
- ;
-
-exp: factor      
- | exp ADD factor { $$ = $1 + $3; }
- | exp SUB factor { $$ = $1 - $3; }
- ;
-
-factor: term      
- | factor MUL term { $$ = $1 * $3; }
- | factor DIV term { $$ = $1 / $3; }
- ;
-
-term: NUMBER 
- | ABS term   { $$ = $2 >= 0? $2 : - $2; }
-;
 %%
 
 int main()
 {
+  ParserContext ctx;
   yyparse();
 }
