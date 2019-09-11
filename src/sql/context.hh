@@ -9,7 +9,12 @@
 // ... and declare it for the parser's sake.
 YY_DECL;
 
-struct ParserContext {};
+struct ParserContext {
+  void Parse() {
+    yy::parser parse(*this);
+    auto result = parse();
+  }
+};
 
 // // Conducting the whole scanning and parsing of Calc++.
 // class ParserContext

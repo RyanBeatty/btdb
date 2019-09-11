@@ -12,7 +12,7 @@
 }
 
 %param {
-  ParserContext& ctx;
+  ParserContext& ctx
 }
 
 %code{
@@ -46,8 +46,12 @@ unit: HELLO { printf("hello"); };
 
 %%
 
+void yy::parser::error(const std::string& m) {
+  std::cerr << m << std::endl;
+}
+
 int main()
 {
   ParserContext ctx;
-  yyparse();
+  //yyparse();
 }
