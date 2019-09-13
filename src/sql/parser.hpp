@@ -366,7 +366,10 @@ namespace yy {
 
     /// An auxiliary type to compute the largest semantic type.
     union union_type
-    {    };
+    {
+      // STRING_GROUP
+      char dummy1[sizeof (std::string)];
+    };
 
     /// The size of the largest semantic type.
     enum { size = sizeof (union_type) };
@@ -408,7 +411,10 @@ namespace yy {
       enum yytokentype
       {
         TOK_EOF = 0,
-        TOK_HELLO = 258
+        TOK_SELECT = 258,
+        TOK_FROM = 259,
+        TOK_SEMICOLON = 260,
+        TOK_STRING_GROUP = 261
       };
     };
 
@@ -459,6 +465,17 @@ namespace yy {
         : Base (t)
       {}
 #endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::string&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::string& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
 
       /// Destroy the symbol.
       ~basic_symbol ()
@@ -482,6 +499,10 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
+      case 6: // STRING_GROUP
+        value.template destroy< std::string > ();
+        break;
+
       default:
         break;
     }
@@ -558,13 +579,26 @@ switch (yytype)
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_HELLO);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON);
       }
 #else
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_HELLO);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, std::string v)
+        : super_type(token_type (tok), std::move (v))
+      {
+        YYASSERT (tok == token::TOK_STRING_GROUP);
+      }
+#else
+      symbol_type (int tok, const std::string& v)
+        : super_type(token_type (tok), v)
+      {
+        YYASSERT (tok == token::TOK_STRING_GROUP);
       }
 #endif
     };
@@ -621,16 +655,61 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_HELLO ()
+      make_SELECT ()
       {
-        return symbol_type (token::TOK_HELLO);
+        return symbol_type (token::TOK_SELECT);
       }
 #else
       static
       symbol_type
-      make_HELLO ()
+      make_SELECT ()
       {
-        return symbol_type (token::TOK_HELLO);
+        return symbol_type (token::TOK_SELECT);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_FROM ()
+      {
+        return symbol_type (token::TOK_FROM);
+      }
+#else
+      static
+      symbol_type
+      make_FROM ()
+      {
+        return symbol_type (token::TOK_FROM);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SEMICOLON ()
+      {
+        return symbol_type (token::TOK_SEMICOLON);
+      }
+#else
+      static
+      symbol_type
+      make_SEMICOLON ()
+      {
+        return symbol_type (token::TOK_SEMICOLON);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_STRING_GROUP (std::string v)
+      {
+        return symbol_type (token::TOK_STRING_GROUP, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_STRING_GROUP (const std::string& v)
+      {
+        return symbol_type (token::TOK_STRING_GROUP, v);
       }
 #endif
 
@@ -689,7 +768,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -936,12 +1015,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1,     ///< Last index in yytable_.
+      yylast_ = 7,     ///< Last index in yytable_.
       yynnts_ = 2,  ///< Number of nonterminal symbols.
-      yyfinal_ = 3, ///< Termination state number.
+      yyfinal_ = 4, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 4  ///< Number of tokens.
+      yyntokens_ = 7  ///< Number of tokens.
     };
 
 
@@ -984,9 +1063,10 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2,     3
+       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
+       5,     6
     };
-    const unsigned user_token_number_max_ = 258;
+    const unsigned user_token_number_max_ = 261;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1006,6 +1086,10 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
+      case 6: // STRING_GROUP
+        value.move< std::string > (std::move (that.value));
+        break;
+
       default:
         break;
     }
@@ -1020,6 +1104,10 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
+      case 6: // STRING_GROUP
+        value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
       default:
         break;
     }
@@ -1042,6 +1130,10 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
+      case 6: // STRING_GROUP
+        value.move< std::string > (YY_MOVE (s.value));
+        break;
+
       default:
         break;
     }
@@ -1105,13 +1197,13 @@ switch (yytype)
     const unsigned short
     yytoken_number_[] =
     {
-       0,   256,   257,   258
+       0,   256,   257,   258,   259,   260,   261
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1115 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 1207 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
 
 
 

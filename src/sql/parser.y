@@ -16,17 +16,8 @@
 }
 
 %code{
-#include <stdio.h>
-#include "context.hh"
-
-// extern int yylex();
-//extern int yyparse();
-
-// void yyerror(char *s)
-// {
-//   fprintf(stderr, "error: %s\n", s);
-// }
-    // yy::parser::symbol_type yylex (void);
+  #include <stdio.h>
+  #include "context.hh"
 }
 
 //%locations
@@ -37,12 +28,20 @@
 %define api.token.prefix {TOK_}
 %token
     EOF 0
-    HELLO
+    SELECT
+    FROM
+    SEMICOLON ";"
 ;
+%token <std::string> STRING_GROUP;
 
 %%
-%start unit;
-unit: HELLO { printf("hello"); };
+%start selectstmt;
+selectstmt: SELECT FROM STRING_GROUP ";"
+{ 
+  SelectSmt sel;
+  sel.table_name = $3;
+  ctx.result = sel;
+};
 
 %%
 
@@ -53,5 +52,7 @@ void yy::parser::error(const std::string& m) {
 int main()
 {
   ParserContext ctx;
+  ctx.Parse();
+  std::cout << ctx.result.table_name << std::endl;
   //yyparse();
 }
