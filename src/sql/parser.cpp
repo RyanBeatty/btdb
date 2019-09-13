@@ -800,11 +800,9 @@ void yy::parser::error(const std::string& m) {
 
 int main()
 {
-  ParserContext ctx;
   for (std::string line; std::getline(std::cin, line);) {
-    ctx.BeginScan(line);
+    ParserContext ctx(line);
     ctx.Parse();
-    ctx.EndScan();
     std::cout << ctx.result.table_name << std::endl;
   }
 }

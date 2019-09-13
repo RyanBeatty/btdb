@@ -23,6 +23,10 @@ struct ParserContext {
   SelectSmt result;
   YY_BUFFER_STATE buffer_state;
 
+  ParserContext(std::string sql) { BeginScan(sql); }
+
+  ~ParserContext() { EndScan(); }
+
   void BeginScan(std::string sql);
   void EndScan();
 
