@@ -44,9 +44,10 @@
 #line 18 "parser.y"
 
   #include <stdio.h>
+  #include <iostream>
   #include "context.hh"
 
-#line 50 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 51 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
 
 
 #ifndef YY_
@@ -121,7 +122,7 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 125 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 126 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
 
 
   /// Build a parser object.
@@ -494,17 +495,17 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 40 "parser.y"
+#line 41 "parser.y"
     { 
   SelectSmt sel;
   sel.table_name = yystack_[1].value.as < std::string > ();
   ctx.result = sel;
 }
-#line 504 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 505 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 508 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 509 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -754,7 +755,7 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    39,    39
+       0,    40,    40
   };
 
   // Print the state stack on the debug stream.
@@ -788,9 +789,9 @@ namespace yy {
 
 
 } // yy
-#line 792 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 793 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
 
-#line 46 "parser.y"
+#line 47 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {
@@ -800,7 +801,10 @@ void yy::parser::error(const std::string& m) {
 int main()
 {
   ParserContext ctx;
-  ctx.Parse();
-  std::cout << ctx.result.table_name << std::endl;
-  //yyparse();
+  for (std::string line; std::getline(std::cin, line);) {
+    ctx.BeginScan(line);
+    ctx.Parse();
+    ctx.EndScan();
+    std::cout << ctx.result.table_name << std::endl;
+  }
 }

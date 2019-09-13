@@ -17,6 +17,7 @@
 
 %code{
   #include <stdio.h>
+  #include <iostream>
   #include "context.hh"
 }
 
@@ -52,7 +53,10 @@ void yy::parser::error(const std::string& m) {
 int main()
 {
   ParserContext ctx;
-  ctx.Parse();
-  std::cout << ctx.result.table_name << std::endl;
-  //yyparse();
+  for (std::string line; std::getline(std::cin, line);) {
+    ctx.BeginScan(line);
+    ctx.Parse();
+    ctx.EndScan();
+    std::cout << ctx.result.table_name << std::endl;
+  }
 }

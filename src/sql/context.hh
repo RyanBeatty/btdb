@@ -10,6 +10,10 @@
 // ... and declare it for the parser's sake.
 YY_DECL;
 
+// Forward declare buffer state from scanner so parser can use this.
+// TODO: Is this the right thing to do?
+typedef struct yy_buffer_state* YY_BUFFER_STATE;
+
 struct SelectSmt {
   std::vector<std::string> select_list;
   std::string table_name;
@@ -17,6 +21,10 @@ struct SelectSmt {
 
 struct ParserContext {
   SelectSmt result;
+  YY_BUFFER_STATE buffer_state;
+
+  void BeginScan(std::string sql);
+  void EndScan();
 
   int Parse() {
     yy::parser parse(*this);
