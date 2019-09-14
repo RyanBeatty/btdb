@@ -6,9 +6,12 @@
 #include "parser.hpp"
 
 // Give Flex the prototype of yylex we want ...
-#define YY_DECL yy::parser::symbol_type yylex(ParserContext& context)
+#define YY_DECL yy::parser::symbol_type yylex(btdb::sql::ParserContext& context)
 // ... and declare it for the parser's sake.
 YY_DECL;
+
+namespace btdb {
+namespace sql {
 
 // Forward declare buffer state from scanner so parser can use this.
 // TODO: Is this the right thing to do?
@@ -36,4 +39,6 @@ struct ParserContext {
   }
 };
 
+}  // namespace sql
+}  // namespace btdb
 #endif  // CONTEXT_HH

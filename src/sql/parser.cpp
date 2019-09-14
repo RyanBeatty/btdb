@@ -41,7 +41,7 @@
 
 
 // Unqualified %code blocks.
-#line 18 "parser.y"
+#line 21 "parser.y"
 
   #include <stdio.h>
   #include <iostream>
@@ -126,7 +126,7 @@ namespace yy {
 
 
   /// Build a parser object.
-  parser::parser (ParserContext& ctx_yyarg)
+  parser::parser (btdb::sql::ParserContext& ctx_yyarg)
     :
 #if YYDEBUG
       yydebug_ (false),
@@ -511,9 +511,9 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 44 "parser.y"
+#line 47 "parser.y"
     { 
-  SelectSmt sel;
+  btdb::sql::SelectSmt sel;
   sel.select_list = yystack_[3].value.as < std::vector<std::string> > ();
   sel.table_name = yystack_[1].value.as < std::string > ();
   ctx.result = sel;
@@ -522,13 +522,13 @@ namespace yy {
     break;
 
   case 3:
-#line 52 "parser.y"
+#line 55 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
 #line 528 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
     break;
 
   case 4:
-#line 53 "parser.y"
+#line 56 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = yystack_[0].value.as < std::vector<std::string> > (); yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[2].value.as < std::string > ()); }
 #line 534 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
     break;
@@ -787,7 +787,7 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    43,    43,    52,    53
+       0,    46,    46,    55,    56
   };
 
   // Print the state stack on the debug stream.
@@ -823,7 +823,7 @@ namespace yy {
 } // yy
 #line 825 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
 
-#line 56 "parser.y"
+#line 59 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {
@@ -833,7 +833,7 @@ void yy::parser::error(const std::string& m) {
 int main()
 {
   for (std::string line; std::getline(std::cin, line);) {
-    ParserContext ctx(line);
+    btdb::sql::ParserContext ctx(line);
     ctx.Parse();
     for(const auto& it : ctx.result.select_list) {
       std::cout << it << " ";

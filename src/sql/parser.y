@@ -8,11 +8,14 @@
 %define parse.assert
 
 %code requires {
+  namespace btdb {
+    namespace sql {
   struct ParserContext;
+    }}
 }
 
 %param {
-  ParserContext& ctx
+  btdb::sql::ParserContext& ctx
 }
 
 %code{
@@ -42,7 +45,7 @@
 %start select_stmt;
 select_stmt: SELECT column_exp FROM STRING_GROUP ";"
 { 
-  SelectSmt sel;
+  btdb::sql::SelectSmt sel;
   sel.select_list = $2;
   sel.table_name = $4;
   ctx.result = sel;
@@ -62,7 +65,7 @@ void yy::parser::error(const std::string& m) {
 int main()
 {
   for (std::string line; std::getline(std::cin, line);) {
-    ParserContext ctx(line);
+    btdb::sql::ParserContext ctx(line);
     ctx.Parse();
     for(const auto& it : ctx.result.select_list) {
       std::cout << it << " ";

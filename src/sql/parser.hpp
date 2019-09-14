@@ -46,9 +46,12 @@
 // //                    "%code requires" blocks.
 #line 10 "parser.y"
 
+  namespace btdb {
+    namespace sql {
   struct ParserContext;
+    }}
 
-#line 52 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 55 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -163,7 +166,7 @@
 #endif
 
 namespace yy {
-#line 167 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 170 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
 
 
 
@@ -623,7 +626,7 @@ switch (yytype)
     };
 
     /// Build a parser object.
-    parser (ParserContext& ctx_yyarg);
+    parser (btdb::sql::ParserContext& ctx_yyarg);
     virtual ~parser ();
 
     /// Parse.  An alias for parse ().
@@ -1059,7 +1062,7 @@ switch (yytype)
 
 
     // User arguments.
-    ParserContext& ctx;
+    btdb::sql::ParserContext& ctx;
   };
 
   inline
@@ -1249,7 +1252,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1253 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 1256 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
 
 
 
