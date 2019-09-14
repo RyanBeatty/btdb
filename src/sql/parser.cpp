@@ -47,7 +47,7 @@
   #include <iostream>
   #include "context.hpp"
 
-#line 51 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 51 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 
 #ifndef YY_
@@ -122,7 +122,7 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 126 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 126 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 
   /// Build a parser object.
@@ -518,23 +518,23 @@ namespace yy {
   sel.table_name = yystack_[1].value.as < std::string > ();
   ctx.query = sel;
 }
-#line 522 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 522 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 3:
 #line 55 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
-#line 528 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 528 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 4:
 #line 56 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = yystack_[0].value.as < std::vector<std::string> > (); yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[2].value.as < std::string > ()); }
-#line 534 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 534 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 538 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 538 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -821,7 +821,7 @@ namespace yy {
 
 
 } // yy
-#line 825 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
+#line 825 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 #line 59 "parser.y"
 

@@ -1,6 +1,6 @@
-#line 2 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
+#line 2 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"
 
-#line 4 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
+#line 4 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -493,7 +493,7 @@ char *yytext;
   #include "context.hpp"
 
 #define YY_NO_INPUT 1
-#line 497 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
+#line 497 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"
 
 #define INITIAL 0
 
@@ -711,7 +711,7 @@ YY_DECL
 	{
 #line 12 "scanner.l"
 
-#line 715 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
+#line 715 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -808,7 +808,7 @@ YY_RULE_SETUP
 #line 21 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 812 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
+#line 812 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

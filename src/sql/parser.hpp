@@ -32,7 +32,7 @@
 
 
 /**
- ** \file /home/rbeatty/C++/BTDB/src/sql/parser.hpp
+ ** \file /home/rbeatty/Projects/BTDB/src/sql/parser.hpp
  ** Define the yy::parser class.
  */
 
@@ -41,8 +41,8 @@
 // Undocumented macros, especially those whose name start with YY_,
 // are private implementation details.  Do not rely on them.
 
-#ifndef YY_YY_HOME_RBEATTY_C_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
-# define YY_YY_HOME_RBEATTY_C_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
+#ifndef YY_YY_HOME_RBEATTY_PROJECTS_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
+# define YY_YY_HOME_RBEATTY_PROJECTS_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
 // //                    "%code requires" blocks.
 #line 10 "parser.y"
 
@@ -51,7 +51,7 @@
   struct ParserContext;
     }}
 
-#line 55 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 55 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -166,7 +166,7 @@
 #endif
 
 namespace yy {
-#line 170 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 170 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -1252,10 +1252,10 @@ switch (yytype)
   }
 
 } // yy
-#line 1256 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 1256 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
 
 
-#endif // !YY_YY_HOME_RBEATTY_C_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
+#endif // !YY_YY_HOME_RBEATTY_PROJECTS_BTDB_SRC_SQL_PARSER_HPP_INCLUDED
