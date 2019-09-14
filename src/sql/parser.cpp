@@ -513,10 +513,10 @@ namespace yy {
   case 2:
 #line 47 "parser.y"
     { 
-  btdb::sql::SelectSmt sel;
+  btdb::sql::SelectStmt sel;
   sel.select_list = yystack_[3].value.as < std::vector<std::string> > ();
   sel.table_name = yystack_[1].value.as < std::string > ();
-  ctx.result = sel;
+  ctx.query = sel;
 }
 #line 522 "/home/rbeatty/C++/BTDB/src/sql/parser.cpp"
     break;

@@ -45,10 +45,10 @@
 %start select_stmt;
 select_stmt: SELECT column_exp FROM STRING_GROUP ";"
 { 
-  btdb::sql::SelectSmt sel;
+  btdb::sql::SelectStmt sel;
   sel.select_list = $2;
   sel.table_name = $4;
-  ctx.result = sel;
+  ctx.query = sel;
 };
 
 column_exp:

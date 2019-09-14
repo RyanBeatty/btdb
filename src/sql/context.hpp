@@ -17,13 +17,15 @@ namespace sql {
 // TODO: Is this the right thing to do?
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 
-struct SelectSmt {
+struct SelectStmt {
   std::vector<std::string> select_list;
   std::string table_name;
 };
 
+typedef std::variant<SelectStmt> Query;
+
 struct ParserContext {
-  SelectSmt result;
+  Query query;
   YY_BUFFER_STATE buffer_state;
 
   ParserContext(std::string sql) { BeginScan(sql); }
