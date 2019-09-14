@@ -1,7 +1,7 @@
 /* recognize tokens for the calculator and print them out */
 %{
   #include "parser.hpp"
-  #include "context.hh"
+  #include "context.hpp"
 
 %}
 

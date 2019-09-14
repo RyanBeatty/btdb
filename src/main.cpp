@@ -15,6 +15,8 @@
 #include <sstream>
 #include <string>
 
+#include "sql/context.hpp"
+
 struct SystemCatalogue {};
 
 struct BufferPool {
@@ -34,32 +36,9 @@ struct QueryPlan {
   bool is_valid_;
 };
 
-std::unique_ptr<QueryPlan> parse_sql(const std::string& raw_text) {
-  std::vector<std::string> tokens;
-  std::istringstream iss(raw_text);
-  std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(),
-            std::back_inserter(tokens));
-
-  if (tokens.size() != 4) {
-    return nullptr;
-  }
-
-  if (tokens[0] != "select" || tokens[1] != "*" || tokens[2] != "from" ||
-      tokens[3] != "foo;") {
-    return nullptr;
-  }
-
-  return std::make_unique<QueryPlan>();
-}
-
-bool validate_plan(QueryPlan& plan) {
-  plan.is_valid_ = true;
-  return true;
-}
-
-std::unique_ptr<std::vector<std::string>> execute_plan(QueryPlan& plan,
+std::unique_ptr<std::vector<std::string>> execute_plan(btdb::sql::SelectSmt& plan,
                                                        std::vector<std::string>& tuples) {
-  plan.is_valid_ = true;
+  plan.table_name = "foo";
   auto results = std::make_unique<std::vector<std::string>>();
   for (const auto& tuple : tuples) {
     results->emplace_back(tuple);
@@ -83,16 +62,12 @@ int main() {
     if (line == "\\q") {
       break;
     }
-    auto query_plan = parse_sql(line);
-    if (query_plan == nullptr) {
-      printf("Failed to parse sql\n");
+    btdb::sql::ParserContext parser(line);
+    if (parser.Parse() != 0) {
       continue;
     }
-    if (!validate_plan(*query_plan)) {
-      printf("Invalid Plan\n");
-      continue;
-    }
-    auto results = execute_plan(*query_plan, *tuples);
+    auto query_plan = parser.result;
+    auto results = execute_plan(query_plan, *tuples);
     printf("Results:\n");
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;

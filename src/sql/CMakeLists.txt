@@ -12,12 +12,17 @@ BISON_TARGET(btdb_parser
 )
 ADD_FLEX_BISON_DEPENDENCY(btdb_scanner btdb_parser)
 
-add_executable(parse_sql
+add_library(btdb_sql_parser
+    ${sources}
     ${FLEX_btdb_scanner_OUTPUTS}
     ${BISON_btdb_parser_OUTPUTS}
 )
+
+add_executable(parse_sql
+    main.cpp
+)
 target_link_libraries(parse_sql
-    ${FLEX_LIBRARIES}
+    btdb_sql_parser
 )
 target_compile_options(parse_sql
     PRIVATE

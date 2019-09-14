@@ -490,7 +490,7 @@ char *yytext;
 /* recognize tokens for the calculator and print them out */
 #line 3 "scanner.l"
   #include "parser.hpp"
-  #include "context.hh"
+  #include "context.hpp"
 
 #define YY_NO_INPUT 1
 #line 497 "/home/rbeatty/C++/BTDB/src/sql/scanner.cpp"
