@@ -10,6 +10,7 @@
 
 
 %%
+"," return yy::parser::make_COMMA();
 ";" return yy::parser::make_SEMICOLON();
 "select" return yy::parser::make_SELECT();
 "SELECT" return yy::parser::make_SELECT();

@@ -369,6 +369,9 @@ namespace yy {
     {
       // STRING_GROUP
       char dummy1[sizeof (std::string)];
+
+      // column_exp
+      char dummy2[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -414,7 +417,8 @@ namespace yy {
         TOK_SELECT = 258,
         TOK_FROM = 259,
         TOK_SEMICOLON = 260,
-        TOK_STRING_GROUP = 261
+        TOK_COMMA = 261,
+        TOK_STRING_GROUP = 262
       };
     };
 
@@ -476,6 +480,17 @@ namespace yy {
         , value (v)
       {}
 #endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
 
       /// Destroy the symbol.
       ~basic_symbol ()
@@ -499,8 +514,12 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 6: // STRING_GROUP
+      case 7: // STRING_GROUP
         value.template destroy< std::string > ();
+        break;
+
+      case 10: // column_exp
+        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -579,13 +598,13 @@ switch (yytype)
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA);
       }
 #else
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -695,6 +714,21 @@ switch (yytype)
       make_SEMICOLON ()
       {
         return symbol_type (token::TOK_SEMICOLON);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_COMMA ()
+      {
+        return symbol_type (token::TOK_COMMA);
+      }
+#else
+      static
+      symbol_type
+      make_COMMA ()
+      {
+        return symbol_type (token::TOK_COMMA);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1015,12 +1049,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 7,     ///< Last index in yytable_.
-      yynnts_ = 2,  ///< Number of nonterminal symbols.
-      yyfinal_ = 4, ///< Termination state number.
+      yylast_ = 9,     ///< Last index in yytable_.
+      yynnts_ = 3,  ///< Number of nonterminal symbols.
+      yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 7  ///< Number of tokens.
+      yyntokens_ = 8  ///< Number of tokens.
     };
 
 
@@ -1064,9 +1098,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6
+       5,     6,     7
     };
-    const unsigned user_token_number_max_ = 261;
+    const unsigned user_token_number_max_ = 262;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1086,8 +1120,12 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 6: // STRING_GROUP
+      case 7: // STRING_GROUP
         value.move< std::string > (std::move (that.value));
+        break;
+
+      case 10: // column_exp
+        value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
       default:
@@ -1104,8 +1142,12 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 6: // STRING_GROUP
+      case 7: // STRING_GROUP
         value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      case 10: // column_exp
+        value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1130,8 +1172,12 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 6: // STRING_GROUP
+      case 7: // STRING_GROUP
         value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      case 10: // column_exp
+        value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1197,13 +1243,13 @@ switch (yytype)
     const unsigned short
     yytoken_number_[] =
     {
-       0,   256,   257,   258,   259,   260,   261
+       0,   256,   257,   258,   259,   260,   261,   262
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1207 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
+#line 1253 "/home/rbeatty/C++/BTDB/src/sql/parser.hpp"
 
 
 
