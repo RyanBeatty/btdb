@@ -38,11 +38,15 @@ struct QueryPlan {
 
 std::unique_ptr<std::vector<std::string>> execute_plan(btdb::sql::Query& plan,
                                                        std::vector<std::string>& tuples) {
+  if (std::holds_alternative<btdb::sql::SelectStmt>(plan)) {
+    auto& select_stmt = std::get<btdb::sql::SelectStmt>(plan);
     auto results = std::make_unique<std::vector<std::string>>();
-  for (const auto& tuple : tuples) {
-    results->emplace_back(tuple);
+    for (const auto& tuple : tuples) {
+      results->emplace_back(tuple);
+    }
+    return results;
   }
-  return results;
+  return nullptr;
 }
 
 int main() {
