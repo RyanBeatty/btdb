@@ -47,19 +47,6 @@ Query AnalyzeAndRewriteStmt(RawStmt& stmt) {
   return query;
 }
 
-struct BufferPool {
-  std::vector<std::string> items;
-};
-
-struct SequentialScanIterator {
-  BufferPool& buffer_pool_;
-  uint64_t cur_tuple_id_;
-
-  void open() { cur_tuple_id_ = 0; };
-  void next(){};
-  void close(){};
-};
-
 std::unique_ptr<std::vector<std::string>> execute_plan(RawStmt& stmt,
                                                        std::vector<std::string>& tuples) {
   if (std::holds_alternative<btdb::sql::SelectStmt>(stmt)) {
