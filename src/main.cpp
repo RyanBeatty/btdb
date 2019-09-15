@@ -21,7 +21,7 @@ using btdb::sql::RawStmt;
 
 void Panic(const std::string& msg) {
   std::cerr << "Panic: " << msg << std::endl;
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 struct SystemCatalog {};
@@ -89,8 +89,7 @@ int main() {
     }
   }
   if (std::cin.bad()) {
-    fprintf(stderr, "I/O Error\n");
-    exit(EXIT_FAILURE);
+    Panic("I/O Error");
   }
 
   printf("Shutting down btdb\n");
