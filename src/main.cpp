@@ -17,7 +17,35 @@
 
 #include "sql/context.hpp"
 
-struct SystemCatalogue {};
+using btdb::sql::RawStmt;
+
+void Panic(const std::string& msg) {
+  std::cerr << "Panic: " << msg << std::endl;
+  exit(1);
+}
+
+struct SystemCatalog {};
+
+struct SelectQuery {
+  std::vector<std::string> target_list;
+  std::vector<std::string> range_table;
+};
+
+typedef std::variant<SelectQuery> Query;
+
+Query AnalyzeAndRewriteStmt(RawStmt& stmt) {
+  Query query;
+  switch (stmt.index()) {
+    case 0: {
+      const btdb::sql::SelectStmt select = std::get<btdb::sql::SelectStmt>(stmt);
+      query = SelectQuery{select.select_list, std::vector<std::string>{select.table_name}};
+      break;
+    }
+    default:
+      Panic("Unknown Statement Type");
+  }
+  return query;
+}
 
 struct BufferPool {
   std::vector<std::string> items;
@@ -32,11 +60,7 @@ struct SequentialScanIterator {
   void close(){};
 };
 
-struct QueryPlan {
-  bool is_valid_;
-};
-
-std::unique_ptr<std::vector<std::string>> execute_plan(btdb::sql::RawStmt& stmt,
+std::unique_ptr<std::vector<std::string>> execute_plan(RawStmt& stmt,
                                                        std::vector<std::string>& tuples) {
   if (std::holds_alternative<btdb::sql::SelectStmt>(stmt)) {
     auto& select_stmt = std::get<btdb::sql::SelectStmt>(stmt);
@@ -70,6 +94,7 @@ int main() {
       continue;
     }
     auto stmt = parser.stmt;
+    auto query = AnalyzeAndRewriteStmt(stmt);
     auto results = execute_plan(stmt, *tuples);
     printf("Results:\n");
     for (const auto& result : *results.get()) {
