@@ -48,7 +48,7 @@ select_stmt: SELECT column_exp FROM STRING_GROUP ";"
   btdb::sql::SelectStmt sel;
   sel.select_list = $2;
   sel.table_name = $4;
-  ctx.query = sel;
+  ctx.stmt = sel;
 };
 
 column_exp:

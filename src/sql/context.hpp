@@ -22,10 +22,10 @@ struct SelectStmt {
   std::string table_name;
 };
 
-typedef std::variant<SelectStmt> Query;
+typedef std::variant<SelectStmt> RawStmt;
 
 struct ParserContext {
-  Query query;
+  RawStmt stmt;
   YY_BUFFER_STATE buffer_state;
 
   ParserContext(std::string sql) { BeginScan(sql); }

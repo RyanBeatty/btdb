@@ -516,7 +516,7 @@ namespace yy {
   btdb::sql::SelectStmt sel;
   sel.select_list = yystack_[3].value.as < std::vector<std::string> > ();
   sel.table_name = yystack_[1].value.as < std::string > ();
-  ctx.query = sel;
+  ctx.stmt = sel;
 }
 #line 522 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;

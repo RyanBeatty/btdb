@@ -36,10 +36,10 @@ struct QueryPlan {
   bool is_valid_;
 };
 
-std::unique_ptr<std::vector<std::string>> execute_plan(btdb::sql::Query& plan,
+std::unique_ptr<std::vector<std::string>> execute_plan(btdb::sql::RawStmt& stmt,
                                                        std::vector<std::string>& tuples) {
-  if (std::holds_alternative<btdb::sql::SelectStmt>(plan)) {
-    auto& select_stmt = std::get<btdb::sql::SelectStmt>(plan);
+  if (std::holds_alternative<btdb::sql::SelectStmt>(stmt)) {
+    auto& select_stmt = std::get<btdb::sql::SelectStmt>(stmt);
     auto results = std::make_unique<std::vector<std::string>>();
     for (const auto& tuple : tuples) {
       results->emplace_back(tuple);
@@ -69,8 +69,8 @@ int main() {
     if (parser.Parse() != 0) {
       continue;
     }
-    auto query_plan = parser.query;
-    auto results = execute_plan(query_plan, *tuples);
+    auto stmt = parser.stmt;
+    auto results = execute_plan(stmt, *tuples);
     printf("Results:\n");
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;
