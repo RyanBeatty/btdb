@@ -47,10 +47,28 @@ Query AnalyzeAndRewriteStmt(RawStmt& stmt) {
   return query;
 }
 
-std::unique_ptr<std::vector<std::string>> execute_plan(RawStmt& stmt,
+struct SequentialScan {};
+
+typedef std::variant<SequentialScan> Plan;
+
+Plan PlanQuery(Query& query) {
+  Plan plan;
+  switch (query.index()) {
+    case 0: {
+      const SelectQuery& select_query = std::get<SelectQuery>(query);
+      plan = SequentialScan{};
+      break;
+    }
+    default:
+      Panic("Unknown Query Type");
+  }
+  return plan;
+}
+
+std::unique_ptr<std::vector<std::string>> execute_plan(Plan& plan,
                                                        std::vector<std::string>& tuples) {
-  if (std::holds_alternative<btdb::sql::SelectStmt>(stmt)) {
-    auto& select_stmt = std::get<btdb::sql::SelectStmt>(stmt);
+  if (std::holds_alternative<SequentialScan>(plan)) {
+    auto& select_stmt = std::get<SequentialScan>(plan);
     auto results = std::make_unique<std::vector<std::string>>();
     for (const auto& tuple : tuples) {
       results->emplace_back(tuple);
@@ -82,7 +100,8 @@ int main() {
     }
     auto stmt = parser.stmt;
     auto query = AnalyzeAndRewriteStmt(stmt);
-    auto results = execute_plan(stmt, *tuples);
+    auto plan = PlanQuery(query);
+    auto results = execute_plan(plan, *tuples);
     printf("Results:\n");
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;
