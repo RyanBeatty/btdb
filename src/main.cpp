@@ -14,6 +14,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include "sql/context.hpp"
 
@@ -24,7 +25,30 @@ void Panic(const std::string& msg) {
   exit(EXIT_FAILURE);
 }
 
-struct SystemCatalog {};
+struct TableDef {
+  std::string name;
+  std::vector<std::string> col_names;
+};
+
+struct SystemCatalog {
+  std::unordered_map<std::string, TableDef> tables;
+
+  bool ValidateStmt(RawStmt& stmt) {
+    switch (stmt.index()) {
+      case 0: {
+        const btdb::sql::SelectStmt select = std::get<btdb::sql::SelectStmt>(stmt);
+        if (this->tables.find(select.table_name) == this->tables.end()) {
+          return false;
+        }
+        break;
+      }
+      default:
+        Panic("Unknown Statement Type");
+    }
+
+    return true;
+  }
+};
 
 struct SelectQuery {
   std::vector<std::string> target_list;
@@ -79,13 +103,14 @@ std::unique_ptr<std::vector<std::string>> execute_plan(Plan& plan,
 }
 
 int main() {
-  printf("Starting btdb\n");
+  std::cout << "Starting btdb" << std::endl;
 
   auto tuples = std::make_unique<std::vector<std::string>>();
+  auto catalog = SystemCatalog{std::unordered_map<std::string, TableDef>{{"foo", {"bar"}}}};
   tuples->emplace_back("hello");
   tuples->emplace_back("world");
   while (true) {
-    printf("btdb> ");
+    std::cout << "btdb> ";
     std::string line;
     if (!std::getline(std::cin, line)) {
       break;
@@ -99,10 +124,14 @@ int main() {
       continue;
     }
     auto stmt = parser.stmt;
+    if (!catalog.ValidateStmt(stmt)) {
+      std::cout << "Query not valid" << std::endl;
+      continue;
+    }
     auto query = AnalyzeAndRewriteStmt(stmt);
     auto plan = PlanQuery(query);
     auto results = execute_plan(plan, *tuples);
-    printf("Results:\n");
+    std::cout << "Results:" << std::endl;
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;
     }
@@ -111,6 +140,6 @@ int main() {
     Panic("I/O Error");
   }
 
-  printf("Shutting down btdb\n");
+  std::cout << "Shutting down btdb" << std::endl;
   return 0;
 }
