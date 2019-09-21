@@ -18,7 +18,7 @@
 
 #include "sql/context.hpp"
 
-using btdb::sql::RawStmt;
+namespace btdb {
 
 void Panic(const std::string& msg) {
   std::cerr << "Panic: " << msg << std::endl;
@@ -33,10 +33,10 @@ struct TableDef {
 struct SystemCatalog {
   std::unordered_map<std::string, TableDef> tables;
 
-  bool ValidateStmt(RawStmt& stmt) {
+  bool ValidateStmt(sql::RawStmt& stmt) {
     switch (stmt.index()) {
       case 0: {
-        const btdb::sql::SelectStmt select = std::get<btdb::sql::SelectStmt>(stmt);
+        const sql::SelectStmt select = std::get<sql::SelectStmt>(stmt);
         if (this->tables.find(select.table_name) == this->tables.end()) {
           return false;
         }
@@ -57,11 +57,11 @@ struct SelectQuery {
 
 typedef std::variant<SelectQuery> Query;
 
-Query AnalyzeAndRewriteStmt(RawStmt& stmt) {
+Query AnalyzeAndRewriteStmt(sql::RawStmt& stmt) {
   Query query;
   switch (stmt.index()) {
     case 0: {
-      const btdb::sql::SelectStmt select = std::get<btdb::sql::SelectStmt>(stmt);
+      const sql::SelectStmt select = std::get<sql::SelectStmt>(stmt);
       query = SelectQuery{select.select_list, std::vector<std::string>{select.table_name}};
       break;
     }
@@ -102,11 +102,13 @@ std::unique_ptr<std::vector<std::string>> execute_plan(Plan& plan,
   return nullptr;
 }
 
+}  // namespace btdb
+
 int main() {
   std::cout << "Starting btdb" << std::endl;
 
   auto tuples = std::make_unique<std::vector<std::string>>();
-  auto catalog = SystemCatalog{std::unordered_map<std::string, TableDef>{{"foo", {"bar"}}}};
+  auto catalog = btdb::SystemCatalog{{{"foo", {"bar"}}}};
   tuples->emplace_back("hello");
   tuples->emplace_back("world");
   while (true) {
@@ -128,16 +130,16 @@ int main() {
       std::cout << "Query not valid" << std::endl;
       continue;
     }
-    auto query = AnalyzeAndRewriteStmt(stmt);
-    auto plan = PlanQuery(query);
-    auto results = execute_plan(plan, *tuples);
+    auto query = btdb::AnalyzeAndRewriteStmt(stmt);
+    auto plan = btdb::PlanQuery(query);
+    auto results = btdb::execute_plan(plan, *tuples);
     std::cout << "Results:" << std::endl;
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;
     }
   }
   if (std::cin.bad()) {
-    Panic("I/O Error");
+    btdb::Panic("I/O Error");
   }
 
   std::cout << "Shutting down btdb" << std::endl;
