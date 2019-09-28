@@ -20,6 +20,8 @@
 
 namespace btdb {
 
+static std::vector<std::string> Tuples;
+
 void Panic(const std::string& msg) {
   std::cerr << "Panic: " << msg << std::endl;
   exit(EXIT_FAILURE);
@@ -71,16 +73,46 @@ Query AnalyzeAndRewriteStmt(sql::RawStmt& stmt) {
   return query;
 }
 
-struct SequentialScan {};
+// TODO: Figure out what a tuple will actually look like.
+typedef std::unique_ptr<std::string> MTuple;
 
-typedef std::variant<SequentialScan> Plan;
+struct SequentialScan {
+  int next_index = 0;
+  void Open() {}
+  MTuple GetNext() { 
+    if (next_index >= Tuples.size()) {
+      return nullptr;
+    } else {
+      auto tpl = std::make_unique<std::string>(Tuples[next_index]);
+      ++next_index;
+      return tpl;
+    }
+  }
+  void Close() {}
+};
 
-Plan PlanQuery(Query& query) {
-  Plan plan;
+struct Iterator {
+  virtual void Open() = 0;
+  virtual MTuple GetNext() = 0;
+  virtual void Close() = 0;
+};
+
+struct SequentialIterator : Iterator {
+  SequentialScan scan;
+  SequentialIterator() {}
+  void Open() { scan.Open(); }
+  MTuple GetNext() { return scan.GetNext(); }
+  void Close() { return scan.Close(); }
+};
+
+typedef Iterator Plan;
+
+std::unique_ptr<Plan> PlanQuery(Query& query) {
+  std::unique_ptr<Plan> plan;
   switch (query.index()) {
     case 0: {
       const SelectQuery& select_query = std::get<SelectQuery>(query);
-      plan = SequentialScan{};
+      plan = std::make_unique<SequentialIterator>(SequentialIterator{});
       break;
     }
     default:
@@ -89,17 +121,14 @@ Plan PlanQuery(Query& query) {
   return plan;
 }
 
-std::unique_ptr<std::vector<std::string>> execute_plan(Plan& plan,
-                                                       std::vector<std::string>& tuples) {
-  if (std::holds_alternative<SequentialScan>(plan)) {
-    auto& select_stmt = std::get<SequentialScan>(plan);
-    auto results = std::make_unique<std::vector<std::string>>();
-    for (const auto& tuple : tuples) {
-      results->emplace_back(tuple);
-    }
-    return results;
+std::unique_ptr<std::vector<std::string>> execute_plan(std::unique_ptr<Plan> plan) {
+  auto results = std::make_unique<std::vector<std::string>>();
+  auto str = plan->GetNext();
+  while (str != nullptr) {
+    results->emplace_back(*str);
+    str = plan->GetNext();
   }
-  return nullptr;
+  return results;
 }
 
 }  // namespace btdb
@@ -107,10 +136,9 @@ std::unique_ptr<std::vector<std::string>> execute_plan(Plan& plan,
 int main() {
   std::cout << "Starting btdb" << std::endl;
 
-  auto tuples = std::make_unique<std::vector<std::string>>();
   auto catalog = btdb::SystemCatalog{{{"foo", {"bar"}}}};
-  tuples->emplace_back("hello");
-  tuples->emplace_back("world");
+  btdb::Tuples.emplace_back("hello");
+  btdb::Tuples.emplace_back("world");
   while (true) {
     std::cout << "btdb> ";
     std::string line;
@@ -132,7 +160,7 @@ int main() {
     }
     auto query = btdb::AnalyzeAndRewriteStmt(stmt);
     auto plan = btdb::PlanQuery(query);
-    auto results = btdb::execute_plan(plan, *tuples);
+    auto results = btdb::execute_plan(std::move(plan));
     std::cout << "Results:" << std::endl;
     for (const auto& result : *results.get()) {
       std::cout << "\t" << result << std::endl;
