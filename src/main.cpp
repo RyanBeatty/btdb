@@ -34,7 +34,6 @@ struct TableDef {
 
 struct SystemCatalog {
   std::unordered_map<std::string, TableDef> tables;
-
   bool ValidateStmt(sql::RawStmt& stmt) {
     switch (stmt.index()) {
       case 0: {
@@ -79,7 +78,7 @@ typedef std::unique_ptr<std::string> MTuple;
 struct SequentialScan {
   int next_index = 0;
   void Open() {}
-  MTuple GetNext() { 
+  MTuple GetNext() {
     if (next_index >= Tuples.size()) {
       return nullptr;
     } else {
