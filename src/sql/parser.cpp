@@ -41,13 +41,14 @@
 
 
 // Unqualified %code blocks.
-#line 21 "parser.y"
+#line 27 "parser.y"
 
   #include <stdio.h>
   #include <iostream>
+  #include <memory>
   #include "context.hpp"
 
-#line 51 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 52 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 
 #ifndef YY_
@@ -122,7 +123,7 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 126 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 127 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 
   /// Build a parser object.
@@ -190,11 +191,16 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 7: // STRING_GROUP
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
-      case 10: // column_exp
+      case 14: // where_clause
+        value.YY_MOVE_OR_COPY< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
+        break;
+
+      case 13: // column_exp
         value.YY_MOVE_OR_COPY< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -213,11 +219,16 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 7: // STRING_GROUP
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
-      case 10: // column_exp
+      case 14: // where_clause
+        value.move< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
+        break;
+
+      case 13: // column_exp
         value.move< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -236,11 +247,16 @@ namespace yy {
     state = that.state;
     switch (that.type_get ())
     {
-      case 7: // STRING_GROUP
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.move< std::string > (that.value);
         break;
 
-      case 10: // column_exp
+      case 14: // where_clause
+        value.move< std::unique_ptr<btdb::sql::WhereClause> > (that.value);
+        break;
+
+      case 13: // column_exp
         value.move< std::vector<std::string> > (that.value);
         break;
 
@@ -488,11 +504,16 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 7: // STRING_GROUP
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         yylhs.value.emplace< std::string > ();
         break;
 
-      case 10: // column_exp
+      case 14: // where_clause
+        yylhs.value.emplace< std::unique_ptr<btdb::sql::WhereClause> > ();
+        break;
+
+      case 13: // column_exp
         yylhs.value.emplace< std::vector<std::string> > ();
         break;
 
@@ -511,30 +532,42 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 47 "parser.y"
+#line 58 "parser.y"
     { 
-  btdb::sql::SelectStmt sel;
-  sel.select_list = yystack_[3].value.as < std::vector<std::string> > ();
-  sel.table_name = yystack_[1].value.as < std::string > ();
-  ctx.stmt = sel;
+  btdb::sql::SelectStmt sel(yystack_[4].value.as < std::vector<std::string> > (), yystack_[2].value.as < std::string > (), std::move(yystack_[1].value.as < std::unique_ptr<btdb::sql::WhereClause> > ()));
+  ctx.stmt = std::move(sel);
 }
-#line 522 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 541 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 3:
-#line 55 "parser.y"
+#line 64 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
-#line 528 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 547 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 4:
-#line 56 "parser.y"
+#line 65 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = yystack_[0].value.as < std::vector<std::string> > (); yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[2].value.as < std::string > ()); }
-#line 534 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 553 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+    break;
+
+  case 5:
+#line 69 "parser.y"
+    { yylhs.value.as < std::unique_ptr<btdb::sql::WhereClause> > () = nullptr; }
+#line 559 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+    break;
+
+  case 6:
+#line 70 "parser.y"
+    { 
+    yylhs.value.as < std::unique_ptr<btdb::sql::WhereClause> > () = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ yystack_[2].value.as < std::string > (), yystack_[0].value.as < std::string > ()});
+  }
+#line 567 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 538 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 571 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -711,65 +744,67 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -7;
+  const signed char parser::yypact_ninf_ = -9;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      -3,    -6,     2,    -2,    -1,    -7,    -6,     0,    -7,     1,
-      -7
+      -3,    -8,     2,    -2,    -1,    -9,    -8,    -4,    -9,     0,
+       1,     3,     4,    -9,     5,    -9
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       0,     0,     0,     3,     0,     1,     0,     0,     4,     0,
-       2
+       0,     0,     0,     3,     0,     1,     0,     0,     4,     5,
+       0,     0,     0,     2,     0,     6
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -7,    -7,     3
+      -9,    -9,     7,    -9
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     2,     4
+      -1,     2,     4,    11
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       1,     3,     5,     7,     6,     0,    10,     9,     0,     8
+       1,     3,     5,     7,     6,     9,     0,    10,    13,     0,
+      12,     0,    14,     8,     0,    15
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       3,     7,     0,     4,     6,    -1,     5,     7,    -1,     6
+       3,     9,     0,     4,     6,     9,    -1,     7,     5,    -1,
+       9,    -1,     8,     6,    -1,    10
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,     3,     9,     7,    10,     0,     6,     4,    10,     7,
-       5
+       0,     3,    12,     9,    13,     0,     6,     4,    13,     9,
+       7,    14,     9,     5,     8,    10
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,     8,     9,    10,    10
+       0,    11,    12,    13,    13,    14,    14
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     5,     1,     3
+       0,     2,     6,     1,     3,     0,     4
   };
 
 
@@ -780,14 +815,15 @@ namespace yy {
   const parser::yytname_[] =
   {
   "EOF", "error", "$undefined", "SELECT", "FROM", "\";\"", "\",\"",
-  "STRING_GROUP", "$accept", "select_stmt", "column_exp", YY_NULLPTR
+  "WHERE", "EQUALS", "STRING_GROUP", "STRING_LITERAL", "$accept",
+  "select_stmt", "column_exp", "where_clause", YY_NULLPTR
   };
 
 
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    46,    46,    55,    56
+       0,    57,    57,    64,    65,    69,    70
   };
 
   // Print the state stack on the debug stream.
@@ -821,9 +857,9 @@ namespace yy {
 
 
 } // yy
-#line 825 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 861 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 59 "parser.y"
+#line 75 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {

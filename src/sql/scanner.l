@@ -16,6 +16,10 @@
 "SELECT" return yy::parser::make_SELECT();
 "from" return yy::parser::make_FROM();
 "FROM" return yy::parser::make_FROM();
+"WHERE"
+"where" return yy::parser::make_WHERE();
+"=" return yy::parser::make_EQUALS();
+\'(\\.|[^'\\])*\' return yy::parser::make_STRING_LITERAL(yytext);
 [a-zA-Z]+ return yy::parser::make_STRING_GROUP(yytext);
 <<EOF>> return yy::parser::make_EOF ();
 %%

@@ -17,12 +17,40 @@ namespace sql {
 // TODO: Is this the right thing to do?
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 
-struct SelectStmt {
-  std::vector<std::string> select_list;
-  std::string table_name;
+struct WhereClause {
+  std::string column_name;
+  std::string value_name;
 };
 
-typedef std::variant<SelectStmt> RawStmt;
+struct SelectStmt {
+  SelectStmt(const std::vector<std::string>& select_lists, const std::string& table_names,
+             std::unique_ptr<WhereClause> where_clauses)
+      : select_list(select_lists),
+        table_name(table_names),
+        where_clause(std::move(where_clauses)) {}
+  ~SelectStmt() {}
+  SelectStmt(SelectStmt& stmt) {
+    select_list = stmt.select_list;
+    table_name = stmt.table_name;
+    where_clause = std::move(stmt.where_clause);
+  }
+  SelectStmt(SelectStmt&& stmt) noexcept
+      : select_list(stmt.select_list),
+        table_name(stmt.table_name),
+        where_clause(std::move(stmt.where_clause)) {}
+  SelectStmt& operator=(SelectStmt&& stmt) {
+    select_list = stmt.select_list;
+    table_name = stmt.table_name;
+    where_clause = std::move(stmt.where_clause);
+    return *this;
+  }
+
+  std::vector<std::string> select_list;
+  std::string table_name;
+  std::unique_ptr<WhereClause> where_clause;
+};
+
+typedef std::variant<std::monostate, SelectStmt> RawStmt;
 
 struct ParserContext {
   RawStmt stmt;
