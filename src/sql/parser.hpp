@@ -54,9 +54,10 @@
     namespace sql {
       struct ParserContext;
       struct WhereClause;
+      struct NExpr;
     }}
 
-#line 60 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 61 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -171,7 +172,7 @@
 #endif
 
 namespace yy {
-#line 175 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 176 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -375,20 +376,18 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // expr
+      char dummy1[sizeof (btdb::sql::NExpr*)];
+
       // STRING_GROUP
       // STRING_LITERAL
-      char dummy1[sizeof (std::string)];
+      char dummy2[sizeof (std::string)];
 
       // where_clause
-      char dummy2[sizeof (std::unique_ptr<btdb::sql::WhereClause>)];
+      char dummy3[sizeof (std::unique_ptr<btdb::sql::WhereClause>)];
 
       // column_exp
-      char dummy3[sizeof (std::vector<std::string>)];
-
-      // bool_expr
-      // expr
-      // factor
-      char dummy4[sizeof (void*)];
+      char dummy4[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -501,6 +500,17 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, btdb::sql::NExpr*&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const btdb::sql::NExpr*& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
@@ -533,17 +543,6 @@ namespace yy {
         , value (v)
       {}
 #endif
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, void*&& v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const void*& v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
 
       /// Destroy the symbol.
       ~basic_symbol ()
@@ -567,23 +566,21 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
+      case 26: // expr
+        value.template destroy< btdb::sql::NExpr* > ();
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.template destroy< std::string > ();
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.template destroy< std::unique_ptr<btdb::sql::WhereClause> > ();
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.template destroy< std::vector<std::string> > ();
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.template destroy< void* > ();
         break;
 
       default:
@@ -662,13 +659,13 @@ switch (yytype)
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV || tok == 277);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
       }
 #else
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV || tok == 277);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1076,7 +1073,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1323,12 +1320,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 46,     ///< Last index in yytable_.
-      yynnts_ = 7,  ///< Number of nonterminal symbols.
+      yylast_ = 47,     ///< Last index in yytable_.
+      yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 23  ///< Number of tokens.
+      yyntokens_ = 22  ///< Number of tokens.
     };
 
 
@@ -1373,9 +1370,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22
+      15,    16,    17,    18,    19,    20,    21
     };
-    const unsigned user_token_number_max_ = 277;
+    const unsigned user_token_number_max_ = 276;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1395,23 +1392,21 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
+      case 26: // expr
+        value.move< btdb::sql::NExpr* > (std::move (that.value));
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (std::move (that.value));
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.move< std::unique_ptr<btdb::sql::WhereClause> > (std::move (that.value));
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.move< std::vector<std::string> > (std::move (that.value));
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.move< void* > (std::move (that.value));
         break;
 
       default:
@@ -1428,23 +1423,21 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
+      case 26: // expr
+        value.copy< btdb::sql::NExpr* > (YY_MOVE (that.value));
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.copy< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.copy< std::vector<std::string> > (YY_MOVE (that.value));
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.copy< void* > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1469,23 +1462,21 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
+      case 26: // expr
+        value.move< btdb::sql::NExpr* > (YY_MOVE (s.value));
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.move< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (s.value));
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.move< std::vector<std::string> > (YY_MOVE (s.value));
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.move< void* > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1553,13 +1544,13 @@ switch (yytype)
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277
+     275,   276
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1563 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1554 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

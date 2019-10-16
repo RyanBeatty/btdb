@@ -17,6 +17,7 @@
     namespace sql {
       struct ParserContext;
       struct WhereClause;
+      struct NExpr;
     }}
 }
 
@@ -62,8 +63,7 @@
 
 %type <std::vector<std::string>> column_exp
 %type <std::unique_ptr<btdb::sql::WhereClause>> where_clause
-%type <void*> bool_expr
-%type <void*> expr
+%type <btdb::sql::NExpr*> expr
 // %type <void*> term
 %type <void*> factor
 
@@ -82,18 +82,17 @@ column_exp:
 
 where_clause:
   /* empty */ { $$ = nullptr; }
-  | WHERE bool_expr { 
+  | WHERE expr { 
     //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
     $$ = nullptr;
-  }  
+  }
 
-bool_expr:
-  expr {$$ = $1;}
-  | expr AND bool_expr { $$ = nullptr;}
-  | expr OR bool_expr
-
+%left "<" ">" "=" "!=" "<=" ">=";
+%left "+" "-";
+%left "*" "/";
 expr:
-  factor
+  STRING_GROUP { $$ = new btdb::sql::NIdentifier($1); }
+  | STRING_LITERAL { $$ = new btdb::sql::NStringLit($1); }
   | expr "=" expr { $$ = nullptr; }
   | expr "!=" expr { $$ = nullptr; }
   | expr ">" expr { $$ = nullptr; }
@@ -104,7 +103,8 @@ expr:
   | expr "-" expr { $$ = nullptr; }
   | expr "*" expr { $$ = nullptr; }
   | expr "/" expr { $$ = nullptr; }
-  | expr "" expr { $$ = nullptr; }
+  | expr AND expr { $$ = nullptr; }
+  | expr OR expr { $$ = nullptr; }
 
 
 
@@ -118,7 +118,9 @@ expr:
 //   | factor "*" term { $$ = nullptr; }
 
 factor:
-  STRING_LITERAL { $$ = nullptr; }
+  // column ref case.
+  STRING_GROUP { $$ = nullptr; }
+  | STRING_LITERAL { $$ = nullptr; }
 
 
 

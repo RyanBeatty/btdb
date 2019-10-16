@@ -41,7 +41,7 @@
 
 
 // Unqualified %code blocks.
-#line 27 "parser.y"
+#line 28 "parser.y"
 
   #include <stdio.h>
   #include <iostream>
@@ -191,23 +191,21 @@ namespace yy {
   {
     switch (that.type_get ())
     {
+      case 26: // expr
+        value.YY_MOVE_OR_COPY< btdb::sql::NExpr* > (YY_MOVE (that.value));
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.YY_MOVE_OR_COPY< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.YY_MOVE_OR_COPY< std::vector<std::string> > (YY_MOVE (that.value));
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.YY_MOVE_OR_COPY< void* > (YY_MOVE (that.value));
         break;
 
       default:
@@ -225,23 +223,21 @@ namespace yy {
   {
     switch (that.type_get ())
     {
+      case 26: // expr
+        value.move< btdb::sql::NExpr* > (YY_MOVE (that.value));
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.move< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.move< std::vector<std::string> > (YY_MOVE (that.value));
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.move< void* > (YY_MOVE (that.value));
         break;
 
       default:
@@ -259,23 +255,21 @@ namespace yy {
     state = that.state;
     switch (that.type_get ())
     {
+      case 26: // expr
+        value.move< btdb::sql::NExpr* > (that.value);
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (that.value);
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         value.move< std::unique_ptr<btdb::sql::WhereClause> > (that.value);
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         value.move< std::vector<std::string> > (that.value);
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        value.move< void* > (that.value);
         break;
 
       default:
@@ -522,23 +516,21 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
+      case 26: // expr
+        yylhs.value.emplace< btdb::sql::NExpr* > ();
+        break;
+
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         yylhs.value.emplace< std::string > ();
         break;
 
-      case 26: // where_clause
+      case 25: // where_clause
         yylhs.value.emplace< std::unique_ptr<btdb::sql::WhereClause> > ();
         break;
 
-      case 25: // column_exp
+      case 24: // column_exp
         yylhs.value.emplace< std::vector<std::string> > ();
-        break;
-
-      case 27: // bool_expr
-      case 28: // expr
-      case 29: // factor
-        yylhs.value.emplace< void* > ();
         break;
 
       default:
@@ -561,25 +553,25 @@ namespace yy {
   btdb::sql::SelectStmt sel(yystack_[4].value.as < std::vector<std::string> > (), yystack_[2].value.as < std::string > (), std::move(yystack_[1].value.as < std::unique_ptr<btdb::sql::WhereClause> > ()));
   ctx.stmt = std::move(sel);
 }
-#line 565 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 557 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 3:
 #line 79 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
-#line 571 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 563 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 4:
 #line 80 "parser.y"
     { yylhs.value.as < std::vector<std::string> > () = yystack_[0].value.as < std::vector<std::string> > (); yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[2].value.as < std::string > ()); }
-#line 577 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 569 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 5:
 #line 84 "parser.y"
     { yylhs.value.as < std::unique_ptr<btdb::sql::WhereClause> > () = nullptr; }
-#line 583 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 575 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 6:
@@ -588,107 +580,95 @@ namespace yy {
     //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
     yylhs.value.as < std::unique_ptr<btdb::sql::WhereClause> > () = nullptr;
   }
-#line 592 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 584 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 7:
-#line 91 "parser.y"
-    {yylhs.value.as < void* > () = yystack_[0].value.as < void* > ();}
-#line 598 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 94 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = new btdb::sql::NIdentifier(yystack_[0].value.as < std::string > ()); }
+#line 590 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 8:
-#line 92 "parser.y"
-    { yylhs.value.as < void* > () = nullptr;}
-#line 604 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 95 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = new btdb::sql::NStringLit(yystack_[0].value.as < std::string > ()); }
+#line 596 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 9:
-#line 93 "parser.y"
-    { yylhs.value.as < void* > () = yystack_[2].value.as < void* > (); }
-#line 610 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 96 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 602 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 10:
-#line 96 "parser.y"
-    { yylhs.value.as < void* > () = yystack_[0].value.as < void* > (); }
-#line 616 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 97 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 608 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 11:
-#line 97 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 622 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 98 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 614 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 12:
-#line 98 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 628 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 99 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 620 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 13:
-#line 99 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 634 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 100 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 626 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 14:
-#line 100 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 640 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 101 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 632 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 15:
-#line 101 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 646 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 102 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 638 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 16:
-#line 102 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 652 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 103 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 644 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 17:
-#line 103 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 658 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 104 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 650 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 18:
-#line 104 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 664 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 105 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 656 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 19:
-#line 105 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 670 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 106 "parser.y"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 662 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 20:
-#line 106 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 676 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
-    break;
-
-  case 21:
 #line 107 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 682 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
-    break;
-
-  case 22:
-#line 121 "parser.y"
-    { yylhs.value.as < void* > () = nullptr; }
-#line 688 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+    { yylhs.value.as < btdb::sql::NExpr* > () = nullptr; }
+#line 668 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 692 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 672 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -872,79 +852,76 @@ namespace yy {
   const signed char
   parser::yypact_[] =
   {
-      22,     6,    39,    34,    37,    -9,     6,    23,    -9,    35,
-      24,    41,    -9,    -9,    -8,    -9,    -9,    24,    24,    24,
-      24,    24,    24,    24,    24,    24,    24,    24,    24,    24,
-      -9,    -9,     5,     5,     5,     5,     5,     5,     5,     5,
-       5,     5,     5
+      35,    19,    40,    36,    37,    -9,    19,    23,    -9,    38,
+       8,    39,    -9,    -9,    -8,    -9,     8,     8,     8,     8,
+       8,     8,     8,     8,     8,     8,     8,     8,    -8,    -8,
+      16,    16,    16,    16,    16,    16,    18,    18,    22,    22
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
        0,     0,     0,     3,     0,     1,     0,     0,     4,     5,
-       0,     0,    22,     6,     7,    10,     2,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       8,     9,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,    21
+       0,     0,     7,     8,     6,     2,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    19,    20,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,    18
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -9,    -9,    38,    -9,    -5,     9,    -9
+      -9,    -9,    41,    -9,    -4
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     2,     4,    11,    13,    14,    15
+      -1,     2,     4,    11,    14
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-      17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
-      27,    28,    30,    31,    29,    19,    20,    21,    22,    23,
-      24,    25,    26,    27,    28,     1,     3,    29,    32,    33,
-      34,    35,    36,    37,    38,    39,    40,    41,    42,     5,
-       6,     7,    10,     9,     8,    12,    16
+      16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
+      26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
+      36,    37,    38,    39,    16,    17,    16,    17,    12,    13,
+      16,    17,    24,    25,    26,    27,    26,    27,     1,     3,
+       5,     7,     6,     9,    15,    10,     0,     8
   };
 
-  const unsigned char
+  const signed char
   parser::yycheck_[] =
   {
        8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      18,    19,    17,    18,    22,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,     3,    20,    22,    19,    20,
-      21,    22,    23,    24,    25,    26,    27,    28,    29,     0,
-       6,     4,     7,    20,     6,    21,     5
+      18,    19,    16,    17,    18,    19,    20,    21,    22,    23,
+      24,    25,    26,    27,     8,     9,     8,     9,    20,    21,
+       8,     9,    16,    17,    18,    19,    18,    19,     3,    20,
+       0,     4,     6,    20,     5,     7,    -1,     6
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,     3,    24,    20,    25,     0,     6,     4,    25,    20,
-       7,    26,    21,    27,    28,    29,     5,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,    18,    19,    22,
-      27,    27,    28,    28,    28,    28,    28,    28,    28,    28,
-      28,    28,    28
+       0,     3,    23,    20,    24,     0,     6,     4,    24,    20,
+       7,    25,    20,    21,    26,     5,     8,     9,    10,    11,
+      12,    13,    14,    15,    16,    17,    18,    19,    26,    26,
+      26,    26,    26,    26,    26,    26,    26,    26,    26,    26
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,    23,    24,    25,    25,    26,    26,    27,    27,    27,
-      28,    28,    28,    28,    28,    28,    28,    28,    28,    28,
-      28,    28,    29
+       0,    22,    23,    24,    24,    25,    25,    26,    26,    26,
+      26,    26,    26,    26,    26,    26,    26,    26,    26,    26,
+      26
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     6,     1,     3,     0,     2,     1,     3,     3,
-       1,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     1
+       0,     2,     6,     1,     3,     0,     2,     1,     1,     3,
+       3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       3
   };
 
 
@@ -957,17 +934,17 @@ namespace yy {
   "EOF", "error", "$undefined", "SELECT", "FROM", "\";\"", "\",\"",
   "WHERE", "AND", "OR", "\"=\"", "\"!=\"", "\">\"", "\">=\"", "\"<\"",
   "\"<=\"", "\"+\"", "\"-\"", "\"*\"", "\"/\"", "STRING_GROUP",
-  "STRING_LITERAL", "\"\"", "$accept", "select_stmt", "column_exp",
-  "where_clause", "bool_expr", "expr", "factor", YY_NULLPTR
+  "STRING_LITERAL", "$accept", "select_stmt", "column_exp", "where_clause",
+  "expr", YY_NULLPTR
   };
 
 
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    72,    72,    79,    80,    84,    85,    91,    92,    93,
-      96,    97,    98,    99,   100,   101,   102,   103,   104,   105,
-     106,   107,   121
+       0,    72,    72,    79,    80,    84,    85,    94,    95,    96,
+      97,    98,    99,   100,   101,   102,   103,   104,   105,   106,
+     107
   };
 
   // Print the state stack on the debug stream.
@@ -1001,9 +978,9 @@ namespace yy {
 
 
 } // yy
-#line 1005 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 982 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 125 "parser.y"
+#line 127 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {

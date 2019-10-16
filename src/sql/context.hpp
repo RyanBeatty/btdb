@@ -17,6 +17,32 @@ namespace sql {
 // TODO: Is this the right thing to do?
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 
+struct Node {
+};
+
+struct NExpr : Node {
+};
+
+struct NBinExpr : NExpr {
+  NBinExpr(int op, NExpr& lhs, NExpr& rhs) : op(op), lhs(lhs), rhs(rhs) {}
+
+  int op;
+  NExpr& lhs;
+  NExpr& rhs;
+};
+
+struct NStringLit : NExpr {
+  NStringLit(std::string lit) : val(lit) {}
+
+  std::string val;
+};
+
+struct NIdentifier : NExpr {
+  NIdentifier(std::string identifier) : identifier(identifier) {}
+
+  std::string identifier;
+};
+
 struct WhereClause {
   std::string column_name;
   std::string value_name;
