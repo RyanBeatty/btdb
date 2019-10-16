@@ -44,13 +44,28 @@
     SEMICOLON ";"
     COMMA ","
     WHERE
-    EQUALS
+    AND
+    OR
+    EQ "="
+    NEQ "!="
+    GT ">"
+    GE ">="
+    LT "<"
+    LE "<="
+    PLUS "+"
+    MINUS "-"
+    MULT "*"
+    DIV "/"
 ;
 %token <std::string> STRING_GROUP
 %token <std::string> STRING_LITERAL
 
 %type <std::vector<std::string>> column_exp
 %type <std::unique_ptr<btdb::sql::WhereClause>> where_clause
+%type <void*> bool_expr
+%type <void*> expr
+// %type <void*> term
+%type <void*> factor
 
 %%
 %start select_stmt;
@@ -67,9 +82,44 @@ column_exp:
 
 where_clause:
   /* empty */ { $$ = nullptr; }
-  | WHERE STRING_GROUP EQUALS STRING_LITERAL { 
-    $$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
-  }
+  | WHERE bool_expr { 
+    //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
+    $$ = nullptr;
+  }  
+
+bool_expr:
+  expr {$$ = $1;}
+  | expr AND bool_expr { $$ = nullptr;}
+  | expr OR bool_expr
+
+expr:
+  factor
+  | expr "=" expr { $$ = nullptr; }
+  | expr "!=" expr { $$ = nullptr; }
+  | expr ">" expr { $$ = nullptr; }
+  | expr ">=" expr { $$ = nullptr; }
+  | expr "<" expr { $$ = nullptr; }
+  | expr "<=" expr { $$ = nullptr; }
+  | expr "+" expr { $$ = nullptr; }
+  | expr "-" expr { $$ = nullptr; }
+  | expr "*" expr { $$ = nullptr; }
+  | expr "/" expr { $$ = nullptr; }
+  | expr "" expr { $$ = nullptr; }
+
+
+
+
+// expr:
+//   term { $$ = $1; }
+//   | term "+" expr { $$ = nullptr; }
+
+// term:
+//   factor { $$ = $1; }
+//   | factor "*" term { $$ = nullptr; }
+
+factor:
+  STRING_LITERAL { $$ = nullptr; }
+
 
 
 %%
