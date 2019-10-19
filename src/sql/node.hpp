@@ -7,6 +7,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -20,6 +21,7 @@ enum { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT };
 struct ParseNode {
   int type;
 };
+static_assert(std::is_pod<ParseNode>::value);
 
 enum BinExprOp {
   EQ,
@@ -41,18 +43,21 @@ struct NBinExpr {
   ParseNode* lhs;
   ParseNode* rhs;
 };
+static_assert(std::is_pod<NBinExpr>::value);
 
 struct NIdentifier {
   int type;
 
   char* identifier;
 };
+static_assert(std::is_pod<NIdentifier>::value);
 
 struct NStringLit {
   int type;
 
   char* str_lit;
 };
+static_assert(std::is_pod<NStringLit>::value);
 
 void free_parse_node(ParseNode* node);
 
