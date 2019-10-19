@@ -14,6 +14,7 @@
   using btdb::sql::ParseNode;
   using btdb::sql::ParseTree;
   using btdb::sql::NIdentifier;
+  using btdb::sql::NStringLit;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -104,14 +105,23 @@ stmt: expr {
 %left "*" "/";
 expr:
   STRING_GROUP {
-    NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-    assert(identifier != NULL);
-    identifier->type = btdb::sql::NIDENTIFIER;
-    identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-    assert(identifier->identifier != NULL);
-    strncpy(identifier->identifier, $1.c_str(), $1.length());
-    $$ = (ParseNode*)identifier; }
-  //| STRING_LITERAL { $$ = btdb::sql::NStringLit($1); }
+      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+      assert(identifier != NULL);
+      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
+      assert(identifier->identifier != NULL);
+      strncpy(identifier->identifier, $1.c_str(), $1.length());
+      $$ = (ParseNode*)identifier;
+    }
+  | STRING_LITERAL {
+      NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
+      assert(str_lit != NULL);
+      str_lit->type = btdb::sql::NSTRING_LIT;
+      str_lit->str_lit = (char*)calloc($1.length(), sizeof(char));
+      assert(str_lit->str_lit != NULL);
+      strncpy(str_lit->str_lit, $1.c_str(), $1.length());
+      $$ = (ParseNode*)str_lit;
+    }
   // | expr "=" expr { $$ = nullptr; }
   // | expr "!=" expr { $$ = nullptr; }
   // | expr ">" expr { $$ = nullptr; }

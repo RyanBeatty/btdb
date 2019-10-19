@@ -51,6 +51,7 @@
   using btdb::sql::ParseNode;
   using btdb::sql::ParseTree;
   using btdb::sql::NIdentifier;
+  using btdb::sql::NStringLit;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -59,7 +60,7 @@
       struct ParserContext;
     }}
 
-#line 63 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 64 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -174,7 +175,7 @@
 #endif
 
 namespace yy {
-#line 178 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 179 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -1286,9 +1287,9 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1,     ///< Last index in yytable_.
+      yylast_ = 2,     ///< Last index in yytable_.
       yynnts_ = 3,  ///< Number of nonterminal symbols.
-      yyfinal_ = 4, ///< Termination state number.
+      yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 22  ///< Number of tokens.
@@ -1492,7 +1493,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1496 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1497 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

@@ -41,7 +41,7 @@
 
 
 // Unqualified %code blocks.
-#line 30 "parser.y"
+#line 31 "parser.y"
 
   #include <cassert>
   #include <stdlib.h>
@@ -518,7 +518,7 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 75 "parser.y"
+#line 76 "parser.y"
     {
   ctx.tree = std::make_unique<ParseTree>(yystack_[0].value.as < ParseNode* > ());
 }
@@ -526,20 +526,35 @@ namespace yy {
     break;
 
   case 3:
-#line 106 "parser.y"
+#line 107 "parser.y"
     {
-    NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-    assert(identifier != NULL);
-    identifier->type = btdb::sql::NIDENTIFIER;
-    identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
-    assert(identifier->identifier != NULL);
-    strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
-    yylhs.value.as < ParseNode* > () = (ParseNode*)identifier; }
-#line 539 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+      assert(identifier != NULL);
+      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
+      assert(identifier->identifier != NULL);
+      strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
+      yylhs.value.as < ParseNode* > () = (ParseNode*)identifier;
+    }
+#line 540 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+    break;
+
+  case 4:
+#line 116 "parser.y"
+    {
+      NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
+      assert(str_lit != NULL);
+      str_lit->type = btdb::sql::NSTRING_LIT;
+      str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
+      assert(str_lit->str_lit != NULL);
+      strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
+      yylhs.value.as < ParseNode* > () = (ParseNode*)str_lit;
+    }
+#line 554 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 543 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 558 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -723,13 +738,13 @@ namespace yy {
   const signed char
   parser::yypact_[] =
   {
-     -20,   -21,     1,   -21,   -21
+     -20,   -21,   -21,     2,   -21,   -21
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       0,     3,     0,     2,     1
+       0,     3,     4,     0,     2,     1
   };
 
   const signed char
@@ -741,37 +756,37 @@ namespace yy {
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     2,     3
+      -1,     3,     4
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       1,     4
+       1,     2,     5
   };
 
   const unsigned char
   parser::yycheck_[] =
   {
-      20,     0
+      20,    21,     0
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,    20,    23,    24,     0
+       0,    20,    21,    23,    24,     0
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,    22,    23,    24
+       0,    22,    23,    24,    24
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     1,     1
+       0,     2,     1,     1,     1
   };
 
 
@@ -791,7 +806,7 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    75,    75,   106
+       0,    76,    76,   107,   116
   };
 
   // Print the state stack on the debug stream.
@@ -825,9 +840,9 @@ namespace yy {
 
 
 } // yy
-#line 829 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 844 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 129 "parser.y"
+#line 139 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {

@@ -15,10 +15,7 @@ namespace sql {
 
 void Panic(const std::string& msg);
 
-enum {
-  NBIN_EXPR,
-  NIDENTIFIER,
-};
+enum { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT };
 
 struct ParseNode {
   int type;
@@ -36,6 +33,12 @@ struct NIdentifier {
   int type;
 
   char* identifier;
+};
+
+struct NStringLit {
+  int type;
+
+  char* str_lit;
 };
 
 void free_parse_node(ParseNode* node);

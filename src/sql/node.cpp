@@ -38,6 +38,13 @@ void free_parse_node(ParseNode* node) {
       free(bin_expr);
       break;
     }
+    case NSTRING_LIT: {
+      NStringLit* str_lit = (NStringLit*)(node);
+      assert(str_lit->str_lit != nullptr);
+      free(str_lit->str_lit);
+      free(str_lit);
+      break;
+    }
     default: {
       Panic("Unkown Parse Node Type");
       break;
@@ -66,6 +73,12 @@ std::ostringstream& print_parse_node(ParseNode* node, std::ostringstream& oss) {
       }
       if (bin_expr->rhs != nullptr) {
       }
+      break;
+    }
+    case NSTRING_LIT: {
+      NStringLit* str_lit = (NStringLit*)(node);
+      oss << "NStringLit{ "
+          << "str_lit=" << str_lit->str_lit << " }" << std::endl;
       break;
     }
     default: {
