@@ -46,9 +46,11 @@
 // //                    "%code requires" blocks.
 #line 11 "parser.y"
 
-  #include <memory>
-  #include <optional>
   #include "node.hpp"
+
+  using btdb::sql::ParseNode;
+  using btdb::sql::ParseTree;
+  using btdb::sql::NIdentifier;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -57,7 +59,7 @@
       struct ParserContext;
     }}
 
-#line 61 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 63 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -172,7 +174,7 @@
 #endif
 
 namespace yy {
-#line 176 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 178 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -376,18 +378,12 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // where_clause
-      char dummy1[sizeof (std::optional<btdb::sql::NWhereClause>)];
+      // expr
+      char dummy1[sizeof (ParseNode*)];
 
       // STRING_GROUP
       // STRING_LITERAL
       char dummy2[sizeof (std::string)];
-
-      // expr
-      char dummy3[sizeof (std::unique_ptr<btdb::sql::NExpr>)];
-
-      // column_exp
-      char dummy4[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -500,12 +496,12 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<btdb::sql::NWhereClause>&& v)
+      basic_symbol (typename Base::kind_type t, ParseNode*&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<btdb::sql::NWhereClause>& v)
+      basic_symbol (typename Base::kind_type t, const ParseNode*& v)
         : Base (t)
         , value (v)
       {}
@@ -517,28 +513,6 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::string& v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::unique_ptr<btdb::sql::NExpr>&& v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::unique_ptr<btdb::sql::NExpr>& v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v)
         : Base (t)
         , value (v)
       {}
@@ -566,21 +540,13 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 25: // where_clause
-        value.template destroy< std::optional<btdb::sql::NWhereClause> > ();
+      case 24: // expr
+        value.template destroy< ParseNode* > ();
         break;
 
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.template destroy< std::string > ();
-        break;
-
-      case 26: // expr
-        value.template destroy< std::unique_ptr<btdb::sql::NExpr> > ();
-        break;
-
-      case 24: // column_exp
-        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -1073,7 +1039,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const signed char yycheck_[];
+  static const unsigned char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1320,9 +1286,9 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 10,     ///< Last index in yytable_.
-      yynnts_ = 5,  ///< Number of nonterminal symbols.
-      yyfinal_ = 5, ///< Termination state number.
+      yylast_ = 1,     ///< Last index in yytable_.
+      yynnts_ = 3,  ///< Number of nonterminal symbols.
+      yyfinal_ = 4, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 22  ///< Number of tokens.
@@ -1392,21 +1358,13 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 25: // where_clause
-        value.move< std::optional<btdb::sql::NWhereClause> > (std::move (that.value));
+      case 24: // expr
+        value.move< ParseNode* > (std::move (that.value));
         break;
 
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (std::move (that.value));
-        break;
-
-      case 26: // expr
-        value.move< std::unique_ptr<btdb::sql::NExpr> > (std::move (that.value));
-        break;
-
-      case 24: // column_exp
-        value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
       default:
@@ -1423,21 +1381,13 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 25: // where_clause
-        value.copy< std::optional<btdb::sql::NWhereClause> > (YY_MOVE (that.value));
+      case 24: // expr
+        value.copy< ParseNode* > (YY_MOVE (that.value));
         break;
 
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.copy< std::string > (YY_MOVE (that.value));
-        break;
-
-      case 26: // expr
-        value.copy< std::unique_ptr<btdb::sql::NExpr> > (YY_MOVE (that.value));
-        break;
-
-      case 24: // column_exp
-        value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1462,21 +1412,13 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 25: // where_clause
-        value.move< std::optional<btdb::sql::NWhereClause> > (YY_MOVE (s.value));
+      case 24: // expr
+        value.move< ParseNode* > (YY_MOVE (s.value));
         break;
 
       case 20: // STRING_GROUP
       case 21: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (s.value));
-        break;
-
-      case 26: // expr
-        value.move< std::unique_ptr<btdb::sql::NExpr> > (YY_MOVE (s.value));
-        break;
-
-      case 24: // column_exp
-        value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1550,7 +1492,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1554 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1496 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

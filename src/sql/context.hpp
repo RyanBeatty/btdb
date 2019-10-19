@@ -3,8 +3,8 @@
 #include <map>
 #include <string>
 #include <variant>
-#include "parser.hpp"
 #include "node.hpp"
+#include "parser.hpp"
 
 // Give Flex the prototype of yylex we want ...
 #define YY_DECL yy::parser::symbol_type yylex(btdb::sql::ParserContext& context)
@@ -19,7 +19,7 @@ namespace sql {
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 
 struct ParserContext {
-  RawStmt stmt;
+  std::unique_ptr<btdb::sql::ParseTree> tree;
   YY_BUFFER_STATE buffer_state;
 
   ParserContext(std::string sql) { BeginScan(sql); }

@@ -9,9 +9,11 @@
 
 // This code goes in parser.hpp
 %code requires {
-  #include <memory>
-  #include <optional>
   #include "node.hpp"
+
+  using btdb::sql::ParseNode;
+  using btdb::sql::ParseTree;
+  using btdb::sql::NIdentifier;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -26,9 +28,11 @@
 }
 
 %code{
-  #include <stdio.h>
+  #include <cassert>
+  #include <stdlib.h>
   #include <iostream>
   #include <memory>
+  #include <string.h>
   #include "context.hpp"
 }
 
@@ -61,46 +65,52 @@
 %token <std::string> STRING_GROUP
 %token <std::string> STRING_LITERAL
 
-%type <std::vector<std::string>> column_exp
-%type <std::optional<btdb::sql::NWhereClause>> where_clause
-%type <std::unique_ptr<btdb::sql::NExpr>> expr
+// %type <std::vector<std::string>> column_exp
+// %type <std::optional<btdb::sql::NWhereClause>> where_clause
+%type <ParseNode*> expr
 
 %%
-%start select_stmt;
-select_stmt: SELECT column_exp FROM STRING_GROUP where_clause ";"
-{ 
-  btdb::sql::SelectStmt sel($2, $4, $5);
-  ctx.stmt = sel;
-};
+%start stmt;
 
-column_exp:
-  STRING_GROUP { $$ = std::vector<std::string>{$1}; }
-  | STRING_GROUP "," column_exp { $$ = $3; $$.push_back($1); }
+stmt: expr {
+  ctx.tree = std::make_unique<ParseTree>($1);
+}
+
+// %start select_stmt;
+// select_stmt: SELECT column_exp FROM STRING_GROUP where_clause ";"
+// { 
+//   btdb::sql::SelectStmt sel($2, $4, $5);
+//   ctx.stmt = sel;
+// };
+
+// column_exp:
+//   STRING_GROUP { $$ = std::vector<std::string>{$1}; }
+//   | STRING_GROUP "," column_exp { $$ = $3; $$.push_back($1); }
 
 
-where_clause:
-  /* empty */ { $$ = std::nullopt; }
-  | WHERE expr { 
-    auto where = btdb::sql::NWhereClause(*$2.get());
-    btdb::sql::Node& expr = where;
-    btdb::sql::PrintParseTreeVisitor pp(expr);
-    std::cout << "test: " << pp.PrettyPrint() << std::endl;
-    //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
-    $$ = where;
-  }
+// where_clause:
+//   /* empty */ { $$ = std::nullopt; }
+//   | WHERE expr { 
+//     auto where = btdb::sql::NWhereClause(*$2.get());
+//     btdb::sql::Node& expr = where;
+//     btdb::sql::PrintParseTreeVisitor pp(expr);
+//     std::cout << "test: " << pp.PrettyPrint() << std::endl;
+//     //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
+//     $$ = where;
+//   }
 
 %left "<" ">" "=" "!=" "<=" ">=";
 %left "+" "-";
 %left "*" "/";
 expr:
-  STRING_GROUP { 
-    std::cout << "h: " << $1 << std::endl;
-    btdb::sql::NIdentifier id($1);
-    btdb::sql::NExpr& expr = id;
-    btdb::sql::PrintParseTreeVisitor pp(expr);
-    std::cout << "test: " << pp.PrettyPrint() << std::endl;
-
-    $$ = std::make_unique<btdb::sql::NIdentifier>($1); }
+  STRING_GROUP {
+    NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(identifier != NULL);
+    identifier->type = btdb::sql::NIDENTIFIER;
+    identifier->identifier = (char*)calloc($1.length(), sizeof(char));
+    assert(identifier->identifier != NULL);
+    strncpy(identifier->identifier, $1.c_str(), $1.length());
+    $$ = (ParseNode*)identifier; }
   //| STRING_LITERAL { $$ = btdb::sql::NStringLit($1); }
   // | expr "=" expr { $$ = nullptr; }
   // | expr "!=" expr { $$ = nullptr; }
