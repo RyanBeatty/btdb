@@ -52,6 +52,49 @@ void free_parse_node(ParseNode* node) {
   }
 }
 
+void print_parse_node(ParseNode* node, PrintContext& ctx) {
+  if (node == nullptr) {
+    return;
+  }
+
+  switch (node->type) {
+    case NIDENTIFIER: {
+      NIdentifier* identifier = (NIdentifier*)(node);
+      ctx.PrintObject("NIdentifier");
+      ctx.PrintChild("identifier", identifier->identifier);
+      ctx.EndObject();
+      break;
+    }
+    case NBIN_EXPR: {
+      NBinExpr* bin_expr = (NBinExpr*)(node);
+      ctx.PrintObject("NBinExpr");
+      if (bin_expr->lhs != nullptr) {
+        ctx.PrintObject("lhs");
+        print_parse_node(bin_expr->lhs, ctx);
+        ctx.EndObject();
+      }
+      if (bin_expr->rhs != nullptr) {
+        ctx.PrintObject("rhs");
+        print_parse_node(bin_expr->rhs, ctx);
+        ctx.EndObject();
+      }
+      break;
+    }
+    case NSTRING_LIT: {
+      NStringLit* str_lit = (NStringLit*)(node);
+      ctx.PrintObject("NStringLit");
+      ctx.PrintChild("str_lit", str_lit->str_lit);
+      ctx.EndObject();
+      break;
+    }
+    default: {
+      Panic("Unkown Parse Node Type");
+      break;
+    }
+  }
+  return;
+}
+
 std::ostringstream& print_parse_node(ParseNode* node, std::ostringstream& oss) {
   if (node == nullptr) {
     return oss;

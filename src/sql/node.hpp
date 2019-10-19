@@ -56,7 +56,35 @@ struct NStringLit {
 
 void free_parse_node(ParseNode* node);
 
-std::ostringstream& print_parse_node(ParseNode* node, std::ostringstream& oss);
+struct PrintContext {
+  PrintContext() : indent(0) {}
+  std::string Print() { return oss.str(); }
+
+  void PrintObject(std::string key) {
+    PrintIndent();
+    oss << key << ": {" << std::endl;
+  }
+  void EndObject() {
+    PrintIndent();
+    oss << "}" << std::endl;
+  }
+  void PrintChild(std::string key, std::string val) {
+    PrintIndent();
+    oss << key << ": " << val << std::endl;
+  }
+  void PrintIndent() {
+    for (uint64_t i = 0; i < indent; ++i) {
+      oss << "\t";
+    }
+  }
+  void Indent() { ++indent; }
+  void Dedent() { --indent; }
+
+  uint64_t indent;
+  std::ostringstream oss;
+};
+
+void print_parse_node(ParseNode* node, PrintContext& ctx);
 
 struct ParseTree {
   ParseTree(ParseNode* tree) : tree(tree) {}
