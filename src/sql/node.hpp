@@ -63,10 +63,12 @@ struct PrintContext {
   void PrintObject(std::string key) {
     PrintIndent();
     oss << key << ": {" << std::endl;
+    Indent();
   }
   void EndObject() {
     PrintIndent();
     oss << "}" << std::endl;
+    Dedent();
   }
   void PrintChild(std::string key, std::string val) {
     PrintIndent();

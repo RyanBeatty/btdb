@@ -78,6 +78,7 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
         print_parse_node(bin_expr->rhs, ctx);
         ctx.EndObject();
       }
+      ctx.EndObject();
       break;
     }
     case NSTRING_LIT: {
@@ -93,43 +94,6 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
     }
   }
   return;
-}
-
-std::ostringstream& print_parse_node(ParseNode* node, std::ostringstream& oss) {
-  if (node == nullptr) {
-    return oss;
-  }
-
-  switch (node->type) {
-    case NIDENTIFIER: {
-      NIdentifier* identifier = (NIdentifier*)(node);
-      oss << "NIdentifier{ "
-          << "identifier=" << identifier->identifier << " }" << std::endl;
-      break;
-    }
-    case NBIN_EXPR: {
-      NBinExpr* bin_expr = (NBinExpr*)(node);
-      oss << "NBinExpr{";
-      if (bin_expr->lhs != nullptr) {
-        oss << "lhs=";
-        print_parse_node(bin_expr->lhs, oss);
-      }
-      if (bin_expr->rhs != nullptr) {
-      }
-      break;
-    }
-    case NSTRING_LIT: {
-      NStringLit* str_lit = (NStringLit*)(node);
-      oss << "NStringLit{ "
-          << "str_lit=" << str_lit->str_lit << " }" << std::endl;
-      break;
-    }
-    default: {
-      Panic("Unkown Parse Node Type");
-      break;
-    }
-  }
-  return oss;
 }
 
 }  // namespace sql
