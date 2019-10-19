@@ -2,6 +2,7 @@
 #define NODE_HH
 #include <map>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <variant>
@@ -48,6 +49,7 @@ struct PrintParseTreeVisitor : ParseTreeVisitor {
 
 struct Node {
   virtual void accept(ParseTreeVisitor& visitor) = 0;
+  virtual ~Node(){};
 };
 
 struct NExpr : Node {
@@ -80,6 +82,10 @@ struct NIdentifier : NExpr {
 
 struct NWhereClause : Node {
   NWhereClause(NExpr& expr) : expr(expr) {}
+  NWhereClause& operator=(const NWhereClause& other) {
+    expr = other.expr;
+    return *this;
+  }
   virtual void accept(ParseTreeVisitor& visitor) override;
 
   NExpr& expr;
@@ -97,7 +103,7 @@ struct WhereClause {};
 
 struct SelectStmt {
   SelectStmt(const std::vector<std::string>& select_lists, const std::string& table_names,
-             std::unique_ptr<WhereClause> where_clauses)
+             std::optional<NWhereClause> where_clauses)
       : select_list(select_lists),
         table_name(table_names),
         where_clause(std::move(where_clauses)) {}
@@ -105,7 +111,7 @@ struct SelectStmt {
   SelectStmt(SelectStmt& stmt) {
     select_list = stmt.select_list;
     table_name = stmt.table_name;
-    where_clause = std::move(stmt.where_clause);
+    where_clause = stmt.where_clause;
   }
   SelectStmt(SelectStmt&& stmt) noexcept
       : select_list(stmt.select_list),
@@ -120,7 +126,7 @@ struct SelectStmt {
 
   std::vector<std::string> select_list;
   std::string table_name;
-  std::unique_ptr<WhereClause> where_clause;
+  std::optional<NWhereClause> where_clause;
 };
 
 typedef std::variant<std::monostate, SelectStmt> RawStmt;

@@ -1,8 +1,13 @@
 #include <iostream>
 
-#include <context.hpp>
+#include "context.hpp"
+#include "node.hpp"
 
 int main() {
+  // btdb::sql::NIdentifier id("foo");
+  // btdb::sql::NExpr expr = id;
+  // btdb::sql::PrintParseTreeVisitor pp(expr);
+  // std::cout << pp.PrettyPrint() << std::endl;
   for (std::string line; std::getline(std::cin, line);) {
     btdb::sql::ParserContext ctx(line);
     ctx.Parse();
@@ -13,6 +18,10 @@ int main() {
       }
       std::cout << std::endl;
       std::cout << select_stmt.table_name << std::endl;
+      if (select_stmt.where_clause) {
+        btdb::sql::PrintParseTreeVisitor pp(select_stmt.where_clause->expr);
+        std::cout << pp.PrettyPrint() << std::endl;
+      }
     }
   }
 }

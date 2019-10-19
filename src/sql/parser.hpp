@@ -47,6 +47,7 @@
 #line 11 "parser.y"
 
   #include <memory>
+  #include <optional>
   #include "node.hpp"
 
   // Can't include btdb::sql stuff or else we get circular import,
@@ -56,7 +57,7 @@
       struct ParserContext;
     }}
 
-#line 60 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 61 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -171,7 +172,7 @@
 #endif
 
 namespace yy {
-#line 175 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 176 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -375,15 +376,15 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // expr
-      char dummy1[sizeof (btdb::sql::NExpr)];
+      // where_clause
+      char dummy1[sizeof (std::optional<btdb::sql::NWhereClause>)];
 
       // STRING_GROUP
       // STRING_LITERAL
       char dummy2[sizeof (std::string)];
 
-      // where_clause
-      char dummy3[sizeof (std::unique_ptr<btdb::sql::WhereClause>)];
+      // expr
+      char dummy3[sizeof (std::unique_ptr<btdb::sql::NExpr>)];
 
       // column_exp
       char dummy4[sizeof (std::vector<std::string>)];
@@ -499,12 +500,12 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, btdb::sql::NExpr&& v)
+      basic_symbol (typename Base::kind_type t, std::optional<btdb::sql::NWhereClause>&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const btdb::sql::NExpr& v)
+      basic_symbol (typename Base::kind_type t, const std::optional<btdb::sql::NWhereClause>& v)
         : Base (t)
         , value (v)
       {}
@@ -521,12 +522,12 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::unique_ptr<btdb::sql::WhereClause>&& v)
+      basic_symbol (typename Base::kind_type t, std::unique_ptr<btdb::sql::NExpr>&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::unique_ptr<btdb::sql::WhereClause>& v)
+      basic_symbol (typename Base::kind_type t, const std::unique_ptr<btdb::sql::NExpr>& v)
         : Base (t)
         , value (v)
       {}
@@ -565,8 +566,8 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 26: // expr
-        value.template destroy< btdb::sql::NExpr > ();
+      case 25: // where_clause
+        value.template destroy< std::optional<btdb::sql::NWhereClause> > ();
         break;
 
       case 20: // STRING_GROUP
@@ -574,8 +575,8 @@ switch (yytype)
         value.template destroy< std::string > ();
         break;
 
-      case 25: // where_clause
-        value.template destroy< std::unique_ptr<btdb::sql::WhereClause> > ();
+      case 26: // expr
+        value.template destroy< std::unique_ptr<btdb::sql::NExpr> > ();
         break;
 
       case 24: // column_exp
@@ -1319,7 +1320,7 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 11,     ///< Last index in yytable_.
+      yylast_ = 10,     ///< Last index in yytable_.
       yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
@@ -1391,8 +1392,8 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 26: // expr
-        value.move< btdb::sql::NExpr > (std::move (that.value));
+      case 25: // where_clause
+        value.move< std::optional<btdb::sql::NWhereClause> > (std::move (that.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1400,8 +1401,8 @@ switch (yytype)
         value.move< std::string > (std::move (that.value));
         break;
 
-      case 25: // where_clause
-        value.move< std::unique_ptr<btdb::sql::WhereClause> > (std::move (that.value));
+      case 26: // expr
+        value.move< std::unique_ptr<btdb::sql::NExpr> > (std::move (that.value));
         break;
 
       case 24: // column_exp
@@ -1422,8 +1423,8 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 26: // expr
-        value.copy< btdb::sql::NExpr > (YY_MOVE (that.value));
+      case 25: // where_clause
+        value.copy< std::optional<btdb::sql::NWhereClause> > (YY_MOVE (that.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1431,8 +1432,8 @@ switch (yytype)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case 25: // where_clause
-        value.copy< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
+      case 26: // expr
+        value.copy< std::unique_ptr<btdb::sql::NExpr> > (YY_MOVE (that.value));
         break;
 
       case 24: // column_exp
@@ -1461,8 +1462,8 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 26: // expr
-        value.move< btdb::sql::NExpr > (YY_MOVE (s.value));
+      case 25: // where_clause
+        value.move< std::optional<btdb::sql::NWhereClause> > (YY_MOVE (s.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1470,8 +1471,8 @@ switch (yytype)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case 25: // where_clause
-        value.move< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (s.value));
+      case 26: // expr
+        value.move< std::unique_ptr<btdb::sql::NExpr> > (YY_MOVE (s.value));
         break;
 
       case 24: // column_exp
@@ -1549,7 +1550,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1553 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1554 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

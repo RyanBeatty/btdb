@@ -10,6 +10,7 @@
 // This code goes in parser.hpp
 %code requires {
   #include <memory>
+  #include <optional>
   #include "node.hpp"
 
   // Can't include btdb::sql stuff or else we get circular import,
@@ -61,17 +62,15 @@
 %token <std::string> STRING_LITERAL
 
 %type <std::vector<std::string>> column_exp
-%type <std::unique_ptr<btdb::sql::WhereClause>> where_clause
-%type <btdb::sql::NExpr> expr
-// %type <void*> term
-%type <void*> factor
+%type <std::optional<btdb::sql::NWhereClause>> where_clause
+%type <std::unique_ptr<btdb::sql::NExpr>> expr
 
 %%
 %start select_stmt;
 select_stmt: SELECT column_exp FROM STRING_GROUP where_clause ";"
 { 
-  btdb::sql::SelectStmt sel($2, $4, std::move($5));
-  ctx.stmt = std::move(sel);
+  btdb::sql::SelectStmt sel($2, $4, $5);
+  ctx.stmt = sel;
 };
 
 column_exp:
@@ -80,18 +79,29 @@ column_exp:
 
 
 where_clause:
-  /* empty */ { $$ = nullptr; }
+  /* empty */ { $$ = std::nullopt; }
   | WHERE expr { 
+    auto where = btdb::sql::NWhereClause(*$2.get());
+    btdb::sql::Node& expr = where;
+    btdb::sql::PrintParseTreeVisitor pp(expr);
+    std::cout << "test: " << pp.PrettyPrint() << std::endl;
     //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
-    $$ = nullptr;
+    $$ = where;
   }
 
 %left "<" ">" "=" "!=" "<=" ">=";
 %left "+" "-";
 %left "*" "/";
 expr:
-  STRING_GROUP { $$ = btdb::sql::NIdentifier($1); }
-  | STRING_LITERAL { $$ = btdb::sql::NStringLit($1); }
+  STRING_GROUP { 
+    std::cout << "h: " << $1 << std::endl;
+    btdb::sql::NIdentifier id($1);
+    btdb::sql::NExpr& expr = id;
+    btdb::sql::PrintParseTreeVisitor pp(expr);
+    std::cout << "test: " << pp.PrettyPrint() << std::endl;
+
+    $$ = std::make_unique<btdb::sql::NIdentifier>($1); }
+  //| STRING_LITERAL { $$ = btdb::sql::NStringLit($1); }
   // | expr "=" expr { $$ = nullptr; }
   // | expr "!=" expr { $$ = nullptr; }
   // | expr ">" expr { $$ = nullptr; }
@@ -104,23 +114,6 @@ expr:
   // | expr "/" expr { $$ = nullptr; }
   // | expr AND expr { $$ = nullptr; }
   // | expr OR expr { $$ = nullptr; }
-
-
-
-
-// expr:
-//   term { $$ = $1; }
-//   | term "+" expr { $$ = nullptr; }
-
-// term:
-//   factor { $$ = $1; }
-//   | factor "*" term { $$ = nullptr; }
-
-factor:
-  // column ref case.
-  STRING_GROUP { $$ = nullptr; }
-  | STRING_LITERAL { $$ = nullptr; }
-
 
 
 %%
