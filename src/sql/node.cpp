@@ -16,6 +16,7 @@ std::string PrintParseTreeVisitor::PrettyPrint() {
   parse_tree.accept(*this);
   return oss.str();
 }
+void PrintParseTreeVisitor::visit(Node& node) {}
 void PrintParseTreeVisitor::visit(NExpr& expr) {}
 void PrintParseTreeVisitor::visit(NBinExpr& bin_expr) {}
 void PrintParseTreeVisitor::visit(NStringLit& string_lit) {
@@ -33,6 +34,8 @@ void PrintParseTreeVisitor::visit(NIdentifier& id) {
 
 void PrintParseTreeVisitor::visit(NWhereClause& where_clause) {}
 void PrintParseTreeVisitor::visit(NSelect& select) {}
+
+void Node::accept(ParseTreeVisitor& visitor) { visitor.visit(*this); }
 
 void NExpr::accept(ParseTreeVisitor& visitor) { visitor.visit(*this); }
 

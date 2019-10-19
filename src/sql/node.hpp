@@ -20,6 +20,8 @@ struct NWhereClause;
 struct NSelect;
 
 struct ParseTreeVisitor {
+  virtual void visit(Node& node) = 0;
+
   virtual void visit(NExpr& expr) = 0;
   virtual void visit(NBinExpr& bin_expr) = 0;
   virtual void visit(NStringLit& string_lit) = 0;
@@ -31,6 +33,7 @@ struct ParseTreeVisitor {
 struct PrintParseTreeVisitor : ParseTreeVisitor {
   PrintParseTreeVisitor(Node& parse_tree);
   std::string PrettyPrint();
+  virtual void visit(Node& node) override;
   void visit(NExpr& expr) override;
   void visit(NBinExpr& bin_expr) override;
   void visit(NStringLit& string_lit) override;
