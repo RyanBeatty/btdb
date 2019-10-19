@@ -15,6 +15,7 @@
   using btdb::sql::ParseTree;
   using btdb::sql::NIdentifier;
   using btdb::sql::NStringLit;
+  using btdb::sql::NBinExpr;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -122,7 +123,15 @@ expr:
       strncpy(str_lit->str_lit, $1.c_str(), $1.length());
       $$ = (ParseNode*)str_lit;
     }
-  // | expr "=" expr { $$ = nullptr; }
+  | expr "=" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::EQ;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
   // | expr "!=" expr { $$ = nullptr; }
   // | expr ">" expr { $$ = nullptr; }
   // | expr ">=" expr { $$ = nullptr; }

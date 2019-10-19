@@ -21,6 +21,19 @@ struct ParseNode {
   int type;
 };
 
+enum BinExprOp {
+  EQ,
+  NEQ,
+  GT,
+  GE,
+  LT,
+  LE,
+  PLUS,
+  MINUS,
+  MULT,
+  DIV,
+};
+
 struct NBinExpr {
   int type;
 
