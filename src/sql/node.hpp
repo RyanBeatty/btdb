@@ -1,22 +1,60 @@
 #ifndef NODE_HH
 #define NODE_HH
 #include <map>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <variant>
-#include "parser.hpp"
+#include <vector>
 
 namespace btdb {
 namespace sql {
 
+// Need forward decls in order for ParseTreeVisitor to compile.
+struct Node;
+struct NExpr;
+struct NBinExpr;
+struct NStringLit;
+struct NIdentifier;
+struct NWhereClause;
+struct NSelect;
+
+struct ParseTreeVisitor {
+  virtual void visit(NExpr& expr) = 0;
+  virtual void visit(NBinExpr& bin_expr) = 0;
+  virtual void visit(NStringLit& string_lit) = 0;
+  virtual void visit(NIdentifier& identifier) = 0;
+  virtual void visit(NWhereClause& where_clause) = 0;
+  virtual void visit(NSelect& select) = 0;
+};
+
+struct PrintParseTreeVisitor : ParseTreeVisitor {
+  PrintParseTreeVisitor(Node& parse_tree);
+  std::string PrettyPrint();
+  void visit(NExpr& expr) override;
+  void visit(NBinExpr& bin_expr) override;
+  void visit(NStringLit& string_lit) override;
+  void visit(NIdentifier& id) override;
+  void visit(NWhereClause& where_clause) override;
+  void visit(NSelect& select) override;
+
+  Node& parse_tree;
+  uint64_t ident;
+  std::ostringstream oss;
+};
+
 struct Node {
+  virtual void accept(ParseTreeVisitor& visitor) = 0;
 };
 
 struct NExpr : Node {
+  virtual void accept(ParseTreeVisitor& visitor) override;
 };
 
 struct NBinExpr : NExpr {
   NBinExpr(int op, NExpr& lhs, NExpr& rhs) : op(op), lhs(lhs), rhs(rhs) {}
 
+  virtual void accept(ParseTreeVisitor& visitor) override;
   int op;
   NExpr& lhs;
   NExpr& rhs;
@@ -25,19 +63,34 @@ struct NBinExpr : NExpr {
 struct NStringLit : NExpr {
   NStringLit(std::string lit) : val(lit) {}
 
+  virtual void accept(ParseTreeVisitor& visitor) override;
+
   std::string val;
 };
 
 struct NIdentifier : NExpr {
   NIdentifier(std::string identifier) : identifier(identifier) {}
+  virtual void accept(ParseTreeVisitor& visitor) override;
 
   std::string identifier;
 };
 
-struct WhereClause {
-  std::string column_name;
-  std::string value_name;
+struct NWhereClause : Node {
+  NWhereClause(NExpr& expr) : expr(expr) {}
+  virtual void accept(ParseTreeVisitor& visitor) override;
+
+  NExpr& expr;
 };
+
+struct NSelect : Node {
+  virtual void accept(ParseTreeVisitor& visitor) override;
+
+  std::vector<NIdentifier> select_list;
+  NIdentifier table_name;
+  std::optional<NWhereClause> where_clause;
+};
+
+struct WhereClause {};
 
 struct SelectStmt {
   SelectStmt(const std::vector<std::string>& select_lists, const std::string& table_names,

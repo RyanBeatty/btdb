@@ -10,14 +10,13 @@
 // This code goes in parser.hpp
 %code requires {
   #include <memory>
+  #include "node.hpp"
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
   namespace btdb {
     namespace sql {
       struct ParserContext;
-      struct WhereClause;
-      struct NExpr;
     }}
 }
 
@@ -63,7 +62,7 @@
 
 %type <std::vector<std::string>> column_exp
 %type <std::unique_ptr<btdb::sql::WhereClause>> where_clause
-%type <btdb::sql::NExpr*> expr
+%type <btdb::sql::NExpr> expr
 // %type <void*> term
 %type <void*> factor
 
@@ -91,20 +90,20 @@ where_clause:
 %left "+" "-";
 %left "*" "/";
 expr:
-  STRING_GROUP { $$ = new btdb::sql::NIdentifier($1); }
-  | STRING_LITERAL { $$ = new btdb::sql::NStringLit($1); }
-  | expr "=" expr { $$ = nullptr; }
-  | expr "!=" expr { $$ = nullptr; }
-  | expr ">" expr { $$ = nullptr; }
-  | expr ">=" expr { $$ = nullptr; }
-  | expr "<" expr { $$ = nullptr; }
-  | expr "<=" expr { $$ = nullptr; }
-  | expr "+" expr { $$ = nullptr; }
-  | expr "-" expr { $$ = nullptr; }
-  | expr "*" expr { $$ = nullptr; }
-  | expr "/" expr { $$ = nullptr; }
-  | expr AND expr { $$ = nullptr; }
-  | expr OR expr { $$ = nullptr; }
+  STRING_GROUP { $$ = btdb::sql::NIdentifier($1); }
+  | STRING_LITERAL { $$ = btdb::sql::NStringLit($1); }
+  // | expr "=" expr { $$ = nullptr; }
+  // | expr "!=" expr { $$ = nullptr; }
+  // | expr ">" expr { $$ = nullptr; }
+  // | expr ">=" expr { $$ = nullptr; }
+  // | expr "<" expr { $$ = nullptr; }
+  // | expr "<=" expr { $$ = nullptr; }
+  // | expr "+" expr { $$ = nullptr; }
+  // | expr "-" expr { $$ = nullptr; }
+  // | expr "*" expr { $$ = nullptr; }
+  // | expr "/" expr { $$ = nullptr; }
+  // | expr AND expr { $$ = nullptr; }
+  // | expr OR expr { $$ = nullptr; }
 
 
 

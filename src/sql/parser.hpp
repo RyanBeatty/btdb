@@ -47,17 +47,16 @@
 #line 11 "parser.y"
 
   #include <memory>
+  #include "node.hpp"
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
   namespace btdb {
     namespace sql {
       struct ParserContext;
-      struct WhereClause;
-      struct NExpr;
     }}
 
-#line 61 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 60 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -172,7 +171,7 @@
 #endif
 
 namespace yy {
-#line 176 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 175 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -377,7 +376,7 @@ namespace yy {
     union union_type
     {
       // expr
-      char dummy1[sizeof (btdb::sql::NExpr*)];
+      char dummy1[sizeof (btdb::sql::NExpr)];
 
       // STRING_GROUP
       // STRING_LITERAL
@@ -500,12 +499,12 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, btdb::sql::NExpr*&& v)
+      basic_symbol (typename Base::kind_type t, btdb::sql::NExpr&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const btdb::sql::NExpr*& v)
+      basic_symbol (typename Base::kind_type t, const btdb::sql::NExpr& v)
         : Base (t)
         , value (v)
       {}
@@ -567,7 +566,7 @@ namespace yy {
 switch (yytype)
     {
       case 26: // expr
-        value.template destroy< btdb::sql::NExpr* > ();
+        value.template destroy< btdb::sql::NExpr > ();
         break;
 
       case 20: // STRING_GROUP
@@ -1320,7 +1319,7 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 47,     ///< Last index in yytable_.
+      yylast_ = 11,     ///< Last index in yytable_.
       yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
@@ -1393,7 +1392,7 @@ switch (yytype)
     switch (this->type_get ())
     {
       case 26: // expr
-        value.move< btdb::sql::NExpr* > (std::move (that.value));
+        value.move< btdb::sql::NExpr > (std::move (that.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1424,7 +1423,7 @@ switch (yytype)
     switch (this->type_get ())
     {
       case 26: // expr
-        value.copy< btdb::sql::NExpr* > (YY_MOVE (that.value));
+        value.copy< btdb::sql::NExpr > (YY_MOVE (that.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1463,7 +1462,7 @@ switch (yytype)
     switch (this->type_get ())
     {
       case 26: // expr
-        value.move< btdb::sql::NExpr* > (YY_MOVE (s.value));
+        value.move< btdb::sql::NExpr > (YY_MOVE (s.value));
         break;
 
       case 20: // STRING_GROUP
@@ -1550,7 +1549,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1554 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1553 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
