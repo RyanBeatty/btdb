@@ -132,15 +132,87 @@ expr:
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
     }
-  // | expr "!=" expr { $$ = nullptr; }
-  // | expr ">" expr { $$ = nullptr; }
-  // | expr ">=" expr { $$ = nullptr; }
-  // | expr "<" expr { $$ = nullptr; }
-  // | expr "<=" expr { $$ = nullptr; }
-  // | expr "+" expr { $$ = nullptr; }
-  // | expr "-" expr { $$ = nullptr; }
-  // | expr "*" expr { $$ = nullptr; }
-  // | expr "/" expr { $$ = nullptr; }
+  | expr "!=" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::NEQ;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr ">" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::GT;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr ">=" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::GE;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "<" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::LT;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "<=" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::LE;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "+" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::PLUS;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "-" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::MINUS;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "*" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::MULT;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
+  | expr "/" expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::DIV;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
   // | expr AND expr { $$ = nullptr; }
   // | expr OR expr { $$ = nullptr; }
 
