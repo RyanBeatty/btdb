@@ -34,7 +34,11 @@ enum BinExprOp {
   MINUS,
   MULT,
   DIV,
+  AND,
+  OR,
 };
+
+std::string bin_expr_op_to_string(int op);
 
 struct NBinExpr {
   int type;

@@ -101,6 +101,7 @@ stmt: expr {
 //     $$ = where;
 //   }
 
+%left AND OR;
 %left "<" ">" "=" "!=" "<=" ">=";
 %left "+" "-";
 %left "*" "/";
@@ -213,8 +214,24 @@ expr:
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
     }
-  // | expr AND expr { $$ = nullptr; }
-  // | expr OR expr { $$ = nullptr; }
+  | expr AND expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::AND;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }  
+  | expr OR expr { 
+      NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
+      assert(bin_expr != NULL);
+      bin_expr->type = btdb::sql::NBIN_EXPR;
+      bin_expr->op = btdb::sql::OR;
+      bin_expr->lhs = $1;
+      bin_expr->rhs = $3;
+      $$ = (ParseNode*)bin_expr;
+    }
 
 
 %%

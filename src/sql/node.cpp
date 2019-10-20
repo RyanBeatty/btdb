@@ -52,6 +52,48 @@ void free_parse_node(ParseNode* node) {
   }
 }
 
+std::string bin_expr_op_to_string(int op) {
+  switch (op) {
+    case EQ: {
+      return "EQ";
+    }
+    case NEQ: {
+      return "NEQ";
+    }
+    case GT: {
+      return "GT";
+    }
+    case GE: {
+      return "GE";
+    }
+    case LT: {
+      return "LT";
+    }
+    case LE: {
+      return "LE";
+    }
+    case PLUS: {
+      return "PLUS";
+    }
+    case MINUS: {
+      return "MINUS";
+    }
+    case MULT: {
+      return "MULT";
+    }
+    case DIV: {
+      return "DIV";
+    }
+    case AND: {
+      return "AND";
+    }
+    case OR: {
+      return "OR";
+    }
+    default: { Panic("Unknown BinExpOp"); }
+  }
+}
+
 void print_parse_node(ParseNode* node, PrintContext& ctx) {
   if (node == nullptr) {
     return;
@@ -68,6 +110,7 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
     case NBIN_EXPR: {
       NBinExpr* bin_expr = (NBinExpr*)(node);
       ctx.PrintObject("NBinExpr");
+      ctx.PrintChild("op", bin_expr_op_to_string(bin_expr->op));
       if (bin_expr->lhs != nullptr) {
         ctx.PrintObject("lhs");
         print_parse_node(bin_expr->lhs, ctx);
