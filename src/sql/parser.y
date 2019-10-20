@@ -68,13 +68,12 @@
 %token <std::string> STRING_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-// %type <std::optional<btdb::sql::NWhereClause>> where_clause
-%type <ParseNode*> expr
+%type <ParseNode*> expr where_clause
 
 %%
 %start stmt;
 
-stmt: expr {
+stmt: where_clause {
   ctx.tree = std::make_unique<ParseTree>($1);
 }
 
@@ -90,16 +89,11 @@ stmt: expr {
 //   | STRING_GROUP "," column_exp { $$ = $3; $$.push_back($1); }
 
 
-// where_clause:
-//   /* empty */ { $$ = std::nullopt; }
-//   | WHERE expr { 
-//     auto where = btdb::sql::NWhereClause(*$2.get());
-//     btdb::sql::Node& expr = where;
-//     btdb::sql::PrintParseTreeVisitor pp(expr);
-//     std::cout << "test: " << pp.PrettyPrint() << std::endl;
-//     //$$ = std::make_unique<btdb::sql::WhereClause>(btdb::sql::WhereClause{ $2, $4});
-//     $$ = where;
-//   }
+where_clause:
+  /* empty */ { $$ = nullptr; }
+  | WHERE expr {
+      $$ = $2;
+    }
 
 %left AND OR;
 %left "<" ">" "=" "!=" "<=" ">=";

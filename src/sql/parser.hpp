@@ -380,6 +380,7 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // where_clause
       // expr
       char dummy1[sizeof (ParseNode*)];
 
@@ -542,7 +543,8 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 24: // expr
+      case 24: // where_clause
+      case 25: // expr
         value.template destroy< ParseNode* > ();
         break;
 
@@ -1288,9 +1290,9 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 42,     ///< Last index in yytable_.
-      yynnts_ = 3,  ///< Number of nonterminal symbols.
-      yyfinal_ = 5, ///< Termination state number.
+      yylast_ = 43,     ///< Last index in yytable_.
+      yynnts_ = 4,  ///< Number of nonterminal symbols.
+      yyfinal_ = 7, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 22  ///< Number of tokens.
@@ -1360,7 +1362,8 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 24: // expr
+      case 24: // where_clause
+      case 25: // expr
         value.move< ParseNode* > (std::move (that.value));
         break;
 
@@ -1383,7 +1386,8 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 24: // expr
+      case 24: // where_clause
+      case 25: // expr
         value.copy< ParseNode* > (YY_MOVE (that.value));
         break;
 
@@ -1414,7 +1418,8 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 24: // expr
+      case 24: // where_clause
+      case 25: // expr
         value.move< ParseNode* > (YY_MOVE (s.value));
         break;
 
@@ -1494,7 +1499,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1498 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1503 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
