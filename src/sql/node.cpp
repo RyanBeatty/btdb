@@ -52,7 +52,7 @@ void free_parse_node(ParseNode* node) {
   }
 }
 
-std::string bin_expr_op_to_string(int op) {
+std::string bin_expr_op_to_string(BinExprOp op) {
   switch (op) {
     case EQ: {
       return "EQ";

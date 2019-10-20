@@ -16,10 +16,10 @@ namespace sql {
 
 void Panic(const std::string& msg);
 
-enum { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT };
+enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT };
 
 struct ParseNode {
-  int type;
+  ParseNodeType type;
 };
 static_assert(std::is_pod<ParseNode>::value);
 
@@ -38,26 +38,26 @@ enum BinExprOp {
   OR,
 };
 
-std::string bin_expr_op_to_string(int op);
+std::string bin_expr_op_to_string(BinExprOp op);
 
 struct NBinExpr {
-  int type;
+  ParseNodeType type;
 
-  int op;
+  BinExprOp op;
   ParseNode* lhs;
   ParseNode* rhs;
 };
 static_assert(std::is_pod<NBinExpr>::value);
 
 struct NIdentifier {
-  int type;
+  ParseNodeType type;
 
   char* identifier;
 };
 static_assert(std::is_pod<NIdentifier>::value);
 
 struct NStringLit {
-  int type;
+  ParseNodeType type;
 
   char* str_lit;
 };
