@@ -16,12 +16,21 @@ namespace sql {
 
 void Panic(const std::string& msg);
 
-enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT };
+enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT };
 
 struct ParseNode {
   ParseNodeType type;
 };
 static_assert(std::is_pod<ParseNode>::value);
+
+struct List {
+  // Need double pointer because we want array of ParseNode*'s. Else we can't cast items to right type
+  // based on tag.
+  ParseNode** items;
+  uint64_t length;
+  uint64_t capacity;
+};
+static_assert(std::is_pod<List>::value);
 
 enum BinExprOp {
   EQ,
@@ -62,6 +71,15 @@ struct NStringLit {
   char* str_lit;
 };
 static_assert(std::is_pod<NStringLit>::value);
+
+struct NSelectStmt {
+  ParseNodeType type;
+
+  List* target_list;
+  ParseNode* table_name;
+  ParseNode* where_clause;
+};
+static_assert(std::is_pod<NSelectStmt>::value);
 
 void free_parse_node(ParseNode* node);
 

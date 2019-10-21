@@ -53,6 +53,8 @@
   using btdb::sql::NIdentifier;
   using btdb::sql::NStringLit;
   using btdb::sql::NBinExpr;
+  using btdb::sql::List;
+  using btdb::sql::NSelectStmt;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -61,7 +63,7 @@
       struct ParserContext;
     }}
 
-#line 65 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 67 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -176,7 +178,7 @@
 #endif
 
 namespace yy {
-#line 180 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 182 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -380,13 +382,18 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // target_list
+      char dummy1[sizeof (List*)];
+
+      // select_stmt
+      // from_clause
       // where_clause
       // expr
-      char dummy1[sizeof (ParseNode*)];
+      char dummy2[sizeof (ParseNode*)];
 
       // STRING_GROUP
       // STRING_LITERAL
-      char dummy2[sizeof (std::string)];
+      char dummy3[sizeof (std::string)];
     };
 
     /// The size of the largest semantic type.
@@ -499,6 +506,17 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, List*&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const List*& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, ParseNode*&& v)
         : Base (t)
         , value (std::move (v))
@@ -543,8 +561,14 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 24: // where_clause
-      case 25: // expr
+      case 25: // target_list
+        value.template destroy< List* > ();
+        break;
+
+      case 24: // select_stmt
+      case 26: // from_clause
+      case 27: // where_clause
+      case 28: // expr
         value.template destroy< ParseNode* > ();
         break;
 
@@ -1043,7 +1067,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1061,7 +1085,7 @@ switch (yytype)
     static const char* const yytname_[];
 
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned char yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -1290,9 +1314,9 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 43,     ///< Last index in yytable_.
-      yynnts_ = 4,  ///< Number of nonterminal symbols.
-      yyfinal_ = 7, ///< Termination state number.
+      yylast_ = 52,     ///< Last index in yytable_.
+      yynnts_ = 7,  ///< Number of nonterminal symbols.
+      yyfinal_ = 6, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 22  ///< Number of tokens.
@@ -1362,8 +1386,14 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 24: // where_clause
-      case 25: // expr
+      case 25: // target_list
+        value.move< List* > (std::move (that.value));
+        break;
+
+      case 24: // select_stmt
+      case 26: // from_clause
+      case 27: // where_clause
+      case 28: // expr
         value.move< ParseNode* > (std::move (that.value));
         break;
 
@@ -1386,8 +1416,14 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 24: // where_clause
-      case 25: // expr
+      case 25: // target_list
+        value.copy< List* > (YY_MOVE (that.value));
+        break;
+
+      case 24: // select_stmt
+      case 26: // from_clause
+      case 27: // where_clause
+      case 28: // expr
         value.copy< ParseNode* > (YY_MOVE (that.value));
         break;
 
@@ -1418,8 +1454,14 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 24: // where_clause
-      case 25: // expr
+      case 25: // target_list
+        value.move< List* > (YY_MOVE (s.value));
+        break;
+
+      case 24: // select_stmt
+      case 26: // from_clause
+      case 27: // where_clause
+      case 28: // expr
         value.move< ParseNode* > (YY_MOVE (s.value));
         break;
 
@@ -1499,7 +1541,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1503 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1545 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

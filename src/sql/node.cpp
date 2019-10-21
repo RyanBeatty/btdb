@@ -45,6 +45,20 @@ void free_parse_node(ParseNode* node) {
       free(str_lit);
       break;
     }
+    case NSELECT_STMT: {
+        NSelectStmt* select = (NSelectStmt*) node;
+        assert(select->target_list != nullptr);
+        assert(select->target_list->items != nullptr);
+        for(uint64_t i = 0; i < select->target_list->length; ++i) {
+            free_parse_node(select->target_list->items[i]);
+        }
+        free(select->target_list->items);
+        free(select->target_list);
+        free_parse_node(select->table_name);
+        free_parse_node(select->where_clause);
+        free(select);
+        break;
+    }
     default: {
       Panic("Unkown Parse Node Type");
       break;
@@ -130,6 +144,26 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       ctx.PrintChild("str_lit", str_lit->str_lit);
       ctx.EndObject();
       break;
+    }
+    case NSELECT_STMT: {
+        NSelectStmt* select = (NSelectStmt*) node;
+        ctx.PrintObject("NSelectStmt");
+        assert(select->target_list != nullptr);
+        assert(select->target_list->items != nullptr);
+        ctx.PrintObject("target_list");
+        auto* items = select->target_list->items;
+        for (uint64_t i = 0; i < select->target_list->length; ++i) {
+            print_parse_node(items[i], ctx);
+        }
+        ctx.EndObject();
+        ctx.PrintObject("table_name");
+        print_parse_node(select->table_name, ctx);
+        ctx.EndObject();
+        ctx.PrintObject("where_clause");
+        print_parse_node(select->where_clause, ctx);
+        ctx.EndObject();
+        ctx.EndObject();
+        break;
     }
     default: {
       Panic("Unkown Parse Node Type");
