@@ -9,7 +9,7 @@
 
 // This code goes in parser.hpp
 %code requires {
-  #include "node.hpp"
+  #include "sql/node.hpp"
 
   using btdb::sql::ParseNode;
   using btdb::sql::ParseTree;
@@ -37,7 +37,7 @@
   #include <iostream>
   #include <memory>
   #include <string.h>
-  #include "context.hpp"
+  #include "sql/context.hpp"
 }
 
 //%locations

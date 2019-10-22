@@ -515,8 +515,8 @@ char *yytext;
 #line 1 "scanner.l"
 /* recognize tokens for the calculator and print them out */
 #line 3 "scanner.l"
-  #include "parser.hpp"
-  #include "context.hpp"
+  #include "sql/parser.hpp"
+  #include "sql/context.hpp"
 
 #define YY_NO_INPUT 1
 #line 523 "/home/rbeatty/Projects/BTDB/src/sql/scanner.cpp"

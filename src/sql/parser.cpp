@@ -48,7 +48,7 @@
   #include <iostream>
   #include <memory>
   #include <string.h>
-  #include "context.hpp"
+  #include "sql/context.hpp"
 
 #line 54 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 

@@ -3,8 +3,8 @@
 #include <map>
 #include <string>
 #include <variant>
-#include "node.hpp"
-#include "parser.hpp"
+#include "sql/node.hpp"
+#include "sql/parser.hpp"
 
 // Give Flex the prototype of yylex we want ...
 #define YY_DECL yy::parser::symbol_type yylex(btdb::sql::ParserContext& context)

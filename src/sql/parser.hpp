@@ -46,7 +46,7 @@
 // //                    "%code requires" blocks.
 #line 11 "parser.y"
 
-  #include "node.hpp"
+  #include "sql/node.hpp"
 
   using btdb::sql::ParseNode;
   using btdb::sql::ParseTree;
