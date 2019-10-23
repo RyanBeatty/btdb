@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 #include "sql/context.hpp"
+#include "sql/node.hpp"
 
 namespace btdb {
 
@@ -34,19 +35,15 @@ struct TableDef {
 
 struct SystemCatalog {
   std::unordered_map<std::string, TableDef> tables;
-  bool ValidateStmt(sql::RawStmt& stmt) {
-    switch (stmt.index()) {
-      case 0: {
-        const sql::SelectStmt select = std::get<sql::SelectStmt>(stmt);
-        if (this->tables.find(select.table_name) == this->tables.end()) {
-          return false;
-        }
-        break;
-      }
-      default:
-        Panic("Unknown Statement Type");
-    }
 
+  bool ValidateParseTree(sql::ParseTree& tree) {
+    assert(tree.tree != nullptr);
+    sql::ParseNode* node = tree.tree;
+    assert(node->type == sql::NSELECT_STMT);
+    sql::NSelectStmt* select = (sql::NSelectStmt*)node;
+    assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
+    auto* table_id = (sql::NIdentifier*)select->table_name;
+    if (this->tables.find(table_id->identifier) == tables.end()) return false;
     return true;
   }
 };
@@ -58,18 +55,26 @@ struct SelectQuery {
 
 typedef std::variant<SelectQuery> Query;
 
-Query AnalyzeAndRewriteStmt(sql::RawStmt& stmt) {
-  Query query;
-  switch (stmt.index()) {
-    case 0: {
-      const sql::SelectStmt select = std::get<sql::SelectStmt>(stmt);
-      query = SelectQuery{select.select_list, std::vector<std::string>{select.table_name}};
-      break;
-    }
-    default:
-      Panic("Unknown Statement Type");
+Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
+  assert(tree.tree != nullptr);
+  ParseNode* node = tree.tree;
+  assert(node->type == sql::NSELECT_STMT);
+  sql::NSelectStmt* select = (NSelectStmt*)node;
+  assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
+  sql::NIdentifier* identifier = (sql::NIdentifier*)select->table_name;
+  auto table_name = std::string(identifier->identifier);
+
+  assert(select->target_list != nullptr);
+  auto* target_list = select->target_list;
+  std::vector<std::string> targets;
+  for (uint64_t i = 0; i < target_list->length; ++i) {
+    auto* item = target_list->items[i];
+    assert(item != nullptr && item->type == sql::NIDENTIFIER);
+    sql::NIdentifier* target = (sql::NIdentifier*)item;
+    targets.push_back(target->identifier);
   }
-  return query;
+
+  return SelectQuery{targets, std::vector<std::string>{table_name}};
 }
 
 // TODO: Figure out what a tuple will actually look like.
@@ -152,12 +157,12 @@ int main() {
     if (parser.Parse() != 0) {
       continue;
     }
-    auto stmt = parser.stmt;
-    if (!catalog.ValidateStmt(stmt)) {
+    auto tree = std::move(parser.tree);
+    if (!catalog.ValidateParseTree(*tree.get())) {
       std::cout << "Query not valid" << std::endl;
       continue;
     }
-    auto query = btdb::AnalyzeAndRewriteStmt(stmt);
+    auto query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(std::move(plan));
     std::cout << "Results:" << std::endl;
