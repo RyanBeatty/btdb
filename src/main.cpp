@@ -21,8 +21,6 @@
 
 namespace btdb {
 
-static std::vector<std::string> Tuples;
-
 void Panic(const std::string& msg) {
   std::cerr << "Panic: " << msg << std::endl;
   exit(EXIT_FAILURE);
@@ -99,7 +97,10 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
 }
 
 // TODO: Figure out what a tuple will actually look like.
-typedef std::unique_ptr<std::string> MTuple;
+typedef std::unordered_map<std::string, std::string> Tuple;
+typedef std::unique_ptr<Tuple> MTuple;
+
+static std::vector<Tuple> Tuples;
 
 struct SequentialScan {
   uint64_t next_index = 0;
@@ -108,7 +109,7 @@ struct SequentialScan {
     if (next_index >= Tuples.size()) {
       return nullptr;
     } else {
-      auto tpl = std::make_unique<std::string>(Tuples[next_index]);
+      auto tpl = std::make_unique<Tuple>(Tuples[next_index]);
       ++next_index;
       return tpl;
     }
@@ -146,12 +147,19 @@ std::unique_ptr<Plan> PlanQuery(Query& query) {
   return plan;
 }
 
-std::unique_ptr<std::vector<std::string>> execute_plan(std::unique_ptr<Plan> plan) {
-  auto results = std::make_unique<std::vector<std::string>>();
-  auto str = plan->GetNext();
-  while (str != nullptr) {
-    results->emplace_back(*str);
-    str = plan->GetNext();
+struct Result {
+  std::vector<std::string> columns;
+  std::vector<MTuple> tuples;
+};
+
+Result execute_plan(std::unique_ptr<Plan> plan) {
+  Result results;
+  // TODO: Don't hardocde this, get from query plan.
+  results.columns.push_back("bar");
+  auto mtuple = plan->GetNext();
+  while (mtuple != nullptr) {
+    results.tuples.push_back(std::move(mtuple));
+    mtuple = plan->GetNext();
   }
   return results;
 }
@@ -163,8 +171,12 @@ int main() {
 
   btdb::TableDef table = {"foo", {"bar"}};
   auto catalog = btdb::SystemCatalog{{table}};
-  btdb::Tuples.emplace_back("hello");
-  btdb::Tuples.emplace_back("world");
+  btdb::Tuple t1;
+  t1["bar"] = "hello";
+  btdb::Tuple t2;
+  t2["bar"] = "world";
+  btdb::Tuples.push_back(t1);
+  btdb::Tuples.push_back(t2);
   while (true) {
     std::cout << "btdb> ";
     std::string line;
@@ -187,9 +199,21 @@ int main() {
     auto query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(std::move(plan));
-    std::cout << "Results:" << std::endl;
-    for (const auto& result : *results.get()) {
-      std::cout << "\t" << result << std::endl;
+    for (const auto& column : results.columns) {
+      std::cout << column << "\t";
+    }
+    std::cout << std::endl;
+    std::cout << "===============" << std::endl;
+    for (auto&& mtuple : results.tuples) {
+      assert(mtuple != nullptr);
+      for (const auto& column : results.columns) {
+        auto it = mtuple->find(column);
+        if (it != mtuple->end()) {
+          std::cout << it->second;
+        }
+        std::cout << "\t";
+      }
+      std::cout << std::endl;
     }
   }
   if (std::cin.bad()) {
