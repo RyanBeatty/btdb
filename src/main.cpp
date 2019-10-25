@@ -34,7 +34,8 @@ struct TableDef {
 };
 
 struct SystemCatalog {
-  std::unordered_map<std::string, TableDef> tables;
+  // std::unordered_map<std::string, TableDef> tables;
+  std::vector<TableDef> tables;
 
   bool ValidateParseTree(sql::ParseTree& tree) {
     assert(tree.tree != nullptr);
@@ -43,7 +44,27 @@ struct SystemCatalog {
     sql::NSelectStmt* select = (sql::NSelectStmt*)node;
     assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
     auto* table_id = (sql::NIdentifier*)select->table_name;
-    if (this->tables.find(table_id->identifier) == tables.end()) return false;
+    auto table_def_it = tables.begin();
+    for (; table_def_it != tables.end(); ++table_def_it) {
+      if (table_def_it->name == table_id->identifier) {
+        break;
+      }
+    }
+    if (table_def_it == tables.end()) {
+      return false;
+    }
+    auto* target_list = select->target_list;
+    for (uint64_t i = 0; i < target_list->length; ++i) {
+      auto* item = target_list->items[i];
+      assert(item != nullptr);
+      assert(item->type == sql::NIDENTIFIER);
+      sql::NIdentifier* col = (sql::NIdentifier*)item;
+      assert(col->identifier != nullptr);
+      if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
+                    col->identifier) == table_def_it->col_names.end()) {
+        return false;
+      }
+    }
     return true;
   }
 };
@@ -81,7 +102,7 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
 typedef std::unique_ptr<std::string> MTuple;
 
 struct SequentialScan {
-  int next_index = 0;
+  uint64_t next_index = 0;
   void Open() {}
   MTuple GetNext() {
     if (next_index >= Tuples.size()) {
@@ -140,7 +161,8 @@ std::unique_ptr<std::vector<std::string>> execute_plan(std::unique_ptr<Plan> pla
 int main() {
   std::cout << "Starting btdb" << std::endl;
 
-  auto catalog = btdb::SystemCatalog{{{"foo", {"bar"}}}};
+  btdb::TableDef table = {"foo", {"bar"}};
+  auto catalog = btdb::SystemCatalog{{table}};
   btdb::Tuples.emplace_back("hello");
   btdb::Tuples.emplace_back("world");
   while (true) {
