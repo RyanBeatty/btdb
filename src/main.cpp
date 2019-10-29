@@ -70,14 +70,14 @@ struct SystemCatalog {
     }
 
     if (select->where_clause != nullptr) {
-      if (CheckType(select->where_clause) == T_UNKNOWN) {
+      if (CheckType(select->where_clause, *table_def_it) == T_UNKNOWN) {
         return false;
       }
     }
     return true;
   }
 
-  BType CheckType(sql::ParseNode* node) {
+  BType CheckType(sql::ParseNode* node, TableDef& table_def) {
     assert(node != nullptr);
     switch(node->type) {
       case sql::NSTRING_LIT: {
@@ -85,14 +85,19 @@ struct SystemCatalog {
       }
       case sql::NIDENTIFIER: {
         // TODO(ryan): Not true in the future.
+        sql::NIdentifier* identifier = (NIdentifier*) node;
+        assert(identifier->identifier != nullptr);
+        if (std::find(table_def.col_names.begin(), table_def.col_names.end(), identifier->identifier) == table_def.col_names.end()) {
+          Panic("Invalid column name in bin expr");
+        }
         return T_STRING;
       }
       case sql::NBIN_EXPR: {
         sql::NBinExpr* expr = (sql::NBinExpr*) node;
         assert(expr->lhs != nullptr);
         assert(expr->rhs != nullptr);
-        auto lhs_type = CheckType(expr->lhs);
-        auto rhs_type = CheckType(expr->rhs);
+        auto lhs_type = CheckType(expr->lhs, table_def);
+        auto rhs_type = CheckType(expr->rhs, table_def);
         if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
           return T_UNKNOWN;
         }
