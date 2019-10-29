@@ -67,11 +67,11 @@ struct SystemCatalog {
                     col->identifier) == table_def_it->col_names.end()) {
         return false;
       }
+    }
 
-      if (select->where_clause != nullptr) {
-        if (CheckType(select->where_clause) == T_UNKNOWN) {
-          return false;
-        }
+    if (select->where_clause != nullptr) {
+      if (CheckType(select->where_clause) == T_UNKNOWN) {
+        return false;
       }
     }
     return true;
