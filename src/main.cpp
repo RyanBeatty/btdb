@@ -31,6 +31,12 @@ struct TableDef {
   std::vector<std::string> col_names;
 };
 
+enum BType {
+  T_UNKNOWN,
+  T_STRING,
+  T_BOOL,
+};
+
 struct SystemCatalog {
   std::vector<TableDef> tables;
 
@@ -61,8 +67,70 @@ struct SystemCatalog {
                     col->identifier) == table_def_it->col_names.end()) {
         return false;
       }
+
+      if (select->where_clause != nullptr) {
+        if (CheckType(select->where_clause) == T_UNKNOWN) {
+          return false;
+        }
+      }
     }
     return true;
+  }
+
+  BType CheckType(sql::ParseNode* node) {
+    assert(node != nullptr);
+    switch(node->type) {
+      case sql::NSTRING_LIT: {
+        return T_STRING;
+      }
+      case sql::NIDENTIFIER: {
+        // TODO(ryan): Not true in the future.
+        return T_STRING;
+      }
+      case sql::NBIN_EXPR: {
+        sql::NBinExpr* expr = (sql::NBinExpr*) node;
+        assert(expr->lhs != nullptr);
+        assert(expr->rhs != nullptr);
+        auto lhs_type = CheckType(expr->lhs);
+        auto rhs_type = CheckType(expr->rhs);
+        if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
+          return T_UNKNOWN;
+        }
+        switch(expr->op) {
+          case sql::AND:
+          case sql::OR: {
+            if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
+              return T_UNKNOWN;
+            }
+            return T_BOOL;
+          }
+          case sql::EQ:
+          case sql::NEQ: {
+            if (lhs_type != rhs_type) {
+              return T_UNKNOWN;
+            }
+            return T_BOOL;
+          }
+          case sql::GT:
+          case sql::GE:
+          case sql::LT:
+          case sql::LE: {
+            if (lhs_type != T_STRING || rhs_type != T_STRING) {
+              return T_UNKNOWN;
+            }
+            return T_STRING;
+          }
+          default: {
+            Panic("Unknown or Unsupported BinExprOp!");
+            return T_UNKNOWN;
+          }
+        }
+      }
+      default: {
+        Panic("Unknown ParseNode type!");
+        return T_UNKNOWN;
+      }
+    }
   }
 };
 
