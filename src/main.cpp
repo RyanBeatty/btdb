@@ -32,7 +32,6 @@ struct TableDef {
 };
 
 struct SystemCatalog {
-  // std::unordered_map<std::string, TableDef> tables;
   std::vector<TableDef> tables;
 
   bool ValidateParseTree(sql::ParseTree& tree) {
@@ -102,49 +101,69 @@ typedef std::unique_ptr<Tuple> MTuple;
 
 static std::vector<Tuple> Tuples;
 
-struct SequentialScan {
-  uint64_t next_index = 0;
-  void Open() {}
-  MTuple GetNext() {
-    if (next_index >= Tuples.size()) {
-      return nullptr;
-    } else {
-      auto tpl = std::make_unique<Tuple>(Tuples[next_index]);
-      ++next_index;
-      return tpl;
-    }
-  }
-  void Close() {}
-};
-
 struct Iterator {
   virtual void Open() = 0;
   virtual MTuple GetNext() = 0;
   virtual void Close() = 0;
 };
 
-struct SequentialIterator : Iterator {
-  SequentialScan scan;
-  SequentialIterator() {}
-  void Open() { scan.Open(); }
-  MTuple GetNext() { return scan.GetNext(); }
-  void Close() { return scan.Close(); }
-};
+// struct SequentialIterator : Iterator {
+//   SequentialScan scan;
+//   SequentialIterator() {}
+//   void Open() { scan.Open(); }
+//   MTuple GetNext() { return scan.GetNext(); }
+//   void Close() { return scan.Close(); }
+// };
 
 typedef Iterator Plan;
 
-std::unique_ptr<Plan> PlanQuery(Query& query) {
+
+struct SequentialScan : Iterator {
+  uint64_t next_index = 0;
+
+  std::vector<std::string> target_list;
+
+  SequentialScan(std::vector<std::string> target_list) : target_list(target_list) {}
+
+  void Open() {}
+  MTuple GetNext() {
+    if (next_index >= Tuples.size()) {
+      return nullptr;
+    } else {
+      Tuple result_tpl;
+      const auto& cur_tpl = Tuples[next_index];
+      for (const auto& target : target_list) {
+        auto it = cur_tpl.find(target);
+        assert(it != cur_tpl.end());
+        result_tpl[it->first] = it->second;
+      }
+      ++next_index;
+      return std::make_unique<Tuple>(result_tpl);
+    }
+  }
+  void Close() {}
+};
+
+
+struct PlanState {
+  std::vector<std::string> target_list;
   std::unique_ptr<Plan> plan;
+};
+
+PlanState PlanQuery(Query& query) {
+  PlanState plan_state;
   switch (query.index()) {
     case 0: {
       const SelectQuery& select_query = std::get<SelectQuery>(query);
-      plan = std::make_unique<SequentialIterator>(SequentialIterator{});
+      auto plan = std::make_unique<SequentialScan>(SequentialScan(select_query.target_list));
+      plan_state.target_list = select_query.target_list;
+      plan_state.plan = std::move(plan);
       break;
     }
     default:
       Panic("Unknown Query Type");
   }
-  return plan;
+  return plan_state;
 }
 
 struct Result {
@@ -152,10 +171,10 @@ struct Result {
   std::vector<MTuple> tuples;
 };
 
-Result execute_plan(std::unique_ptr<Plan> plan) {
+Result execute_plan(PlanState& plan_state) {
   Result results;
-  // TODO: Don't hardocde this, get from query plan.
-  results.columns.push_back("bar");
+  results.columns = plan_state.target_list;
+  auto* plan = plan_state.plan.get();
   auto mtuple = plan->GetNext();
   while (mtuple != nullptr) {
     results.tuples.push_back(std::move(mtuple));
@@ -169,12 +188,14 @@ Result execute_plan(std::unique_ptr<Plan> plan) {
 int main() {
   std::cout << "Starting btdb" << std::endl;
 
-  btdb::TableDef table = {"foo", {"bar"}};
+  btdb::TableDef table = {"foo", {"bar", "baz"}};
   auto catalog = btdb::SystemCatalog{{table}};
   btdb::Tuple t1;
   t1["bar"] = "hello";
+  t1["baz"] = "the quick brown fox";
   btdb::Tuple t2;
   t2["bar"] = "world";
+  t2["baz"] = "jumped over the lazy dog";
   btdb::Tuples.push_back(t1);
   btdb::Tuples.push_back(t2);
   while (true) {
@@ -197,8 +218,8 @@ int main() {
       continue;
     }
     auto query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
-    auto plan = btdb::PlanQuery(query);
-    auto results = btdb::execute_plan(std::move(plan));
+    auto plan_state = btdb::PlanQuery(query);
+    auto results = btdb::execute_plan(plan_state);
     for (const auto& column : results.columns) {
       std::cout << column << "\t";
     }
