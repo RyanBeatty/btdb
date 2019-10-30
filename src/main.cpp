@@ -37,6 +37,14 @@ enum BType {
   T_BOOL,
 };
 
+struct BValue {
+  BValue(BType type, void* data) : type(type), data(data) {}
+
+  BType type;
+  // TODO(ryan): REMEMBER TO FIGURE OUT BEST WAY TO DELETE THIS, WE LEAK MEM HERE.
+  void* data;
+};
+
 struct SystemCatalog {
   std::vector<TableDef> tables;
 
@@ -79,21 +87,22 @@ struct SystemCatalog {
 
   BType CheckType(sql::ParseNode* node, TableDef& table_def) {
     assert(node != nullptr);
-    switch(node->type) {
+    switch (node->type) {
       case sql::NSTRING_LIT: {
         return T_STRING;
       }
       case sql::NIDENTIFIER: {
         // TODO(ryan): Not true in the future.
-        sql::NIdentifier* identifier = (NIdentifier*) node;
+        sql::NIdentifier* identifier = (NIdentifier*)node;
         assert(identifier->identifier != nullptr);
-        if (std::find(table_def.col_names.begin(), table_def.col_names.end(), identifier->identifier) == table_def.col_names.end()) {
+        if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
+                      identifier->identifier) == table_def.col_names.end()) {
           Panic("Invalid column name in bin expr");
         }
         return T_STRING;
       }
       case sql::NBIN_EXPR: {
-        sql::NBinExpr* expr = (sql::NBinExpr*) node;
+        sql::NBinExpr* expr = (sql::NBinExpr*)node;
         assert(expr->lhs != nullptr);
         assert(expr->rhs != nullptr);
         auto lhs_type = CheckType(expr->lhs, table_def);
@@ -101,7 +110,7 @@ struct SystemCatalog {
         if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
           return T_UNKNOWN;
         }
-        switch(expr->op) {
+        switch (expr->op) {
           case sql::AND:
           case sql::OR: {
             if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
@@ -142,6 +151,9 @@ struct SystemCatalog {
 struct SelectQuery {
   std::vector<std::string> target_list;
   std::vector<std::string> range_table;
+  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
+  // ownership transfer eventually.
+  sql::ParseNode* where_clause;
 };
 
 typedef std::variant<SelectQuery> Query;
@@ -165,7 +177,7 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
     targets.push_back(target->identifier);
   }
 
-  return SelectQuery{targets, std::vector<std::string>{table_name}};
+  return SelectQuery{targets, std::vector<std::string>{table_name}, select->where_clause};
 }
 
 // TODO: Figure out what a tuple will actually look like.
@@ -190,21 +202,190 @@ struct Iterator {
 
 typedef Iterator Plan;
 
+std::optional<BValue> ExecPred(ParseNode* node, Tuple& cur_tuple) {
+  switch (node->type) {
+    case sql::NSTRING_LIT: {
+      sql::NStringLit* str_lit = (sql::NStringLit*)node;
+      assert(str_lit->str_lit != nullptr);
+      return BValue(T_STRING, new std::string(str_lit->str_lit));
+    }
+    case sql::NIDENTIFIER: {
+      // TODO(ryan): Not true in the future.
+      sql::NIdentifier* identifier = (NIdentifier*)node;
+      assert(identifier->identifier != nullptr);
+      auto it = cur_tuple.find(identifier->identifier);
+      assert(it != cur_tuple.end());
+      return BValue(T_STRING, new std::string(it->second));
+    }
+    case sql::NBIN_EXPR: {
+      sql::NBinExpr* expr = (sql::NBinExpr*)node;
+      assert(expr->lhs != nullptr);
+      assert(expr->rhs != nullptr);
+      auto lhs_value = ExecPred(expr->lhs, cur_tuple);
+      auto rhs_value = ExecPred(expr->rhs, cur_tuple);
+      if (lhs_value == std::nullopt || rhs_value == std::nullopt) {
+        return std::nullopt;
+      }
+      switch (expr->op) {
+        case sql::AND: {
+          assert(lhs_value->type == T_BOOL);
+          assert(rhs_value->type == T_BOOL);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          bool* lhs_data = (bool*) lhs_value->data;
+          bool* rhs_data = (bool*) rhs_value->data;
+          return BValue(T_BOOL, new bool(*lhs_data && *rhs_data));
+        }
+        case sql::OR: {
+          assert(lhs_value->type == T_BOOL);
+          assert(rhs_value->type == T_BOOL);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          bool* lhs_data = (bool*) lhs_value->data;
+          bool* rhs_data = (bool*) rhs_value->data;
+          return BValue(T_BOOL, new bool(*lhs_data || *rhs_data));
+        }
+        case sql::EQ: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
+          } else {
+            Panic("Invalid type for eq");
+            return std::nullopt;
+          }
+        }
+        case sql::NEQ: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
+          } else {
+            Panic("Invalid type for neq");
+            return std::nullopt;
+          }
+        }
+        case sql::GT: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
+          } else {
+            Panic("Invalid type for gt");
+            return std::nullopt;
+          }
+        }
+        case sql::GE: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
+          } else {
+            Panic("Invalid type for ge");
+            return std::nullopt;
+          }
+        }
+        case sql::LT: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
+          } else {
+            Panic("Invalid type for lt");
+            return std::nullopt;
+          }
+        }
+        case sql::LE: {
+          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
+          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
+          assert(lhs_value->data != nullptr);
+          assert(rhs_value->data != nullptr);
+          if (lhs_value->type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value->data;
+            bool* rhs_data = (bool*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
+          } else if (lhs_value->type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value->data;
+            std::string* rhs_data = (std::string*) rhs_value->data;
+            return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
+          } else {
+            Panic("Invalid type for le");
+            return std::nullopt;
+          }
+        }
+        default: {
+          Panic("Unknown or Unsupported BinExprOp!");
+          return std::nullopt;
+        }
+      }
+    }
+    default: {
+      Panic("Unknown ParseNode type!");
+      return std::nullopt;
+    }
+  }
+}
 
 struct SequentialScan : Iterator {
   uint64_t next_index = 0;
 
   std::vector<std::string> target_list;
+  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
+  // ownership transfer eventually.
+  sql::ParseNode* where_clause;
 
-  SequentialScan(std::vector<std::string> target_list) : target_list(target_list) {}
+  SequentialScan(std::vector<std::string> target_list, sql::ParseNode* where_clause)
+      : target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
   MTuple GetNext() {
     if (next_index >= Tuples.size()) {
       return nullptr;
     } else {
-      Tuple result_tpl;
       const auto& cur_tpl = Tuples[next_index];
+
+      // Column projections.
+      Tuple result_tpl;
       for (const auto& target : target_list) {
         auto it = cur_tpl.find(target);
         assert(it != cur_tpl.end());
@@ -217,7 +398,6 @@ struct SequentialScan : Iterator {
   void Close() {}
 };
 
-
 struct PlanState {
   std::vector<std::string> target_list;
   std::unique_ptr<Plan> plan;
@@ -228,7 +408,7 @@ PlanState PlanQuery(Query& query) {
   switch (query.index()) {
     case 0: {
       const SelectQuery& select_query = std::get<SelectQuery>(query);
-      auto plan = std::make_unique<SequentialScan>(SequentialScan(select_query.target_list));
+      auto plan = std::make_unique<SequentialScan>(SequentialScan(select_query.target_list, select_query.where_clause));
       plan_state.target_list = select_query.target_list;
       plan_state.plan = std::move(plan);
       break;
