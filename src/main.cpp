@@ -202,7 +202,7 @@ struct Iterator {
 
 typedef Iterator Plan;
 
-std::optional<BValue> ExecPred(ParseNode* node, Tuple& cur_tuple) {
+BValue ExecPred(ParseNode* node, Tuple& cur_tuple) {
   switch (node->type) {
     case sql::NSTRING_LIT: {
       sql::NStringLit* str_lit = (sql::NStringLit*)node;
@@ -223,145 +223,142 @@ std::optional<BValue> ExecPred(ParseNode* node, Tuple& cur_tuple) {
       assert(expr->rhs != nullptr);
       auto lhs_value = ExecPred(expr->lhs, cur_tuple);
       auto rhs_value = ExecPred(expr->rhs, cur_tuple);
-      if (lhs_value == std::nullopt || rhs_value == std::nullopt) {
-        return std::nullopt;
-      }
       switch (expr->op) {
         case sql::AND: {
-          assert(lhs_value->type == T_BOOL);
-          assert(rhs_value->type == T_BOOL);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          bool* lhs_data = (bool*) lhs_value->data;
-          bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL);
+          assert(rhs_value.type == T_BOOL);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          bool* lhs_data = (bool*) lhs_value.data;
+          bool* rhs_data = (bool*) rhs_value.data;
           return BValue(T_BOOL, new bool(*lhs_data && *rhs_data));
         }
         case sql::OR: {
-          assert(lhs_value->type == T_BOOL);
-          assert(rhs_value->type == T_BOOL);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          bool* lhs_data = (bool*) lhs_value->data;
-          bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL);
+          assert(rhs_value.type == T_BOOL);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          bool* lhs_data = (bool*) lhs_value.data;
+          bool* rhs_data = (bool*) rhs_value.data;
           return BValue(T_BOOL, new bool(*lhs_data || *rhs_data));
         }
         case sql::EQ: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         case sql::NEQ: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         case sql::GT: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         case sql::GE: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         case sql::LT: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         case sql::LE: {
-          assert(lhs_value->type == T_BOOL || lhs_value->type == T_STRING);
-          assert(rhs_value->type == T_BOOL || rhs_value->type == T_STRING);
-          assert(lhs_value->data != nullptr);
-          assert(rhs_value->data != nullptr);
-          if (lhs_value->type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value->data;
-            bool* rhs_data = (bool*) rhs_value->data;
+          assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
+          assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
+          assert(lhs_value.data != nullptr);
+          assert(rhs_value.data != nullptr);
+          if (lhs_value.type == T_BOOL) {
+            bool* lhs_data = (bool*) lhs_value.data;
+            bool* rhs_data = (bool*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
-          } else if (lhs_value->type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value->data;
-            std::string* rhs_data = (std::string*) rhs_value->data;
+          } else if (lhs_value.type == T_STRING) {
+            std::string* lhs_data = (std::string*) lhs_value.data;
+            std::string* rhs_data = (std::string*) rhs_value.data;
             return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
-            return std::nullopt;
+            return BValue(T_UNKNOWN, nullptr);
           }
         }
         default: {
           Panic("Unknown or Unsupported BinExprOp!");
-          return std::nullopt;
+          return BValue(T_UNKNOWN, nullptr);
         }
       }
     }
     default: {
       Panic("Unknown ParseNode type!");
-      return std::nullopt;
+      return BValue(T_UNKNOWN, nullptr);
     }
   }
 }
