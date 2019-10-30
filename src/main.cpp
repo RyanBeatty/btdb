@@ -202,7 +202,7 @@ struct Iterator {
 
 typedef Iterator Plan;
 
-BValue ExecPred(ParseNode* node, Tuple& cur_tuple) {
+BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
   switch (node->type) {
     case sql::NSTRING_LIT: {
       sql::NStringLit* str_lit = (sql::NStringLit*)node;
@@ -376,10 +376,20 @@ struct SequentialScan : Iterator {
 
   void Open() {}
   MTuple GetNext() {
-    if (next_index >= Tuples.size()) {
-      return nullptr;
-    } else {
+    while (next_index < Tuples.size()) {
       const auto& cur_tpl = Tuples[next_index];
+      ++next_index;
+
+      // Evaluate predicate if any.
+      if (where_clause != nullptr) {
+        auto result_val = ExecPred(where_clause, cur_tpl);
+        assert(result_val.type == T_BOOL);
+        assert(result_val.data != nullptr);
+        bool* result = (bool*)result_val.data;
+        if (!*result) {
+          continue;
+        }
+      }
 
       // Column projections.
       Tuple result_tpl;
@@ -388,9 +398,10 @@ struct SequentialScan : Iterator {
         assert(it != cur_tpl.end());
         result_tpl[it->first] = it->second;
       }
-      ++next_index;
       return std::make_unique<Tuple>(result_tpl);
     }
+
+    return nullptr;
   }
   void Close() {}
 };

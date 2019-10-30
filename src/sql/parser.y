@@ -172,6 +172,9 @@ expr:
       $$ = (ParseNode*)identifier;
     }
   | STRING_LITERAL {
+      // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
+      assert($1.length() >= 2);
+      $1 = $1.substr(1, $1.length() - 2);
       NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
       assert(str_lit != NULL);
       str_lit->type = btdb::sql::NSTRING_LIT;
