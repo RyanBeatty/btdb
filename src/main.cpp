@@ -70,7 +70,7 @@ struct SystemCatalog {
     }
 
     if (select->where_clause != nullptr) {
-      if (CheckType(select->where_clause, *table_def_it) == T_UNKNOWN) {
+      if (CheckType(select->where_clause, *table_def_it) != T_BOOL) {
         return false;
       }
     }
@@ -123,7 +123,7 @@ struct SystemCatalog {
             if (lhs_type != T_STRING || rhs_type != T_STRING) {
               return T_UNKNOWN;
             }
-            return T_STRING;
+            return T_BOOL;
           }
           default: {
             Panic("Unknown or Unsupported BinExprOp!");
