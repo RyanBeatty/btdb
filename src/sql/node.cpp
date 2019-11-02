@@ -79,7 +79,13 @@ void print_list(List* list, PrintContext& ctx) {
       return;
     }
     case T_LIST: {
-      // TODO(ryan)
+      uint64_t size = 0;
+      for (ListCell* ptr = list->head; ptr != nullptr; ptr = ptr->next, ++size) {
+        assert(ptr->data != nullptr);
+        ctx.PrintObject("item " + std::to_string(size));
+        print_list((List*) ptr->data, ctx);
+        ctx.EndObject();
+      }
       return;
     }
     default: {
