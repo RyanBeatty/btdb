@@ -64,12 +64,16 @@ struct SystemCatalog {
     if (table_def_it == tables.end()) {
       return false;
     }
+
+    // Validate target list contains valid references to columns.
     auto* target_list = select->target_list;
-    for (uint64_t i = 0; i < target_list->length; ++i) {
-      ParseNode* item = (ParaseNode*) target_list->items[i];
-      assert(item != nullptr);
-      assert(item->type == sql::NIDENTIFIER);
-      sql::NIdentifier* col = (sql::NIdentifier*)item;
+    assert(target_list != nullptr);
+    assert(target_list->type == sql::T_PARSENODE);
+    sql::ListCell* lc = nullptr;
+    FOR_EACH(lc, target_list) {
+      assert(lc->data != nullptr);
+      sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+      assert(col->type == sql::NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
                     col->identifier) == table_def_it->col_names.end()) {
@@ -168,12 +172,14 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
   auto table_name = std::string(identifier->identifier);
 
   assert(select->target_list != nullptr);
+  assert(select->target_list->type = sql::T_PARSENODE);
   auto* target_list = select->target_list;
   std::vector<std::string> targets;
-  for (uint64_t i = 0; i < target_list->length; ++i) {
-    auto* item = target_list->items[i];
-    assert(item != nullptr && item->type == sql::NIDENTIFIER);
-    sql::NIdentifier* target = (sql::NIdentifier*)item;
+  sql::ListCell* lc = nullptr;
+  FOR_EACH(lc, target_list) {
+    assert(lc->data != nullptr);
+    sql::NIdentifier* target = (sql::NIdentifier*) lc->data;
+    assert(target->type == sql::NIDENTIFIER);
     targets.push_back(target->identifier);
   }
 

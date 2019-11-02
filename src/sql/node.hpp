@@ -68,6 +68,8 @@ void push_list(List* list, void* data);
 void free_list(List* list);
 void print_list(List* list, PrintContext& ctx);
 
+#define FOR_EACH(cell, list) for(cell = list->head; cell != nullptr; cell = cell->next)
+
 enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT, NINSERT_STMT };
 
 struct ParseNode {
