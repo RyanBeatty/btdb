@@ -386,8 +386,9 @@ namespace yy {
       // target_list
       // insert_column_list
       // column_list
+      // insert_values_clause
       // insert_values_list
-      // values_list
+      // insert_value_items
       char dummy1[sizeof (List*)];
 
       // select_stmt
@@ -575,8 +576,9 @@ switch (yytype)
       case 30: // target_list
       case 35: // insert_column_list
       case 36: // column_list
-      case 37: // insert_values_list
-      case 38: // values_list
+      case 37: // insert_values_clause
+      case 38: // insert_values_list
+      case 39: // insert_value_items
         value.template destroy< List* > ();
         break;
 
@@ -1405,8 +1407,8 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 65,     ///< Last index in yytable_.
-      yynnts_ = 12,  ///< Number of nonterminal symbols.
+      yylast_ = 70,     ///< Last index in yytable_.
+      yynnts_ = 13,  ///< Number of nonterminal symbols.
       yyfinal_ = 9, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1481,8 +1483,9 @@ switch (yytype)
       case 30: // target_list
       case 35: // insert_column_list
       case 36: // column_list
-      case 37: // insert_values_list
-      case 38: // values_list
+      case 37: // insert_values_clause
+      case 38: // insert_values_list
+      case 39: // insert_value_items
         value.move< List* > (std::move (that.value));
         break;
 
@@ -1516,8 +1519,9 @@ switch (yytype)
       case 30: // target_list
       case 35: // insert_column_list
       case 36: // column_list
-      case 37: // insert_values_list
-      case 38: // values_list
+      case 37: // insert_values_clause
+      case 38: // insert_values_list
+      case 39: // insert_value_items
         value.copy< List* > (YY_MOVE (that.value));
         break;
 
@@ -1559,8 +1563,9 @@ switch (yytype)
       case 30: // target_list
       case 35: // insert_column_list
       case 36: // column_list
-      case 37: // insert_values_list
-      case 38: // values_list
+      case 37: // insert_values_clause
+      case 38: // insert_values_list
+      case 39: // insert_value_items
         value.move< List* > (YY_MOVE (s.value));
         break;
 
@@ -1648,7 +1653,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1652 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1657 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

@@ -77,7 +77,7 @@
 
 // %type <std::vector<std::string>> column_exp
 %type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt
-%type <List*> target_list insert_column_list column_list insert_values_list values_list
+%type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items
 
 %%
 %start stmt;
@@ -302,7 +302,7 @@ expr:
       $$ = (ParseNode*)bin_expr;
     }
 
-insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_list ";" {
+insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";" {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
   assert(insert != nullptr);
   insert->type = btdb::sql::NINSERT_STMT;
@@ -358,27 +358,47 @@ column_list:
       $$ = column_list;
   }
 
-insert_values_list: VALUES "(" values_list ")" { $$ = $3; }
+insert_values_clause: VALUES insert_values_list { $$ = $2; }
+insert_values_list:
+  "(" insert_value_items ")" {
+      List* value_items = (List*) calloc(1, sizeof(List));
+      value_items->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
+      value_items->capacity = 10;
 
-values_list:
-  expr {
-      List* target_list = (List*)calloc(1, sizeof(List));
-      // TODO: Don't hardcode the size of this;
-      target_list->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
-      target_list->capacity = 10;
-
-      target_list->items[0] = $1;
-      target_list->length = 1;
-      $$ = target_list;
+      // TODO(ryan): THIS CAST IS BAD
+      value_items->items[0] = (ParseNode*) $2;
+      value_items->length = 1;
+      $$ = value_items;
   }
-  | values_list "," expr {
-      auto* values_list = $1;
-      assert(values_list->length < values_list->capacity);
+  | insert_values_list "," "(" insert_value_items ")" {
+    List* value_items = $1;
+    assert(value_items->length < value_items->capacity);
 
-      values_list->items[values_list->length] = $3;
-      values_list->length++;
+    // TODO(ryan): THIS CAST IS BAD
+    value_items->items[value_items->length] = (ParseNode*) $4;
+    value_items->length++;
+    $$ = value_items;
+  }
+
+insert_value_items:
+  expr {
+      List* value_items = (List*)calloc(1, sizeof(List));
+      // TODO: Don't hardcode the size of this;
+      value_items->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
+      value_items->capacity = 10;
+
+      value_items->items[0] = $1;
+      value_items->length = 1;
+      $$ = value_items;
+  }
+  | insert_value_items "," expr {
+      auto* value_items = $1;
+      assert(value_items->length < value_items->capacity);
+
+      value_items->items[value_items->length] = $3;
+      value_items->length++;
       // Don't actually think this is neccessary, but it is clear.
-      $$ = values_list;
+      $$ = value_items;
   }
 
 
