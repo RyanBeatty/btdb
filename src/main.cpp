@@ -66,7 +66,7 @@ struct SystemCatalog {
     }
     auto* target_list = select->target_list;
     for (uint64_t i = 0; i < target_list->length; ++i) {
-      auto* item = target_list->items[i];
+      ParseNode* item = (ParaseNode*) target_list->items[i];
       assert(item != nullptr);
       assert(item->type == sql::NIDENTIFIER);
       sql::NIdentifier* col = (sql::NIdentifier*)item;

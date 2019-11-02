@@ -19,6 +19,8 @@
   using btdb::sql::List;
   using btdb::sql::NSelectStmt;
   using btdb::sql::NInsertStmt;
+  using btdb::sql::make_list;
+  using btdb::sql::push_list;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -101,11 +103,6 @@ select_stmt: SELECT target_list from_clause where_clause ";" {
 
 target_list:
   STRING_GROUP { 
-      List* target_list = (List*)calloc(1, sizeof(List));
-      // TODO: Don't hardcode the size of this;
-      target_list->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
-      target_list->capacity = 10;
-
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = btdb::sql::NIDENTIFIER;
@@ -113,14 +110,11 @@ target_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
-      target_list->items[0] = (ParseNode*) identifier;
-      target_list->length = 1;
+      List* target_list = make_list(btdb::sql::T_PARSENODE);
+      push_list(target_list, identifier);
       $$ = target_list;
     }
   | STRING_GROUP "," target_list { 
-      auto* target_list = $3;
-      assert(target_list->length < target_list->capacity);
-
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = btdb::sql::NIDENTIFIER;
@@ -128,9 +122,8 @@ target_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
-      target_list->items[target_list->length] = (ParseNode*) identifier;
-      target_list->length++;
-      // Don't actually think this is neccessary, but it is clear.
+      auto* target_list = $3;
+      push_list(target_list, identifier);
       $$ = target_list;
     }
 
@@ -325,11 +318,6 @@ insert_column_list: "(" column_list ")" { $$ = $2; }
 
 column_list:
    STRING_GROUP {
-      List* target_list = (List*)calloc(1, sizeof(List));
-      // TODO: Don't hardcode the size of this;
-      target_list->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
-      target_list->capacity = 10;
-
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = btdb::sql::NIDENTIFIER;
@@ -337,14 +325,11 @@ column_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
-      target_list->items[0] = (ParseNode*) identifier;
-      target_list->length = 1;
-      $$ = target_list;
+      List* column_list = make_list(btdb::sql::T_PARSENODE);
+      push_list(column_list, identifier);
+      $$ = column_list;
    }
   | column_list "," STRING_GROUP {
-      auto* column_list = $1;
-      assert(column_list->length < column_list->capacity);
-
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = btdb::sql::NIDENTIFIER;
@@ -352,52 +337,33 @@ column_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $3.c_str(), $3.length());
 
-      column_list->items[column_list->length] = (ParseNode*) identifier;
-      column_list->length++;
-      // Don't actually think this is neccessary, but it is clear.
+      auto* column_list = $1;
+      push_list(column_list, identifier);
       $$ = column_list;
   }
 
 insert_values_clause: VALUES insert_values_list { $$ = $2; }
 insert_values_list:
   "(" insert_value_items ")" {
-      List* value_items = (List*) calloc(1, sizeof(List));
-      value_items->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
-      value_items->capacity = 10;
-
-      // TODO(ryan): THIS CAST IS BAD
-      value_items->items[0] = (ParseNode*) $2;
-      value_items->length = 1;
-      $$ = value_items;
+      List* values_list = make_list(btdb::sql::T_LIST);
+      push_list(values_list, $2);
+      $$ = values_list;
   }
   | insert_values_list "," "(" insert_value_items ")" {
-    List* value_items = $1;
-    assert(value_items->length < value_items->capacity);
-
-    // TODO(ryan): THIS CAST IS BAD
-    value_items->items[value_items->length] = (ParseNode*) $4;
-    value_items->length++;
-    $$ = value_items;
+    auto* values_list = $1;
+    push_list(values_list, $4);
+    $$ = values_list;
   }
 
 insert_value_items:
   expr {
-      List* value_items = (List*)calloc(1, sizeof(List));
-      // TODO: Don't hardcode the size of this;
-      value_items->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
-      value_items->capacity = 10;
-
-      value_items->items[0] = $1;
-      value_items->length = 1;
+      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      push_list(value_items, $1);
       $$ = value_items;
   }
   | insert_value_items "," expr {
       auto* value_items = $1;
-      assert(value_items->length < value_items->capacity);
-
-      value_items->items[value_items->length] = $3;
-      value_items->length++;
-      // Don't actually think this is neccessary, but it is clear.
+      push_list(value_items, $3);
       $$ = value_items;
   }
 

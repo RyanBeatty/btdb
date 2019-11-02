@@ -56,6 +56,8 @@
   using btdb::sql::List;
   using btdb::sql::NSelectStmt;
   using btdb::sql::NInsertStmt;
+  using btdb::sql::make_list;
+  using btdb::sql::push_list;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -64,7 +66,7 @@
       struct ParserContext;
     }}
 
-#line 68 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 70 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -179,7 +181,7 @@
 #endif
 
 namespace yy {
-#line 183 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 185 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -1653,7 +1655,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1657 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1659 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

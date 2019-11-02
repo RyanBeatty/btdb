@@ -16,21 +16,64 @@ namespace sql {
 
 void Panic(const std::string& msg);
 
+struct PrintContext {
+  PrintContext() : indent(0) {}
+  std::string Print() { return oss.str(); }
+
+  void PrintObject(std::string key) {
+    PrintIndent();
+    oss << key << ": {" << std::endl;
+    Indent();
+  }
+  void EndObject() {
+    PrintIndent();
+    oss << "}" << std::endl;
+    Dedent();
+  }
+  void PrintChild(std::string key, std::string val) {
+    PrintIndent();
+    oss << key << ": " << val << std::endl;
+  }
+  void PrintIndent() {
+    for (uint64_t i = 0; i < indent; ++i) {
+      oss << "\t";
+    }
+  }
+  void Indent() { ++indent; }
+  void Dedent() { --indent; }
+
+  uint64_t indent;
+  std::ostringstream oss;
+};
+
+enum ListType {
+  T_PARSENODE, T_LIST
+};
+
+struct ListCell {
+  void *data;
+  ListCell* next;
+};
+static_assert(std::is_pod<ListCell>::value);
+
+struct List {
+  ListType type;
+  uint64_t length;
+  ListCell* head;
+};
+static_assert(std::is_pod<List>::value);
+
+List* make_list(ListType type);
+void push_list(List* list, void* data);
+void free_list(List* list);
+void print_list(List* list, PrintContext& ctx);
+
 enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT, NINSERT_STMT };
 
 struct ParseNode {
   ParseNodeType type;
 };
 static_assert(std::is_pod<ParseNode>::value);
-
-struct List {
-  // Need double pointer because we want array of ParseNode*'s. Else we can't cast items to right type
-  // based on tag.
-  ParseNode** items;
-  uint64_t length;
-  uint64_t capacity;
-};
-static_assert(std::is_pod<List>::value);
 
 enum BinExprOp {
   EQ,
@@ -91,37 +134,6 @@ struct NInsertStmt {
 static_assert(std::is_pod<NInsertStmt>::value);
 
 void free_parse_node(ParseNode* node);
-
-struct PrintContext {
-  PrintContext() : indent(0) {}
-  std::string Print() { return oss.str(); }
-
-  void PrintObject(std::string key) {
-    PrintIndent();
-    oss << key << ": {" << std::endl;
-    Indent();
-  }
-  void EndObject() {
-    PrintIndent();
-    oss << "}" << std::endl;
-    Dedent();
-  }
-  void PrintChild(std::string key, std::string val) {
-    PrintIndent();
-    oss << key << ": " << val << std::endl;
-  }
-  void PrintIndent() {
-    for (uint64_t i = 0; i < indent; ++i) {
-      oss << "\t";
-    }
-  }
-  void Indent() { ++indent; }
-  void Dedent() { --indent; }
-
-  uint64_t indent;
-  std::ostringstream oss;
-};
-
 void print_parse_node(ParseNode* node, PrintContext& ctx);
 
 struct ParseTree {
