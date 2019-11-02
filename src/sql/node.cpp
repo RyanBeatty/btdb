@@ -143,7 +143,6 @@ void free_parse_node(ParseNode* node) {
         free_parse_node(insert->table_name);
         free_list(insert->column_list);
         free_list(insert->values_list);
-        // free(insert->values_list);
         free(insert);
         break;
     }
