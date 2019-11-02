@@ -59,6 +59,25 @@ void free_parse_node(ParseNode* node) {
         free(select);
         break;
     }
+    case NINSERT_STMT: {
+        NInsertStmt* insert = (NInsertStmt*)node;
+        assert(insert->table_name != nullptr);
+        assert(insert->column_list != nullptr);
+        assert(insert->values_list != nullptr);
+        free_parse_node(insert->table_name);
+        for (uint64_t i = 0; i < insert->column_list->length; ++i) {
+          free_parse_node(insert->column_list->items[i]);
+        }
+        free(insert->column_list->items);
+        free(insert->column_list);
+        for (uint64_t i = 0; i < insert->values_list->length; ++i) {
+          free_parse_node(insert->values_list->items[i]);
+        }
+        free(insert->values_list->items);
+        free(insert->values_list);
+        free(insert);
+        break;
+    }
     default: {
       Panic("Unkown Parse Node Type");
       break;
@@ -161,6 +180,28 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
         ctx.EndObject();
         ctx.PrintObject("where_clause");
         print_parse_node(select->where_clause, ctx);
+        ctx.EndObject();
+        ctx.EndObject();
+        break;
+    }
+    case NINSERT_STMT: {
+        NInsertStmt* insert = (NInsertStmt*) node;
+        assert(insert->table_name != nullptr);
+        assert(insert->column_list != nullptr);
+        assert(insert->values_list != nullptr);
+        ctx.PrintObject("NInsertStmt");
+        ctx.PrintObject("table_name");
+        print_parse_node(insert->table_name, ctx);
+        ctx.EndObject();
+        ctx.PrintObject("column_list");
+        for (uint64_t i = 0; i < insert->column_list->length; ++i) {
+            print_parse_node(insert->column_list->items[i], ctx);
+        }
+        ctx.EndObject();
+        ctx.PrintObject("values");
+        for (uint64_t i = 0; i < insert->values_list->length; ++i) {
+            print_parse_node(insert->values_list->items[i], ctx);
+        }
         ctx.EndObject();
         ctx.EndObject();
         break;

@@ -18,6 +18,7 @@
   using btdb::sql::NBinExpr;
   using btdb::sql::List;
   using btdb::sql::NSelectStmt;
+  using btdb::sql::NInsertStmt;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -49,6 +50,11 @@
 %token
     EOF 0
     SELECT
+    INSERT
+    INTO
+    VALUES
+    LPARENS "("
+    RPARENS ")"
     FROM
     SEMICOLON ";"
     COMMA ","
@@ -70,15 +76,19 @@
 %token <std::string> STRING_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <ParseNode*> expr where_clause select_stmt from_clause
-%type <List*> target_list;
+%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt
+%type <List*> target_list insert_column_list column_list insert_values_list values_list
 
 %%
 %start stmt;
 
-stmt: select_stmt {
-  ctx.tree = std::make_unique<ParseTree>($1);
-}
+stmt:
+  select_stmt {
+    ctx.tree = std::make_unique<ParseTree>($1);
+  }
+  | insert_stmt {
+    ctx.tree = std::make_unique<ParseTree>($1);
+  }
 
 select_stmt: SELECT target_list from_clause where_clause ";" {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
@@ -291,6 +301,85 @@ expr:
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
     }
+
+insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_list ";" {
+  NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
+  assert(insert != nullptr);
+  insert->type = btdb::sql::NINSERT_STMT;
+
+  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+  assert(identifier != NULL);
+  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->identifier = (char*)calloc($3.length(), sizeof(char));
+  assert(identifier->identifier != NULL);
+  strncpy(identifier->identifier, $3.c_str(), $3.length());
+
+  insert->table_name = (ParseNode*) identifier;
+  insert->column_list = $4;
+  insert->values_list = $5;
+
+  $$ = (ParseNode*) insert;
+}
+
+insert_column_list: "(" column_list ")" { $$ = $2; }
+
+column_list:
+   STRING_GROUP {
+      List* target_list = (List*)calloc(1, sizeof(List));
+      // TODO: Don't hardcode the size of this;
+      target_list->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
+      target_list->capacity = 10;
+
+      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+      assert(identifier != NULL);
+      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
+      assert(identifier->identifier != NULL);
+      strncpy(identifier->identifier, $1.c_str(), $1.length());
+
+      target_list->items[0] = (ParseNode*) identifier;
+      target_list->length = 1;
+      $$ = target_list;
+   }
+  | column_list "," STRING_GROUP {
+      auto* column_list = $1;
+      assert(column_list->length < column_list->capacity);
+
+      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+      assert(identifier != NULL);
+      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->identifier = (char*)calloc($3.length(), sizeof(char));
+      assert(identifier->identifier != NULL);
+      strncpy(identifier->identifier, $3.c_str(), $3.length());
+
+      column_list->items[column_list->length] = (ParseNode*) identifier;
+      column_list->length++;
+      // Don't actually think this is neccessary, but it is clear.
+      $$ = column_list;
+  }
+
+insert_values_list: VALUES "(" values_list ")" { $$ = $3; }
+
+values_list:
+  expr {
+      List* target_list = (List*)calloc(1, sizeof(List));
+      // TODO: Don't hardcode the size of this;
+      target_list->items = (ParseNode**)calloc(10, sizeof(ParseNode*));
+      target_list->capacity = 10;
+
+      target_list->items[0] = $1;
+      target_list->length = 1;
+      $$ = target_list;
+  }
+  | values_list "," expr {
+      auto* values_list = $1;
+      assert(values_list->length < values_list->capacity);
+
+      values_list->items[values_list->length] = $3;
+      values_list->length++;
+      // Don't actually think this is neccessary, but it is clear.
+      $$ = values_list;
+  }
 
 
 %%

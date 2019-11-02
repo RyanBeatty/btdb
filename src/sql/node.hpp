@@ -16,7 +16,7 @@ namespace sql {
 
 void Panic(const std::string& msg);
 
-enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT };
+enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT, NINSERT_STMT };
 
 struct ParseNode {
   ParseNodeType type;
@@ -80,6 +80,15 @@ struct NSelectStmt {
   ParseNode* where_clause;
 };
 static_assert(std::is_pod<NSelectStmt>::value);
+
+struct NInsertStmt {
+  ParseNodeType type;
+
+  ParseNode* table_name;
+  List* column_list;
+  List* values_list;
+};
+static_assert(std::is_pod<NInsertStmt>::value);
 
 void free_parse_node(ParseNode* node);
 

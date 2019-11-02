@@ -7,13 +7,18 @@
 
 %option noyywrap nounput noinput batch
 
-
-
+/* TODO(ryan): figure out how to do case-insensitive lexing */
 %%
 "," return yy::parser::make_COMMA();
 ";" return yy::parser::make_SEMICOLON();
 "select" return yy::parser::make_SELECT();
 "SELECT" return yy::parser::make_SELECT();
+"INSERT" return yy::parser::make_INSERT();
+"insert" return yy::parser::make_INSERT();
+"INTO" return yy::parser::make_INTO();
+"into" return yy::parser::make_INTO();
+"VALUES" return yy::parser::make_VALUES();
+"values" return yy::parser::make_VALUES();
 "from" return yy::parser::make_FROM();
 "FROM" return yy::parser::make_FROM();
 "WHERE"
@@ -32,6 +37,8 @@
 "-" return yy::parser::make_MINUS();
 "*" return yy::parser::make_MULT();
 "/" return yy::parser::make_DIV();
+"(" return yy::parser::make_LPARENS();
+")" return yy::parser::make_RPARENS();
 \'(\\.|[^'\\])*\' return yy::parser::make_STRING_LITERAL(yytext);
 [a-zA-Z]+ return yy::parser::make_STRING_GROUP(yytext);
 <<EOF>> return yy::parser::make_EOF ();
