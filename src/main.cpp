@@ -37,8 +37,8 @@ enum BType {
   T_BOOL,
 };
 
-struct BValue {
-  BValue(BType type, void* data) : type(type), data(data) {}
+struct Datum {
+  Datum(BType type, void* data) : type(type), data(data) {}
 
   BType type;
   // TODO(ryan): REMEMBER TO FIGURE OUT BEST WAY TO DELETE THIS, WE LEAK MEM HERE.
@@ -202,12 +202,12 @@ struct Iterator {
 
 typedef Iterator Plan;
 
-BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
+Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
   switch (node->type) {
     case sql::NSTRING_LIT: {
       sql::NStringLit* str_lit = (sql::NStringLit*)node;
       assert(str_lit->str_lit != nullptr);
-      return BValue(T_STRING, new std::string(str_lit->str_lit));
+      return Datum(T_STRING, new std::string(str_lit->str_lit));
     }
     case sql::NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
@@ -215,7 +215,7 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
       assert(identifier->identifier != nullptr);
       auto it = cur_tuple.find(identifier->identifier);
       assert(it != cur_tuple.end());
-      return BValue(T_STRING, new std::string(it->second));
+      return Datum(T_STRING, new std::string(it->second));
     }
     case sql::NBIN_EXPR: {
       sql::NBinExpr* expr = (sql::NBinExpr*)node;
@@ -231,7 +231,7 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.data != nullptr);
           bool* lhs_data = (bool*) lhs_value.data;
           bool* rhs_data = (bool*) rhs_value.data;
-          return BValue(T_BOOL, new bool(*lhs_data && *rhs_data));
+          return Datum(T_BOOL, new bool(*lhs_data && *rhs_data));
         }
         case sql::OR: {
           assert(lhs_value.type == T_BOOL);
@@ -240,7 +240,7 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.data != nullptr);
           bool* lhs_data = (bool*) lhs_value.data;
           bool* rhs_data = (bool*) rhs_value.data;
-          return BValue(T_BOOL, new bool(*lhs_data || *rhs_data));
+          return Datum(T_BOOL, new bool(*lhs_data || *rhs_data));
         }
         case sql::EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
@@ -250,14 +250,14 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data == *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         case sql::NEQ: {
@@ -268,14 +268,14 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data != *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         case sql::GT: {
@@ -286,14 +286,14 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data > *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         case sql::GE: {
@@ -304,14 +304,14 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         case sql::LT: {
@@ -322,14 +322,14 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data < *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         case sql::LE: {
@@ -340,25 +340,25 @@ BValue ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*) lhs_value.data;
             bool* rhs_data = (bool*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*) lhs_value.data;
             std::string* rhs_data = (std::string*) rhs_value.data;
-            return BValue(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
-            return BValue(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, nullptr);
           }
         }
         default: {
           Panic("Unknown or Unsupported BinExprOp!");
-          return BValue(T_UNKNOWN, nullptr);
+          return Datum(T_UNKNOWN, nullptr);
         }
       }
     }
     default: {
       Panic("Unknown ParseNode type!");
-      return BValue(T_UNKNOWN, nullptr);
+      return Datum(T_UNKNOWN, nullptr);
     }
   }
 }
