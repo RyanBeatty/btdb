@@ -562,6 +562,27 @@ struct SequentialScan : Iterator {
   void Close() {}
 };
 
+struct InsertScan : Iterator {
+  std::vector<Tuple> tuples;
+
+  InsertScan(std::vector<Tuple> tuples) : tuples(tuples) {}
+
+  void Open() {}
+
+  MTuple GetNext() {
+    if (tuples.size() == 0) {
+      return nullptr;
+    }
+    auto& tuple = tuples.back();
+    Tuples.push_back(tuple);
+    tuples.pop_back();
+    // TODO(ryan): This is sort of wonky, figure out how to do insert scans.
+    return std::make_unique<Tuple>(tuple);
+  }
+
+  void Close() {}
+};
+
 struct PlanState {
   std::vector<std::string> target_list;
   std::unique_ptr<Plan> plan;
@@ -574,6 +595,14 @@ PlanState PlanQuery(Query& query) {
       const SelectQuery& select_query = std::get<SelectQuery>(query);
       auto plan = std::make_unique<SequentialScan>(SequentialScan(select_query.target_list, select_query.where_clause));
       plan_state.target_list = select_query.target_list;
+      plan_state.plan = std::move(plan);
+      break;
+    }
+    case 1: {
+      const InsertQuery& insert_query = std::get<InsertQuery>(query);
+      auto plan = std::make_unique<InsertScan>(InsertScan(insert_query.values_list));
+      // TODO(ryan): This is also wonky.
+      plan_state.target_list = insert_query.column_list;
       plan_state.plan = std::move(plan);
       break;
     }
