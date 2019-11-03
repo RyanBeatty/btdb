@@ -51,9 +51,19 @@ struct SystemCatalog {
   bool ValidateParseTree(sql::ParseTree& tree) {
     assert(tree.tree != nullptr);
     sql::ParseNode* node = tree.tree;
-    assert(node->type == sql::NSELECT_STMT);
-    sql::NSelectStmt* select = (sql::NSelectStmt*)node;
-    return ValidateSelectStmt(select);
+
+    switch (node->type) {
+      case sql::NSELECT_STMT: {
+        return ValidateSelectStmt((sql::NSelectStmt*) node);
+      }
+      case sql::NINSERT_STMT: {
+        return ValidateInsertStmt((sql::NInsertStmt*) node);
+      }
+      default: {
+        Panic("Unknown statement type when validating");
+        return false;
+      }
+    }
   }
 
   bool ValidateSelectStmt(sql::NSelectStmt* select) {
@@ -91,6 +101,67 @@ struct SystemCatalog {
         return false;
       }
     }
+    return true;
+  }
+
+  bool ValidateInsertStmt(sql::NInsertStmt* insert) {
+    assert(insert != nullptr);
+    assert(insert->type == sql::NINSERT_STMT);
+    assert(insert->table_name != nullptr);
+    assert(insert->column_list != nullptr);
+    assert(insert->values_list != nullptr);
+
+    // Validate insert table name exists.
+    sql::NIdentifier* table_name = (sql::NIdentifier*) insert->table_name;
+    assert(table_name->type == sql::NIDENTIFIER);
+    assert(table_name->identifier != nullptr);
+    auto table_def_it = tables.begin();
+    for (; table_def_it != tables.end(); ++table_def_it) {
+      if (table_def_it->name == table_name->identifier) {
+        break;
+      }
+    }
+    if (table_def_it == tables.end()) {
+      return false;
+    }
+
+    // Validate target list contains valid references to columns.
+    auto* column_list = insert->column_list;
+    assert(column_list != nullptr);
+    assert(column_list->type == sql::T_PARSENODE);
+    sql::ListCell* lc = nullptr;
+    FOR_EACH(lc, column_list) {
+      assert(lc->data != nullptr);
+      sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+      assert(col->type == sql::NIDENTIFIER);
+      assert(col->identifier != nullptr);
+      if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
+                    col->identifier) == table_def_it->col_names.end()) {
+        return false;
+      }
+    }
+
+    auto* values_list = insert->values_list;
+    assert(values_list->type == sql::T_LIST);
+    lc = nullptr;
+    FOR_EACH(lc, values_list) {
+      assert(lc->data != nullptr);
+      List* value_items = (List*) lc->data;
+      assert(value_items->type == sql::T_PARSENODE);
+      if (value_items->length != table_def_it->col_names.size()) {
+        return false;
+      }
+
+      sql::ListCell* lc2 = nullptr;
+      FOR_EACH(lc2, value_items) {
+        assert(lc2->data != nullptr);
+        sql::NStringLit* str_lit = (sql::NStringLit*) lc2->data;
+        if (str_lit->type != sql::NSTRING_LIT) {
+          return false;
+        }
+      }
+    }
+
     return true;
   }
 
