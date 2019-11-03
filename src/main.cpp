@@ -53,6 +53,11 @@ struct SystemCatalog {
     sql::ParseNode* node = tree.tree;
     assert(node->type == sql::NSELECT_STMT);
     sql::NSelectStmt* select = (sql::NSelectStmt*)node;
+    return ValidateSelectStmt(select);
+  }
+
+  bool ValidateSelectStmt(sql::NSelectStmt* select) {
+    assert(select != nullptr);
     assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
     auto* table_id = (sql::NIdentifier*)select->table_name;
     auto table_def_it = tables.begin();
