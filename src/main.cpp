@@ -31,6 +31,12 @@ struct TableDef {
   std::vector<std::string> col_names;
 };
 
+// TODO: Figure out what a tuple will actually look like.
+typedef std::unordered_map<std::string, std::string> Tuple;
+typedef std::unique_ptr<Tuple> MTuple;
+
+static std::vector<Tuple> Tuples;
+
 enum BType {
   T_UNKNOWN,
   T_STRING,
@@ -236,11 +242,17 @@ struct SelectQuery {
   sql::ParseNode* where_clause;
 };
 
-typedef std::variant<SelectQuery> Query;
+struct InsertQuery {
+  std::string table;
+  std::vector<std::string> column_list;
+  std::vector<Tuple> values_list;
+};
 
-Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
-  assert(tree.tree != nullptr);
-  ParseNode* node = tree.tree;
+typedef std::variant<SelectQuery, InsertQuery> Query;
+
+
+Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
+  assert(node != nullptr);
   assert(node->type == sql::NSELECT_STMT);
   sql::NSelectStmt* select = (NSelectStmt*)node;
   assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
@@ -262,11 +274,73 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
   return SelectQuery{targets, std::vector<std::string>{table_name}, select->where_clause};
 }
 
-// TODO: Figure out what a tuple will actually look like.
-typedef std::unordered_map<std::string, std::string> Tuple;
-typedef std::unique_ptr<Tuple> MTuple;
+Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
+  assert(node != nullptr);
+  assert(node->type == sql::NINSERT_STMT);
 
-static std::vector<Tuple> Tuples;
+  sql::NIdentifier* table_name = (sql::NIdentifier*) node->table_name;
+  assert(table_name != nullptr);
+  assert(table_name->type == sql::NIDENTIFIER);
+  assert(table_name->identifier != nullptr);
+  
+  std::vector<std::string> columns; 
+  auto* column_list = node->column_list;
+  assert(column_list != nullptr);
+  assert(column_list->type == sql::T_PARSENODE);
+  sql::ListCell* lc = nullptr;
+  FOR_EACH(lc, column_list) {
+    assert(lc->data != nullptr);
+    sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+    assert(col->type == sql::NIDENTIFIER);
+    assert(col->identifier != nullptr);
+    columns.push_back(col->identifier);
+  }
+
+  std::vector<Tuple> values;
+  auto* values_list = node->values_list;
+  assert(values_list->type == sql::T_LIST);
+  lc = nullptr;
+  FOR_EACH(lc, values_list) {
+    assert(lc->data != nullptr);
+    List* value_items = (List*) lc->data;
+    assert(value_items->type == sql::T_PARSENODE);
+    assert(value_items->length == column_list->length);
+
+    Tuple tuple;
+    uint64_t col_index = 0;
+    sql::ListCell* lc2 = nullptr;
+    FOR_EACH(lc2, value_items) {
+      assert(lc2->data != nullptr);
+      // TODO(ryan): Allow for more general expressions here.
+      sql::NStringLit* str_lit = (sql::NStringLit*) lc2->data;
+      assert(str_lit->type == sql::NSTRING_LIT);
+      assert(str_lit->str_lit != nullptr);
+      tuple[columns[col_index]] = str_lit->str_lit;
+      ++col_index;
+    }
+    values.push_back(tuple);
+  }
+
+  return InsertQuery{table_name->identifier, columns, values};
+}
+
+Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
+  assert(tree.tree != nullptr);
+  ParseNode* node = tree.tree;
+  switch (node->type) {
+    case sql::NSELECT_STMT: {
+      return AnalyzeAndRewriteSelectStmt((sql::NSelectStmt*) node);
+    }
+    case sql::NINSERT_STMT: {
+      return AnalyzeAndRewriteInsertStmt((sql::NInsertStmt*) node);
+    }
+    default: {
+      Panic("Invalid statement type when analying");
+      // Just return something so the compiler doesn't complain. Fix this later.
+      return SelectQuery{};
+    }
+  }
+}
 
 struct Iterator {
   virtual void Open() = 0;
