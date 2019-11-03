@@ -155,6 +155,7 @@ struct SystemCatalog {
       sql::ListCell* lc2 = nullptr;
       FOR_EACH(lc2, value_items) {
         assert(lc2->data != nullptr);
+        // TODO(ryan): Allow for more general expressions here.
         sql::NStringLit* str_lit = (sql::NStringLit*) lc2->data;
         if (str_lit->type != sql::NSTRING_LIT) {
           return false;
