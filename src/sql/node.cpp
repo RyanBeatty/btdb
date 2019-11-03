@@ -27,12 +27,14 @@ void push_list(List* list, void* data) {
   cell->data = data;
   if (list->head == nullptr) {
     list->head = cell;
+    list->length = 1;
     return;
   }
 
   ListCell* ptr = list->head;
   for (; ptr->next != nullptr; ptr = ptr->next) {}
   ptr->next = cell;
+  ++list->length;
   return;
 }
 

@@ -125,7 +125,7 @@ struct SystemCatalog {
       return false;
     }
 
-    // Validate target list contains valid references to columns.
+    // Validate column list contains valid references to columns.
     auto* column_list = insert->column_list;
     assert(column_list != nullptr);
     assert(column_list->type == sql::T_PARSENODE);
@@ -148,7 +148,7 @@ struct SystemCatalog {
       assert(lc->data != nullptr);
       List* value_items = (List*) lc->data;
       assert(value_items->type == sql::T_PARSENODE);
-      if (value_items->length != table_def_it->col_names.size()) {
+      if (value_items->length != column_list->length) {
         return false;
       }
 
@@ -161,7 +161,6 @@ struct SystemCatalog {
         }
       }
     }
-
     return true;
   }
 
