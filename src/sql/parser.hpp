@@ -46,28 +46,17 @@
 // //                    "%code requires" blocks.
 #line 11 "parser.y"
 
-  #include "sql/node.hpp"
-
-  using btdb::sql::ParseNode;
-  using btdb::sql::ParseTree;
-  using btdb::sql::NIdentifier;
-  using btdb::sql::NStringLit;
-  using btdb::sql::NBinExpr;
-  using btdb::sql::List;
-  using btdb::sql::NSelectStmt;
-  using btdb::sql::NInsertStmt;
-  using btdb::sql::NDeleteStmt;
-  using btdb::sql::make_list;
-  using btdb::sql::push_list;
+  #include <memory>
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
   namespace btdb {
     namespace sql {
       struct ParserContext;
+      struct WhereClause;
     }}
 
-#line 71 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 60 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -182,7 +171,7 @@
 #endif
 
 namespace yy {
-#line 186 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 175 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -386,25 +375,15 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // target_list
-      // insert_column_list
-      // column_list
-      // insert_values_clause
-      // insert_values_list
-      // insert_value_items
-      char dummy1[sizeof (List*)];
-
-      // select_stmt
-      // from_clause
-      // where_clause
-      // expr
-      // insert_stmt
-      // delete_stmt
-      char dummy2[sizeof (ParseNode*)];
-
       // STRING_GROUP
       // STRING_LITERAL
-      char dummy3[sizeof (std::string)];
+      char dummy1[sizeof (std::string)];
+
+      // where_clause
+      char dummy2[sizeof (std::unique_ptr<btdb::sql::WhereClause>)];
+
+      // column_exp
+      char dummy3[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -448,30 +427,13 @@ namespace yy {
       {
         TOK_EOF = 0,
         TOK_SELECT = 258,
-        TOK_INSERT = 259,
-        TOK_DELETE = 260,
-        TOK_INTO = 261,
-        TOK_VALUES = 262,
-        TOK_LPARENS = 263,
-        TOK_RPARENS = 264,
-        TOK_FROM = 265,
-        TOK_SEMICOLON = 266,
-        TOK_COMMA = 267,
-        TOK_WHERE = 268,
-        TOK_AND = 269,
-        TOK_OR = 270,
-        TOK_EQ = 271,
-        TOK_NEQ = 272,
-        TOK_GT = 273,
-        TOK_GE = 274,
-        TOK_LT = 275,
-        TOK_LE = 276,
-        TOK_PLUS = 277,
-        TOK_MINUS = 278,
-        TOK_MULT = 279,
-        TOK_DIV = 280,
-        TOK_STRING_GROUP = 281,
-        TOK_STRING_LITERAL = 282
+        TOK_FROM = 259,
+        TOK_SEMICOLON = 260,
+        TOK_COMMA = 261,
+        TOK_WHERE = 262,
+        TOK_EQUALS = 263,
+        TOK_STRING_GROUP = 264,
+        TOK_STRING_LITERAL = 265
       };
     };
 
@@ -523,34 +485,34 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, List*&& v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const List*& v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, ParseNode*&& v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const ParseNode*& v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
-#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::string& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::unique_ptr<btdb::sql::WhereClause>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::unique_ptr<btdb::sql::WhereClause>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v)
         : Base (t)
         , value (v)
       {}
@@ -578,27 +540,17 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 31: // target_list
-      case 36: // insert_column_list
-      case 37: // column_list
-      case 38: // insert_values_clause
-      case 39: // insert_values_list
-      case 40: // insert_value_items
-        value.template destroy< List* > ();
-        break;
-
-      case 30: // select_stmt
-      case 32: // from_clause
-      case 33: // where_clause
-      case 34: // expr
-      case 35: // insert_stmt
-      case 41: // delete_stmt
-        value.template destroy< ParseNode* > ();
-        break;
-
-      case 26: // STRING_GROUP
-      case 27: // STRING_LITERAL
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.template destroy< std::string > ();
+        break;
+
+      case 14: // where_clause
+        value.template destroy< std::unique_ptr<btdb::sql::WhereClause> > ();
+        break;
+
+      case 13: // column_exp
+        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -677,13 +629,13 @@ switch (yytype)
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_DELETE || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_EQUALS);
       }
 #else
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_DELETE || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_EQUALS);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -768,96 +720,6 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_INSERT ()
-      {
-        return symbol_type (token::TOK_INSERT);
-      }
-#else
-      static
-      symbol_type
-      make_INSERT ()
-      {
-        return symbol_type (token::TOK_INSERT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_DELETE ()
-      {
-        return symbol_type (token::TOK_DELETE);
-      }
-#else
-      static
-      symbol_type
-      make_DELETE ()
-      {
-        return symbol_type (token::TOK_DELETE);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_INTO ()
-      {
-        return symbol_type (token::TOK_INTO);
-      }
-#else
-      static
-      symbol_type
-      make_INTO ()
-      {
-        return symbol_type (token::TOK_INTO);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_VALUES ()
-      {
-        return symbol_type (token::TOK_VALUES);
-      }
-#else
-      static
-      symbol_type
-      make_VALUES ()
-      {
-        return symbol_type (token::TOK_VALUES);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LPARENS ()
-      {
-        return symbol_type (token::TOK_LPARENS);
-      }
-#else
-      static
-      symbol_type
-      make_LPARENS ()
-      {
-        return symbol_type (token::TOK_LPARENS);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_RPARENS ()
-      {
-        return symbol_type (token::TOK_RPARENS);
-      }
-#else
-      static
-      symbol_type
-      make_RPARENS ()
-      {
-        return symbol_type (token::TOK_RPARENS);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
       make_FROM ()
       {
         return symbol_type (token::TOK_FROM);
@@ -918,181 +780,16 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_AND ()
+      make_EQUALS ()
       {
-        return symbol_type (token::TOK_AND);
+        return symbol_type (token::TOK_EQUALS);
       }
 #else
       static
       symbol_type
-      make_AND ()
+      make_EQUALS ()
       {
-        return symbol_type (token::TOK_AND);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_OR ()
-      {
-        return symbol_type (token::TOK_OR);
-      }
-#else
-      static
-      symbol_type
-      make_OR ()
-      {
-        return symbol_type (token::TOK_OR);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_EQ ()
-      {
-        return symbol_type (token::TOK_EQ);
-      }
-#else
-      static
-      symbol_type
-      make_EQ ()
-      {
-        return symbol_type (token::TOK_EQ);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_NEQ ()
-      {
-        return symbol_type (token::TOK_NEQ);
-      }
-#else
-      static
-      symbol_type
-      make_NEQ ()
-      {
-        return symbol_type (token::TOK_NEQ);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_GT ()
-      {
-        return symbol_type (token::TOK_GT);
-      }
-#else
-      static
-      symbol_type
-      make_GT ()
-      {
-        return symbol_type (token::TOK_GT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_GE ()
-      {
-        return symbol_type (token::TOK_GE);
-      }
-#else
-      static
-      symbol_type
-      make_GE ()
-      {
-        return symbol_type (token::TOK_GE);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LT ()
-      {
-        return symbol_type (token::TOK_LT);
-      }
-#else
-      static
-      symbol_type
-      make_LT ()
-      {
-        return symbol_type (token::TOK_LT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LE ()
-      {
-        return symbol_type (token::TOK_LE);
-      }
-#else
-      static
-      symbol_type
-      make_LE ()
-      {
-        return symbol_type (token::TOK_LE);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_PLUS ()
-      {
-        return symbol_type (token::TOK_PLUS);
-      }
-#else
-      static
-      symbol_type
-      make_PLUS ()
-      {
-        return symbol_type (token::TOK_PLUS);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_MINUS ()
-      {
-        return symbol_type (token::TOK_MINUS);
-      }
-#else
-      static
-      symbol_type
-      make_MINUS ()
-      {
-        return symbol_type (token::TOK_MINUS);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_MULT ()
-      {
-        return symbol_type (token::TOK_MULT);
-      }
-#else
-      static
-      symbol_type
-      make_MULT ()
-      {
-        return symbol_type (token::TOK_MULT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_DIV ()
-      {
-        return symbol_type (token::TOK_DIV);
-      }
-#else
-      static
-      symbol_type
-      make_DIV ()
-      {
-        return symbol_type (token::TOK_DIV);
+        return symbol_type (token::TOK_EQUALS);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1199,7 +896,7 @@ switch (yytype)
     static const char* const yytname_[];
 
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short yyrline_[];
+  static const unsigned char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -1428,12 +1125,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 80,     ///< Last index in yytable_.
-      yynnts_ = 14,  ///< Number of nonterminal symbols.
-      yyfinal_ = 12, ///< Termination state number.
+      yylast_ = 15,     ///< Last index in yytable_.
+      yynnts_ = 4,  ///< Number of nonterminal symbols.
+      yyfinal_ = 5, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 28  ///< Number of tokens.
+      yyntokens_ = 11  ///< Number of tokens.
     };
 
 
@@ -1477,11 +1174,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27
+       5,     6,     7,     8,     9,    10
     };
-    const unsigned user_token_number_max_ = 282;
+    const unsigned user_token_number_max_ = 265;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1501,27 +1196,17 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 31: // target_list
-      case 36: // insert_column_list
-      case 37: // column_list
-      case 38: // insert_values_clause
-      case 39: // insert_values_list
-      case 40: // insert_value_items
-        value.move< List* > (std::move (that.value));
-        break;
-
-      case 30: // select_stmt
-      case 32: // from_clause
-      case 33: // where_clause
-      case 34: // expr
-      case 35: // insert_stmt
-      case 41: // delete_stmt
-        value.move< ParseNode* > (std::move (that.value));
-        break;
-
-      case 26: // STRING_GROUP
-      case 27: // STRING_LITERAL
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.move< std::string > (std::move (that.value));
+        break;
+
+      case 14: // where_clause
+        value.move< std::unique_ptr<btdb::sql::WhereClause> > (std::move (that.value));
+        break;
+
+      case 13: // column_exp
+        value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
       default:
@@ -1538,27 +1223,17 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 31: // target_list
-      case 36: // insert_column_list
-      case 37: // column_list
-      case 38: // insert_values_clause
-      case 39: // insert_values_list
-      case 40: // insert_value_items
-        value.copy< List* > (YY_MOVE (that.value));
-        break;
-
-      case 30: // select_stmt
-      case 32: // from_clause
-      case 33: // where_clause
-      case 34: // expr
-      case 35: // insert_stmt
-      case 41: // delete_stmt
-        value.copy< ParseNode* > (YY_MOVE (that.value));
-        break;
-
-      case 26: // STRING_GROUP
-      case 27: // STRING_LITERAL
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      case 14: // where_clause
+        value.copy< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (that.value));
+        break;
+
+      case 13: // column_exp
+        value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1583,27 +1258,17 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 31: // target_list
-      case 36: // insert_column_list
-      case 37: // column_list
-      case 38: // insert_values_clause
-      case 39: // insert_values_list
-      case 40: // insert_value_items
-        value.move< List* > (YY_MOVE (s.value));
-        break;
-
-      case 30: // select_stmt
-      case 32: // from_clause
-      case 33: // where_clause
-      case 34: // expr
-      case 35: // insert_stmt
-      case 41: // delete_stmt
-        value.move< ParseNode* > (YY_MOVE (s.value));
-        break;
-
-      case 26: // STRING_GROUP
-      case 27: // STRING_LITERAL
+      case 9: // STRING_GROUP
+      case 10: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      case 14: // where_clause
+        value.move< std::unique_ptr<btdb::sql::WhereClause> > (YY_MOVE (s.value));
+        break;
+
+      case 13: // column_exp
+        value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1670,14 +1335,13 @@ switch (yytype)
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282
+     265
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1681 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1345 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
