@@ -46,12 +46,10 @@ struct PrintContext {
   std::ostringstream oss;
 };
 
-enum ListType {
-  T_PARSENODE, T_LIST
-};
+enum ListType { T_PARSENODE, T_LIST };
 
 struct ListCell {
-  void *data;
+  void* data;
   ListCell* next;
 };
 static_assert(std::is_pod<ListCell>::value);
@@ -68,9 +66,16 @@ void push_list(List* list, void* data);
 void free_list(List* list);
 void print_list(List* list, PrintContext& ctx);
 
-#define FOR_EACH(cell, list) for(cell = list->head; cell != nullptr; cell = cell->next)
+#define FOR_EACH(cell, list) for (cell = list->head; cell != nullptr; cell = cell->next)
 
-enum ParseNodeType { NBIN_EXPR, NIDENTIFIER, NSTRING_LIT, NSELECT_STMT, NINSERT_STMT };
+enum ParseNodeType {
+  NBIN_EXPR,
+  NIDENTIFIER,
+  NSTRING_LIT,
+  NSELECT_STMT,
+  NINSERT_STMT,
+  NDELETE_STMT
+};
 
 struct ParseNode {
   ParseNodeType type;
@@ -135,6 +140,14 @@ struct NInsertStmt {
 };
 static_assert(std::is_pod<NInsertStmt>::value);
 
+struct NDeleteStmt {
+  ParseNodeType type;
+
+  ParseNode* table_name;
+  ParseNode* where_clause;
+};
+static_assert(std::is_pod<NDeleteStmt>::value);
+
 void free_parse_node(ParseNode* node);
 void print_parse_node(ParseNode* node, PrintContext& ctx);
 
@@ -144,36 +157,6 @@ struct ParseTree {
 
   ParseNode* tree;
 };
-
-// struct SelectStmt {
-//   SelectStmt(const std::vector<std::string>& select_lists, const std::string& table_names,
-//              std::optional<NWhereClause> where_clauses)
-//       : select_list(select_lists),
-//         table_name(table_names),
-//         where_clause(std::move(where_clauses)) {}
-//   ~SelectStmt() {}
-//   SelectStmt(SelectStmt& stmt) {
-//     select_list = stmt.select_list;
-//     table_name = stmt.table_name;
-//     where_clause = stmt.where_clause;
-//   }
-//   SelectStmt(SelectStmt&& stmt) noexcept
-//       : select_list(stmt.select_list),
-//         table_name(stmt.table_name),
-//         where_clause(std::move(stmt.where_clause)) {}
-//   SelectStmt& operator=(SelectStmt&& stmt) {
-//     select_list = stmt.select_list;
-//     table_name = stmt.table_name;
-//     where_clause = std::move(stmt.where_clause);
-//     return *this;
-//   }
-
-//   std::vector<std::string> select_list;
-//   std::string table_name;
-//   std::optional<NWhereClause> where_clause;
-// };
-
-// typedef std::variant<std::monostate, SelectStmt> RawStmt;
 
 }  // namespace sql
 }  // namespace btdb

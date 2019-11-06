@@ -15,7 +15,7 @@ void Panic(const std::string& msg) {
 };
 
 List* make_list(ListType type) {
-  List* list = (List*) calloc(1, sizeof(List));
+  List* list = (List*)calloc(1, sizeof(List));
   list->type = type;
   return list;
 }
@@ -23,7 +23,7 @@ List* make_list(ListType type) {
 void push_list(List* list, void* data) {
   assert(list != nullptr);
   assert(data != nullptr);
-  ListCell* cell = (ListCell*) calloc(1, sizeof(ListCell));
+  ListCell* cell = (ListCell*)calloc(1, sizeof(ListCell));
   cell->data = data;
   if (list->head == nullptr) {
     list->head = cell;
@@ -32,7 +32,8 @@ void push_list(List* list, void* data) {
   }
 
   ListCell* ptr = list->head;
-  for (; ptr->next != nullptr; ptr = ptr->next) {}
+  for (; ptr->next != nullptr; ptr = ptr->next) {
+  }
   ptr->next = cell;
   ++list->length;
   return;
@@ -55,7 +56,7 @@ void free_list(List* list) {
     case T_LIST: {
       for (ListCell* ptr = list->head; ptr != nullptr;) {
         assert(ptr->data != nullptr);
-        free_list((List*) ptr->data);
+        free_list((List*)ptr->data);
         ListCell* tmp = ptr;
         ptr = ptr->next;
         free(tmp);
@@ -85,7 +86,7 @@ void print_list(List* list, PrintContext& ctx) {
       for (ListCell* ptr = list->head; ptr != nullptr; ptr = ptr->next, ++size) {
         assert(ptr->data != nullptr);
         ctx.PrintObject("item " + std::to_string(size));
-        print_list((List*) ptr->data, ctx);
+        print_list((List*)ptr->data, ctx);
         ctx.EndObject();
       }
       return;
@@ -129,24 +130,33 @@ void free_parse_node(ParseNode* node) {
       break;
     }
     case NSELECT_STMT: {
-        NSelectStmt* select = (NSelectStmt*) node;
-        assert(select->target_list != nullptr);
-        free_list(select->target_list);
-        free_parse_node(select->table_name);
-        free_parse_node(select->where_clause);
-        free(select);
-        break;
+      NSelectStmt* select = (NSelectStmt*)node;
+      assert(select->target_list != nullptr);
+      free_list(select->target_list);
+      free_parse_node(select->table_name);
+      free_parse_node(select->where_clause);
+      free(select);
+      break;
     }
     case NINSERT_STMT: {
-        NInsertStmt* insert = (NInsertStmt*)node;
-        assert(insert->table_name != nullptr);
-        assert(insert->column_list != nullptr);
-        assert(insert->values_list != nullptr);
-        free_parse_node(insert->table_name);
-        free_list(insert->column_list);
-        free_list(insert->values_list);
-        free(insert);
-        break;
+      NInsertStmt* insert = (NInsertStmt*)node;
+      assert(insert->table_name != nullptr);
+      assert(insert->column_list != nullptr);
+      assert(insert->values_list != nullptr);
+      free_parse_node(insert->table_name);
+      free_list(insert->column_list);
+      free_list(insert->values_list);
+      free(insert);
+      break;
+    }
+    case NDELETE_STMT: {
+      NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
+      assert(delete_stmt->table_name != nullptr);
+      if (delete_stmt->where_clause != nullptr) {
+        free_parse_node(delete_stmt->where_clause);
+      }
+      free(delete_stmt);
+      break;
     }
     default: {
       Panic("Unkown Parse Node Type");
@@ -235,38 +245,53 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       break;
     }
     case NSELECT_STMT: {
-        NSelectStmt* select = (NSelectStmt*) node;
-        ctx.PrintObject("NSelectStmt");
-        assert(select->target_list != nullptr);
-        ctx.PrintObject("target_list");
-        print_list(select->target_list, ctx);
-        ctx.EndObject();
-        ctx.PrintObject("table_name");
-        print_parse_node(select->table_name, ctx);
-        ctx.EndObject();
-        ctx.PrintObject("where_clause");
-        print_parse_node(select->where_clause, ctx);
-        ctx.EndObject();
-        ctx.EndObject();
-        break;
+      NSelectStmt* select = (NSelectStmt*)node;
+      ctx.PrintObject("NSelectStmt");
+      assert(select->target_list != nullptr);
+      ctx.PrintObject("target_list");
+      print_list(select->target_list, ctx);
+      ctx.EndObject();
+      ctx.PrintObject("table_name");
+      print_parse_node(select->table_name, ctx);
+      ctx.EndObject();
+      ctx.PrintObject("where_clause");
+      print_parse_node(select->where_clause, ctx);
+      ctx.EndObject();
+      ctx.EndObject();
+      break;
     }
     case NINSERT_STMT: {
-        NInsertStmt* insert = (NInsertStmt*) node;
-        assert(insert->table_name != nullptr);
-        assert(insert->column_list != nullptr);
-        assert(insert->values_list != nullptr);
-        ctx.PrintObject("NInsertStmt");
-        ctx.PrintObject("table_name");
-        print_parse_node(insert->table_name, ctx);
+      NInsertStmt* insert = (NInsertStmt*)node;
+      assert(insert->table_name != nullptr);
+      assert(insert->column_list != nullptr);
+      assert(insert->values_list != nullptr);
+      ctx.PrintObject("NInsertStmt");
+      ctx.PrintObject("table_name");
+      print_parse_node(insert->table_name, ctx);
+      ctx.EndObject();
+      ctx.PrintObject("column_list");
+      print_list(insert->column_list, ctx);
+      ctx.EndObject();
+      ctx.PrintObject("values_list");
+      print_list(insert->values_list, ctx);
+      ctx.EndObject();
+      ctx.EndObject();
+      break;
+    }
+    case NDELETE_STMT: {
+      NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
+      assert(delete_stmt->table_name != nullptr);
+      ctx.PrintObject("NDeleteStmt");
+      ctx.PrintObject("table_name");
+      print_parse_node(delete_stmt->table_name, ctx);
+      ctx.EndObject();
+      if (delete_stmt->where_clause != nullptr) {
+        ctx.PrintObject("where_clause");
+        print_parse_node(delete_stmt->where_clause, ctx);
         ctx.EndObject();
-        ctx.PrintObject("column_list");
-        print_list(insert->column_list, ctx);
-        ctx.EndObject();
-        ctx.PrintObject("values_list");
-        print_list(insert->values_list, ctx);
-        ctx.EndObject();
-        ctx.EndObject();
-        break;
+      }
+      ctx.EndObject();
+      break;
     }
     default: {
       Panic("Unkown Parse Node Type");
