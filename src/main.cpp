@@ -634,6 +634,41 @@ struct InsertScan : Iterator {
   void Close() {}
 };
 
+struct DeleteScan : Iterator {
+  uint64_t next_index = 0;
+  sql::ParseNode* where_clause;
+
+  DeleteScan(sql::ParseNode* where_clause) : where_clause(where_clause) {}
+
+  void Open() {}
+
+  MTuple GetNext() {
+    while (next_index < Tuples.size()) {
+      const auto& cur_tpl = Tuples[next_index];
+
+      // Evaluate predicate if any.
+      if (where_clause != nullptr) {
+        auto result_val = ExecPred(where_clause, cur_tpl);
+        assert(result_val.type == T_BOOL);
+        assert(result_val.data != nullptr);
+        bool* result = (bool*)result_val.data;
+        if (!*result) {
+          ++next_index;
+          continue;
+        }
+      }
+
+      auto result = std::make_unique<Tuple>(cur_tpl);
+      Tuples.erase(Tuples.begin() + next_index);
+      return result;
+    }
+
+    return nullptr;
+  }
+
+  void Close() {}
+};
+
 struct PlanState {
   std::vector<std::string> target_list;
   std::unique_ptr<Plan> plan;
@@ -655,6 +690,12 @@ PlanState PlanQuery(Query& query) {
       auto plan = std::make_unique<InsertScan>(InsertScan(insert_query.values_list));
       // TODO(ryan): This is also wonky.
       plan_state.target_list = insert_query.column_list;
+      plan_state.plan = std::move(plan);
+      break;
+    }
+    case 2: {
+      const DeleteQuery& delete_query = std::get<DeleteQuery>(query);
+      auto plan = std::make_unique<DeleteScan>(DeleteScan(delete_query.where_clause));
       plan_state.plan = std::move(plan);
       break;
     }
