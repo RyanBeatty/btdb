@@ -16,6 +16,8 @@ add_library(btdb_sql_parser
     ${sources}
     ${FLEX_btdb_scanner_OUTPUTS}
     ${BISON_btdb_parser_OUTPUTS}
+    "node.hpp"
+    "node.cpp"
 )
 
 add_executable(parse_sql
