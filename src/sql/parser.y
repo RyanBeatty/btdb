@@ -80,7 +80,7 @@
 %token <std::string> STRING_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt
+%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt 
 %type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items
 
 %%
@@ -372,7 +372,7 @@ insert_value_items:
       $$ = value_items;
   }
 
-delete_stmt: DELETE FROM STRING_GROUP ";" {
+delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = btdb::sql::NIDENTIFIER;
@@ -383,6 +383,7 @@ delete_stmt: DELETE FROM STRING_GROUP ";" {
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
   delete_stmt->type = btdb::sql::NDELETE_STMT;
   delete_stmt->table_name = (ParseNode*) identifier;
+  delete_stmt->where_clause = $4;
   $$ = (ParseNode*) delete_stmt;
 }
 

@@ -992,20 +992,21 @@ namespace yy {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = btdb::sql::NIDENTIFIER;
-  identifier->identifier = (char*)calloc(yystack_[1].value.as < std::string > ().length(), sizeof(char));
+  identifier->identifier = (char*)calloc(yystack_[2].value.as < std::string > ().length(), sizeof(char));
   assert(identifier->identifier != NULL);
-  strncpy(identifier->identifier, yystack_[1].value.as < std::string > ().c_str(), yystack_[1].value.as < std::string > ().length());
+  strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
 
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
   delete_stmt->type = btdb::sql::NDELETE_STMT;
   delete_stmt->table_name = (ParseNode*) identifier;
+  delete_stmt->where_clause = yystack_[1].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) delete_stmt;
 }
-#line 1005 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1006 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 1009 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1010 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -1189,67 +1190,69 @@ namespace yy {
   const signed char
   parser::yypact_[] =
   {
-      45,    28,    47,    46,    55,   -21,   -21,   -21,    48,    49,
-      35,    36,   -21,    28,    37,    44,    50,    53,   -21,   -21,
-      19,    54,    40,    60,   -21,   -21,   -21,   -13,   -21,   -21,
-      30,    61,    57,    19,    19,    19,    19,    19,    19,    19,
-      19,    19,    19,    19,    19,   -21,    51,    19,    58,   -21,
-       9,     9,    13,    13,    13,    13,    13,    13,    27,    27,
-     -21,   -21,   -21,   -13,    31,    63,   -21,    19,    19,   -13,
-      32,   -21
+      46,    29,     7,    44,    56,   -21,   -21,   -21,    45,    48,
+      34,    35,   -21,    29,    36,    50,    51,    50,   -21,   -21,
+      20,    53,    39,    59,    57,   -21,   -21,   -13,   -21,   -21,
+      31,    61,    60,   -21,    20,    20,    20,    20,    20,    20,
+      20,    20,    20,    20,    20,    20,   -21,    41,    20,    58,
+     -21,    10,    10,    14,    14,    14,    14,    14,    14,    28,
+      28,   -21,   -21,   -21,   -13,    32,    64,   -21,    20,    20,
+     -13,    33,   -21
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
        0,     0,     0,     0,     0,     2,     3,     4,     6,     8,
-       0,     0,     1,     0,     0,    10,     0,     0,     7,     9,
-       0,     0,     0,     0,    35,    12,    13,    11,     5,    28,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    27,     0,     0,    30,    26,
-      24,    25,    14,    15,    16,    17,    18,    19,    20,    21,
-      22,    23,    29,    33,     0,     0,    31,     0,     0,    34,
-       0,    32
+       0,     0,     1,     0,     0,    10,     0,    10,     7,     9,
+       0,     0,     0,     0,     0,    12,    13,    11,     5,    28,
+       0,     0,     0,    35,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    27,     0,     0,    30,
+      26,    24,    25,    14,    15,    16,    17,    18,    19,    20,
+      21,    22,    23,    29,    33,     0,     0,    31,     0,     0,
+      34,     0,    32
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-     -21,   -21,   -21,    59,   -21,   -21,   -20,   -21,   -21,   -21,
-     -21,   -21,     5,   -21
+     -21,   -21,   -21,    62,   -21,    63,   -20,   -21,   -21,   -21,
+     -21,   -21,     4,   -21
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     4,     5,     9,    15,    21,    63,     6,    23,    30,
-      32,    48,    64,     7
+      -1,     4,     5,     9,    15,    21,    64,     6,    23,    30,
+      32,    49,    65,     7
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-      27,    33,    34,    35,    36,    37,    38,    39,    40,    41,
-      42,    43,    44,    50,    51,    52,    53,    54,    55,    56,
-      57,    58,    59,    60,    61,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    41,    42,    43,    44,    45,
-      66,    71,    46,    67,    67,    25,    26,    69,     1,     2,
-       3,    43,    44,    10,     8,    12,    11,    20,    22,    14,
-      13,    16,    17,    19,    24,    28,    29,    31,    49,    47,
-      65,    68,    18,    70,     0,     0,     0,    62
+      27,    34,    35,    36,    37,    38,    39,    40,    41,    42,
+      43,    44,    45,    10,    51,    52,    53,    54,    55,    56,
+      57,    58,    59,    60,    61,    62,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,    45,    42,    43,    44,    45,
+      46,    67,    72,    47,    68,    68,    25,    26,    70,     1,
+       2,     3,    44,    45,    11,     8,    12,    13,    14,    22,
+      16,    17,    19,    20,    28,    29,    31,    63,    33,    48,
+      66,    50,    69,    71,     0,    18,     0,     0,     0,     0,
+      24
   };
 
   const signed char
   parser::yycheck_[] =
   {
       20,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-      23,    24,    25,    33,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    16,    17,    18,    19,    20,
-      21,    22,    23,    24,    25,    22,    23,    24,    25,     9,
-       9,     9,    12,    12,    12,    26,    27,    67,     3,     4,
-       5,    24,    25,     6,    26,     0,    10,    13,     8,    10,
-      12,    26,    26,    26,    11,    11,    26,     7,    11,     8,
-      12,     8,    13,    68,    -1,    -1,    -1,    26
+      23,    24,    25,     6,    34,    35,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,    45,    16,    17,    18,    19,
+      20,    21,    22,    23,    24,    25,    22,    23,    24,    25,
+       9,     9,     9,    12,    12,    12,    26,    27,    68,     3,
+       4,     5,    24,    25,    10,    26,     0,    12,    10,     8,
+      26,    26,    26,    13,    11,    26,     7,    26,    11,     8,
+      12,    11,     8,    69,    -1,    13,    -1,    -1,    -1,    -1,
+      17
   };
 
   const unsigned char
@@ -1257,12 +1260,12 @@ namespace yy {
   {
        0,     3,     4,     5,    29,    30,    35,    41,    26,    31,
        6,    10,     0,    12,    10,    32,    26,    26,    31,    26,
-      13,    33,     8,    36,    11,    26,    27,    34,    11,    26,
-      37,     7,    38,    14,    15,    16,    17,    18,    19,    20,
-      21,    22,    23,    24,    25,     9,    12,     8,    39,    11,
-      34,    34,    34,    34,    34,    34,    34,    34,    34,    34,
-      34,    34,    26,    34,    40,    12,     9,    12,     8,    34,
-      40,     9
+      13,    33,     8,    36,    33,    26,    27,    34,    11,    26,
+      37,     7,    38,    11,    14,    15,    16,    17,    18,    19,
+      20,    21,    22,    23,    24,    25,     9,    12,     8,    39,
+      11,    34,    34,    34,    34,    34,    34,    34,    34,    34,
+      34,    34,    34,    26,    34,    40,    12,     9,    12,     8,
+      34,    40,     9
   };
 
   const unsigned char
@@ -1280,7 +1283,7 @@ namespace yy {
        0,     2,     1,     1,     1,     5,     1,     3,     0,     2,
        0,     2,     1,     1,     3,     3,     3,     3,     3,     3,
        3,     3,     3,     3,     3,     3,     6,     3,     1,     3,
-       2,     3,     5,     1,     3,     4
+       2,     3,     5,     1,     3,     5
   };
 
 
@@ -1341,9 +1344,9 @@ namespace yy {
 
 
 } // yy
-#line 1345 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1348 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 390 "parser.y"
+#line 391 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {
