@@ -171,6 +171,31 @@ struct SystemCatalog {
     return true;
   }
 
+  bool ValidateDeleteStmt(sql::NDeleteStmt* delete_stmt) {
+    assert(delete_stmt != nullptr);
+    assert(delete_stmt->table_name != nullptr);
+
+    // Validate table name exists and get definition.
+    sql::NIdentifier* table_name = (sql::NIdentifier*)delete_stmt->table_name;
+    assert(table_name->type == sql::NIDENTIFIER);
+    assert(table_name->identifier != nullptr);
+    auto table_def_it = tables.begin();
+    for (; table_def_it != tables.end(); ++table_def_it) {
+      if (table_def_it->name == table_name->identifier) {
+        break;
+      }
+    }
+    if (table_def_it == tables.end()) {
+      return false;
+    }
+
+    if (delete_stmt->where_clause != nullptr) {
+      return CheckType(delete_stmt->where_clause, *table_def_it);
+    }
+
+    return true;
+  }
+
   BType CheckType(sql::ParseNode* node, TableDef& table_def) {
     assert(node != nullptr);
     switch (node->type) {
@@ -248,7 +273,14 @@ struct InsertQuery {
   std::vector<Tuple> values_list;
 };
 
-typedef std::variant<SelectQuery, InsertQuery> Query;
+struct DeleteQuery {
+  std::string table;
+  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
+  // ownership transfer eventually.
+  sql::ParseNode* where_clause;
+};
+
+typedef std::variant<SelectQuery, InsertQuery, DeleteQuery> Query;
 
 Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
   assert(node != nullptr);
