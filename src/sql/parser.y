@@ -19,6 +19,7 @@
   using btdb::sql::List;
   using btdb::sql::NSelectStmt;
   using btdb::sql::NInsertStmt;
+  using btdb::sql::NDeleteStmt;
   using btdb::sql::make_list;
   using btdb::sql::push_list;
 
@@ -53,6 +54,7 @@
     EOF 0
     SELECT
     INSERT
+    DELETE
     INTO
     VALUES
     LPARENS "("
@@ -78,7 +80,7 @@
 %token <std::string> STRING_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt
+%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt
 %type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items
 
 %%
@@ -89,6 +91,9 @@ stmt:
     ctx.tree = std::make_unique<ParseTree>($1);
   }
   | insert_stmt {
+    ctx.tree = std::make_unique<ParseTree>($1);
+  }
+  | delete_stmt {
     ctx.tree = std::make_unique<ParseTree>($1);
   }
 
@@ -366,6 +371,20 @@ insert_value_items:
       push_list(value_items, $3);
       $$ = value_items;
   }
+
+delete_stmt: DELETE FROM STRING_GROUP ";" {
+  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+  assert(identifier != NULL);
+  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->identifier = (char*)calloc($3.length(), sizeof(char));
+  assert(identifier->identifier != NULL);
+  strncpy(identifier->identifier, $3.c_str(), $3.length());
+
+  NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
+  delete_stmt->type = btdb::sql::NDELETE_STMT;
+  delete_stmt->table_name = (ParseNode*) identifier;
+  $$ = (ParseNode*) delete_stmt;
+}
 
 
 %%

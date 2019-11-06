@@ -56,6 +56,7 @@
   using btdb::sql::List;
   using btdb::sql::NSelectStmt;
   using btdb::sql::NInsertStmt;
+  using btdb::sql::NDeleteStmt;
   using btdb::sql::make_list;
   using btdb::sql::push_list;
 
@@ -66,7 +67,7 @@
       struct ParserContext;
     }}
 
-#line 70 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 71 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -181,7 +182,7 @@
 #endif
 
 namespace yy {
-#line 185 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 186 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -398,6 +399,7 @@ namespace yy {
       // where_clause
       // expr
       // insert_stmt
+      // delete_stmt
       char dummy2[sizeof (ParseNode*)];
 
       // STRING_GROUP
@@ -447,28 +449,29 @@ namespace yy {
         TOK_EOF = 0,
         TOK_SELECT = 258,
         TOK_INSERT = 259,
-        TOK_INTO = 260,
-        TOK_VALUES = 261,
-        TOK_LPARENS = 262,
-        TOK_RPARENS = 263,
-        TOK_FROM = 264,
-        TOK_SEMICOLON = 265,
-        TOK_COMMA = 266,
-        TOK_WHERE = 267,
-        TOK_AND = 268,
-        TOK_OR = 269,
-        TOK_EQ = 270,
-        TOK_NEQ = 271,
-        TOK_GT = 272,
-        TOK_GE = 273,
-        TOK_LT = 274,
-        TOK_LE = 275,
-        TOK_PLUS = 276,
-        TOK_MINUS = 277,
-        TOK_MULT = 278,
-        TOK_DIV = 279,
-        TOK_STRING_GROUP = 280,
-        TOK_STRING_LITERAL = 281
+        TOK_DELETE = 260,
+        TOK_INTO = 261,
+        TOK_VALUES = 262,
+        TOK_LPARENS = 263,
+        TOK_RPARENS = 264,
+        TOK_FROM = 265,
+        TOK_SEMICOLON = 266,
+        TOK_COMMA = 267,
+        TOK_WHERE = 268,
+        TOK_AND = 269,
+        TOK_OR = 270,
+        TOK_EQ = 271,
+        TOK_NEQ = 272,
+        TOK_GT = 273,
+        TOK_GE = 274,
+        TOK_LT = 275,
+        TOK_LE = 276,
+        TOK_PLUS = 277,
+        TOK_MINUS = 278,
+        TOK_MULT = 279,
+        TOK_DIV = 280,
+        TOK_STRING_GROUP = 281,
+        TOK_STRING_LITERAL = 282
       };
     };
 
@@ -575,25 +578,26 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 30: // target_list
-      case 35: // insert_column_list
-      case 36: // column_list
-      case 37: // insert_values_clause
-      case 38: // insert_values_list
-      case 39: // insert_value_items
+      case 31: // target_list
+      case 36: // insert_column_list
+      case 37: // column_list
+      case 38: // insert_values_clause
+      case 39: // insert_values_list
+      case 40: // insert_value_items
         value.template destroy< List* > ();
         break;
 
-      case 29: // select_stmt
-      case 31: // from_clause
-      case 32: // where_clause
-      case 33: // expr
-      case 34: // insert_stmt
+      case 30: // select_stmt
+      case 32: // from_clause
+      case 33: // where_clause
+      case 34: // expr
+      case 35: // insert_stmt
+      case 41: // delete_stmt
         value.template destroy< ParseNode* > ();
         break;
 
-      case 25: // STRING_GROUP
-      case 26: // STRING_LITERAL
+      case 26: // STRING_GROUP
+      case 27: // STRING_LITERAL
         value.template destroy< std::string > ();
         break;
 
@@ -673,13 +677,13 @@ switch (yytype)
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_DELETE || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
       }
 #else
       symbol_type (int tok)
         : super_type(token_type (tok))
       {
-        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
+        YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_DELETE || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -774,6 +778,21 @@ switch (yytype)
       make_INSERT ()
       {
         return symbol_type (token::TOK_INSERT);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DELETE ()
+      {
+        return symbol_type (token::TOK_DELETE);
+      }
+#else
+      static
+      symbol_type
+      make_DELETE ()
+      {
+        return symbol_type (token::TOK_DELETE);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1162,7 +1181,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1409,12 +1428,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 70,     ///< Last index in yytable_.
-      yynnts_ = 13,  ///< Number of nonterminal symbols.
-      yyfinal_ = 9, ///< Termination state number.
+      yylast_ = 77,     ///< Last index in yytable_.
+      yynnts_ = 14,  ///< Number of nonterminal symbols.
+      yyfinal_ = 12, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 27  ///< Number of tokens.
+      yyntokens_ = 28  ///< Number of tokens.
     };
 
 
@@ -1460,9 +1479,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26
+      25,    26,    27
     };
-    const unsigned user_token_number_max_ = 281;
+    const unsigned user_token_number_max_ = 282;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1482,25 +1501,26 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 30: // target_list
-      case 35: // insert_column_list
-      case 36: // column_list
-      case 37: // insert_values_clause
-      case 38: // insert_values_list
-      case 39: // insert_value_items
+      case 31: // target_list
+      case 36: // insert_column_list
+      case 37: // column_list
+      case 38: // insert_values_clause
+      case 39: // insert_values_list
+      case 40: // insert_value_items
         value.move< List* > (std::move (that.value));
         break;
 
-      case 29: // select_stmt
-      case 31: // from_clause
-      case 32: // where_clause
-      case 33: // expr
-      case 34: // insert_stmt
+      case 30: // select_stmt
+      case 32: // from_clause
+      case 33: // where_clause
+      case 34: // expr
+      case 35: // insert_stmt
+      case 41: // delete_stmt
         value.move< ParseNode* > (std::move (that.value));
         break;
 
-      case 25: // STRING_GROUP
-      case 26: // STRING_LITERAL
+      case 26: // STRING_GROUP
+      case 27: // STRING_LITERAL
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1518,25 +1538,26 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 30: // target_list
-      case 35: // insert_column_list
-      case 36: // column_list
-      case 37: // insert_values_clause
-      case 38: // insert_values_list
-      case 39: // insert_value_items
+      case 31: // target_list
+      case 36: // insert_column_list
+      case 37: // column_list
+      case 38: // insert_values_clause
+      case 39: // insert_values_list
+      case 40: // insert_value_items
         value.copy< List* > (YY_MOVE (that.value));
         break;
 
-      case 29: // select_stmt
-      case 31: // from_clause
-      case 32: // where_clause
-      case 33: // expr
-      case 34: // insert_stmt
+      case 30: // select_stmt
+      case 32: // from_clause
+      case 33: // where_clause
+      case 34: // expr
+      case 35: // insert_stmt
+      case 41: // delete_stmt
         value.copy< ParseNode* > (YY_MOVE (that.value));
         break;
 
-      case 25: // STRING_GROUP
-      case 26: // STRING_LITERAL
+      case 26: // STRING_GROUP
+      case 27: // STRING_LITERAL
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -1562,25 +1583,26 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 30: // target_list
-      case 35: // insert_column_list
-      case 36: // column_list
-      case 37: // insert_values_clause
-      case 38: // insert_values_list
-      case 39: // insert_value_items
+      case 31: // target_list
+      case 36: // insert_column_list
+      case 37: // column_list
+      case 38: // insert_values_clause
+      case 39: // insert_values_list
+      case 40: // insert_value_items
         value.move< List* > (YY_MOVE (s.value));
         break;
 
-      case 29: // select_stmt
-      case 31: // from_clause
-      case 32: // where_clause
-      case 33: // expr
-      case 34: // insert_stmt
+      case 30: // select_stmt
+      case 32: // from_clause
+      case 33: // where_clause
+      case 34: // expr
+      case 35: // insert_stmt
+      case 41: // delete_stmt
         value.move< ParseNode* > (YY_MOVE (s.value));
         break;
 
-      case 25: // STRING_GROUP
-      case 26: // STRING_LITERAL
+      case 26: // STRING_GROUP
+      case 27: // STRING_LITERAL
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -1649,13 +1671,13 @@ switch (yytype)
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281
+     275,   276,   277,   278,   279,   280,   281,   282
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1659 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1681 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

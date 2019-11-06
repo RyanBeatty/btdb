@@ -21,7 +21,9 @@
 "values" return yy::parser::make_VALUES();
 "from" return yy::parser::make_FROM();
 "FROM" return yy::parser::make_FROM();
-"WHERE"
+"DELETE" return yy::parser::make_DELETE();
+"delete" return yy::parser::make_DELETE();
+"WHERE" return yy::parser::make_WHERE();
 "where" return yy::parser::make_WHERE();
 "AND" return yy::parser::make_AND();
 "and" return yy::parser::make_AND();
