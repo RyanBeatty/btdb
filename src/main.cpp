@@ -60,10 +60,10 @@ struct SystemCatalog {
 
     switch (node->type) {
       case sql::NSELECT_STMT: {
-        return ValidateSelectStmt((sql::NSelectStmt*) node);
+        return ValidateSelectStmt((sql::NSelectStmt*)node);
       }
       case sql::NINSERT_STMT: {
-        return ValidateInsertStmt((sql::NInsertStmt*) node);
+        return ValidateInsertStmt((sql::NInsertStmt*)node);
       }
       default: {
         Panic("Unknown statement type when validating");
@@ -93,7 +93,7 @@ struct SystemCatalog {
     sql::ListCell* lc = nullptr;
     FOR_EACH(lc, target_list) {
       assert(lc->data != nullptr);
-      sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+      sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
       assert(col->type == sql::NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
@@ -118,7 +118,7 @@ struct SystemCatalog {
     assert(insert->values_list != nullptr);
 
     // Validate insert table name exists.
-    sql::NIdentifier* table_name = (sql::NIdentifier*) insert->table_name;
+    sql::NIdentifier* table_name = (sql::NIdentifier*)insert->table_name;
     assert(table_name->type == sql::NIDENTIFIER);
     assert(table_name->identifier != nullptr);
     auto table_def_it = tables.begin();
@@ -138,7 +138,7 @@ struct SystemCatalog {
     sql::ListCell* lc = nullptr;
     FOR_EACH(lc, column_list) {
       assert(lc->data != nullptr);
-      sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+      sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
       assert(col->type == sql::NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
@@ -152,7 +152,7 @@ struct SystemCatalog {
     lc = nullptr;
     FOR_EACH(lc, values_list) {
       assert(lc->data != nullptr);
-      List* value_items = (List*) lc->data;
+      List* value_items = (List*)lc->data;
       assert(value_items->type == sql::T_PARSENODE);
       if (value_items->length != column_list->length) {
         return false;
@@ -162,7 +162,7 @@ struct SystemCatalog {
       FOR_EACH(lc2, value_items) {
         assert(lc2->data != nullptr);
         // TODO(ryan): Allow for more general expressions here.
-        sql::NStringLit* str_lit = (sql::NStringLit*) lc2->data;
+        sql::NStringLit* str_lit = (sql::NStringLit*)lc2->data;
         if (str_lit->type != sql::NSTRING_LIT) {
           return false;
         }
@@ -250,7 +250,6 @@ struct InsertQuery {
 
 typedef std::variant<SelectQuery, InsertQuery> Query;
 
-
 Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
   assert(node != nullptr);
   assert(node->type == sql::NSELECT_STMT);
@@ -266,7 +265,7 @@ Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
   sql::ListCell* lc = nullptr;
   FOR_EACH(lc, target_list) {
     assert(lc->data != nullptr);
-    sql::NIdentifier* target = (sql::NIdentifier*) lc->data;
+    sql::NIdentifier* target = (sql::NIdentifier*)lc->data;
     assert(target->type == sql::NIDENTIFIER);
     targets.push_back(target->identifier);
   }
@@ -278,19 +277,19 @@ Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
   assert(node != nullptr);
   assert(node->type == sql::NINSERT_STMT);
 
-  sql::NIdentifier* table_name = (sql::NIdentifier*) node->table_name;
+  sql::NIdentifier* table_name = (sql::NIdentifier*)node->table_name;
   assert(table_name != nullptr);
   assert(table_name->type == sql::NIDENTIFIER);
   assert(table_name->identifier != nullptr);
-  
-  std::vector<std::string> columns; 
+
+  std::vector<std::string> columns;
   auto* column_list = node->column_list;
   assert(column_list != nullptr);
   assert(column_list->type == sql::T_PARSENODE);
   sql::ListCell* lc = nullptr;
   FOR_EACH(lc, column_list) {
     assert(lc->data != nullptr);
-    sql::NIdentifier* col = (sql::NIdentifier*) lc->data;
+    sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
     assert(col->type == sql::NIDENTIFIER);
     assert(col->identifier != nullptr);
     columns.push_back(col->identifier);
@@ -302,7 +301,7 @@ Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
   lc = nullptr;
   FOR_EACH(lc, values_list) {
     assert(lc->data != nullptr);
-    List* value_items = (List*) lc->data;
+    List* value_items = (List*)lc->data;
     assert(value_items->type == sql::T_PARSENODE);
     assert(value_items->length == column_list->length);
 
@@ -312,7 +311,7 @@ Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != nullptr);
       // TODO(ryan): Allow for more general expressions here.
-      sql::NStringLit* str_lit = (sql::NStringLit*) lc2->data;
+      sql::NStringLit* str_lit = (sql::NStringLit*)lc2->data;
       assert(str_lit->type == sql::NSTRING_LIT);
       assert(str_lit->str_lit != nullptr);
       tuple[columns[col_index]] = str_lit->str_lit;
@@ -329,10 +328,10 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
   ParseNode* node = tree.tree;
   switch (node->type) {
     case sql::NSELECT_STMT: {
-      return AnalyzeAndRewriteSelectStmt((sql::NSelectStmt*) node);
+      return AnalyzeAndRewriteSelectStmt((sql::NSelectStmt*)node);
     }
     case sql::NINSERT_STMT: {
-      return AnalyzeAndRewriteInsertStmt((sql::NInsertStmt*) node);
+      return AnalyzeAndRewriteInsertStmt((sql::NInsertStmt*)node);
     }
     default: {
       Panic("Invalid statement type when analying");
@@ -385,8 +384,8 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.type == T_BOOL);
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
-          bool* lhs_data = (bool*) lhs_value.data;
-          bool* rhs_data = (bool*) rhs_value.data;
+          bool* lhs_data = (bool*)lhs_value.data;
+          bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data && *rhs_data));
         }
         case sql::OR: {
@@ -394,8 +393,8 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.type == T_BOOL);
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
-          bool* lhs_data = (bool*) lhs_value.data;
-          bool* rhs_data = (bool*) rhs_value.data;
+          bool* lhs_data = (bool*)lhs_value.data;
+          bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data || *rhs_data));
         }
         case sql::EQ: {
@@ -404,12 +403,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
@@ -422,12 +421,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
@@ -440,12 +439,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
@@ -458,12 +457,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
@@ -476,12 +475,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
@@ -494,12 +493,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(lhs_value.data != nullptr);
           assert(rhs_value.data != nullptr);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*) lhs_value.data;
-            bool* rhs_data = (bool*) rhs_value.data;
+            bool* lhs_data = (bool*)lhs_value.data;
+            bool* rhs_data = (bool*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*) lhs_value.data;
-            std::string* rhs_data = (std::string*) rhs_value.data;
+            std::string* lhs_data = (std::string*)lhs_value.data;
+            std::string* rhs_data = (std::string*)rhs_value.data;
             return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
@@ -593,7 +592,8 @@ PlanState PlanQuery(Query& query) {
   switch (query.index()) {
     case 0: {
       const SelectQuery& select_query = std::get<SelectQuery>(query);
-      auto plan = std::make_unique<SequentialScan>(SequentialScan(select_query.target_list, select_query.where_clause));
+      auto plan = std::make_unique<SequentialScan>(
+          SequentialScan(select_query.target_list, select_query.where_clause));
       plan_state.target_list = select_query.target_list;
       plan_state.plan = std::move(plan);
       break;
