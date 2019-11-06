@@ -65,6 +65,9 @@ struct SystemCatalog {
       case sql::NINSERT_STMT: {
         return ValidateInsertStmt((sql::NInsertStmt*)node);
       }
+      case sql::NDELETE_STMT: {
+        return ValidateDeleteStmt((sql::NDeleteStmt*)node);
+      }
       default: {
         Panic("Unknown statement type when validating");
         return false;
@@ -173,6 +176,7 @@ struct SystemCatalog {
 
   bool ValidateDeleteStmt(sql::NDeleteStmt* delete_stmt) {
     assert(delete_stmt != nullptr);
+    assert(delete_stmt->type == sql::NDELETE_STMT);
     assert(delete_stmt->table_name != nullptr);
 
     // Validate table name exists and get definition.
@@ -355,6 +359,19 @@ Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
   return InsertQuery{table_name->identifier, columns, values};
 }
 
+Query AnalyzeAndRewriteDeleteStmt(sql::NDeleteStmt* delete_stmt) {
+  assert(delete_stmt != nullptr);
+  assert(delete_stmt->type == sql::NDELETE_STMT);
+  assert(delete_stmt->table_name != nullptr);
+  assert(delete_stmt->table_name->type == sql::NIDENTIFIER);
+
+  sql::NIdentifier* identifier = (sql::NIdentifier*)delete_stmt->table_name;
+  assert(identifier->identifier != nullptr);
+  auto table_name = std::string(identifier->identifier);
+
+  return DeleteQuery{table_name, delete_stmt->where_clause};
+}
+
 Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
   assert(tree.tree != nullptr);
   ParseNode* node = tree.tree;
@@ -364,6 +381,9 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
     }
     case sql::NINSERT_STMT: {
       return AnalyzeAndRewriteInsertStmt((sql::NInsertStmt*)node);
+    }
+    case sql::NDELETE_STMT: {
+      return AnalyzeAndRewriteDeleteStmt((sql::NDeleteStmt*)node);
     }
     default: {
       Panic("Invalid statement type when analying");
