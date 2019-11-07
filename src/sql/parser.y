@@ -20,6 +20,8 @@
   using btdb::sql::NSelectStmt;
   using btdb::sql::NInsertStmt;
   using btdb::sql::NDeleteStmt;
+  using btdb::sql::NUpdateStmt;
+  using btdb::sql::NAssignExpr;
   using btdb::sql::make_list;
   using btdb::sql::push_list;
 
@@ -55,8 +57,10 @@
     SELECT
     INSERT
     DELETE
+    UPDATE
     INTO
     VALUES
+    SET
     LPARENS "("
     RPARENS ")"
     FROM
@@ -80,8 +84,8 @@
 %token <std::string> STRING_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt 
-%type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items
+%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr
+%type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list
 
 %%
 %start stmt;
@@ -94,6 +98,9 @@ stmt:
     ctx.tree = std::make_unique<ParseTree>($1);
   }
   | delete_stmt {
+    ctx.tree = std::make_unique<ParseTree>($1);
+  }
+  | update_stmt {
     ctx.tree = std::make_unique<ParseTree>($1);
   }
 
@@ -385,6 +392,49 @@ delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
   delete_stmt->table_name = (ParseNode*) identifier;
   delete_stmt->where_clause = $4;
   $$ = (ParseNode*) delete_stmt;
+}
+
+update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
+  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+  assert(identifier != NULL);
+  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->identifier = (char*)calloc($2.length(), sizeof(char));
+  assert(identifier->identifier != NULL);
+  strncpy(identifier->identifier, $2.c_str(), $2.length());
+
+  NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
+  update->type = btdb::sql::NUPDATE_STMT;
+  update->table_name = (ParseNode*) identifier;
+  update->assign_expr_list = $4;
+  update->where_clause = $5;
+  $$ = (ParseNode*) update;
+}
+
+update_assign_expr_list:
+  assign_expr {
+      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      push_list(value_items, $1);
+      $$ = value_items;
+  }
+  | update_assign_expr_list "," assign_expr {
+      auto* value_items = $1;
+      push_list(value_items, $3);
+      $$ = value_items;
+  }
+
+assign_expr: STRING_GROUP "=" expr {
+  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+  assert(identifier != NULL);
+  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->identifier = (char*)calloc($1.length(), sizeof(char));
+  assert(identifier->identifier != NULL);
+  strncpy(identifier->identifier, $1.c_str(), $1.length());
+
+  NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
+  assign_expr->type = btdb::sql::NASSIGN_EXPR;
+  assign_expr->column = (ParseNode*) identifier;
+  assign_expr->expr = $3;
+  $$ = (ParseNode*) assign_expr;
 }
 
 

@@ -25,6 +25,10 @@
 "delete" return yy::parser::make_DELETE();
 "WHERE" return yy::parser::make_WHERE();
 "where" return yy::parser::make_WHERE();
+"UPDATE" return yy::parser::make_UPDATE();
+"update" return yy::parser::make_UPDATE();
+"SET" return yy::parser::make_SET();
+"set" return yy::parser::make_SET();
 "AND" return yy::parser::make_AND();
 "and" return yy::parser::make_AND();
 "OR" return yy::parser::make_OR();
