@@ -158,13 +158,20 @@ void free_parse_node(ParseNode* node) {
       free(delete_stmt);
       break;
     }
+    case NASSIGN_EXPR: {
+      NAssignExpr* assign_expr = (NAssignExpr*)node;
+      assert(assign_expr->column != nullptr);
+      assert(assign_expr->expr != nullptr);
+      free_parse_node(assign_expr->column);
+      free_parse_node(assign_expr->expr);
+      free(assign_expr);
+      break;
+    }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
       assert(update->table_name != nullptr);
-      assert(update->column_list != nullptr);
       assert(update->assign_expr_list != nullptr);
       free_parse_node(update->table_name);
-      free_list(update->column_list);
       free_list(update->assign_expr_list);
       if (update->where_clause != nullptr) {
         free_parse_node(update->where_clause);
@@ -307,17 +314,27 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       ctx.EndObject();
       break;
     }
+    case NASSIGN_EXPR: {
+      NAssignExpr* assign_expr = (NAssignExpr*)node;
+      assert(assign_expr->column != nullptr);
+      assert(assign_expr->column != nullptr);
+      ctx.PrintObject("NAssignExpr");
+      ctx.PrintObject("column");
+      print_parse_node(assign_expr->column, ctx);
+      ctx.EndObject();
+      ctx.PrintObject("expr");
+      print_parse_node(assign_expr->expr, ctx);
+      ctx.EndObject();
+      ctx.EndObject();
+      break;
+    }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
       assert(update->table_name != nullptr);
-      assert(update->column_list != nullptr);
       assert(update->assign_expr_list != nullptr);
       ctx.PrintObject("NUpdateStmt");
       ctx.PrintObject("table_name");
       print_parse_node(update->table_name, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("column_list");
-      print_list(update->column_list, ctx);
       ctx.EndObject();
       ctx.PrintObject("assign_expr_list");
       print_list(update->assign_expr_list, ctx);

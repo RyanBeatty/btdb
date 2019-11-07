@@ -75,7 +75,8 @@ enum ParseNodeType {
   NSELECT_STMT,
   NINSERT_STMT,
   NDELETE_STMT,
-  NUPDATE_STMT
+  NUPDATE_STMT,
+  NASSIGN_EXPR
 };
 
 struct ParseNode {
@@ -149,11 +150,18 @@ struct NDeleteStmt {
 };
 static_assert(std::is_pod<NDeleteStmt>::value);
 
+struct NAssignExpr {
+  ParseNodeType type;
+
+  ParseNode* column;
+  ParseNode* expr;
+};
+static_assert(std::is_pod<NAssignExpr>::value);
+
 struct NUpdateStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
-  List* column_list;
   List* assign_expr_list;
   ParseNode* where_clause;
 };
