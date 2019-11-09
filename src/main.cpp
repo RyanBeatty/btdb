@@ -25,40 +25,33 @@
 
 namespace btdb {
 
-struct SelectQuery {
+enum CmdType {
+  CMD_SELECT,
+  CMD_INSERT,
+  CMD_UPDATE,
+  CMD_DELETE,
+  CMD_UTILITY,
+};
+
+struct Query {
+  CmdType cmd;
+
+  char* table_name;
   char_ptr_vec* target_list;
-  // TODO(ryan): Actually use this
-  // std::vector<std::string> range_table;
-
-  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
-  // ownership transfer eventually.
   ParseNode* where_clause;
-};
-
-struct InsertQuery {
-  char_ptr_vec* column_list;
-  std::vector<Tuple> values_list;
-};
-
-struct DeleteQuery {
-  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
-  // ownership transfer eventually.
-  ParseNode* where_clause;
-};
-
-struct UpdateQuery {
   std::vector<std::vector<std::string>> assign_exprs;
-  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
-  // ownership transfer eventually.
-  ParseNode* where_clause;
+  std::vector<Tuple> values;
 };
 
-typedef std::variant<SelectQuery, InsertQuery, DeleteQuery, UpdateQuery> Query;
+Query* MakeQuery(CmdType cmd) {
+  Query* query = (Query*)calloc(1, sizeof(Query));
+  query->cmd = cmd;
+  return query;
+}
 
-Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
-  assert(node != nullptr);
-  assert(node->type == NSELECT_STMT);
-  NSelectStmt* select = (NSelectStmt*)node;
+Query* AnalyzeAndRewriteSelectStmt(NSelectStmt* select) {
+  assert(select != nullptr);
+  assert(select->type == NSELECT_STMT);
   assert(select->table_name != nullptr && select->table_name->type == NIDENTIFIER);
   NIdentifier* identifier = (NIdentifier*)select->table_name;
   auto table_name = std::string(identifier->identifier);
@@ -75,10 +68,14 @@ Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
     push(targets, target->identifier);
   }
 
-  return SelectQuery{targets, select->where_clause};
+  Query* query = MakeQuery(CMD_SELECT);
+  query->table_name = NULL;
+  query->target_list = targets;
+  query->where_clause = select->where_clause;
+  return query;
 }
 
-Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
+Query* AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
   assert(node != nullptr);
   assert(node->type == NINSERT_STMT);
 
@@ -126,10 +123,13 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
     values.push_back(tuple);
   }
 
-  return InsertQuery{columns, values};
+  Query* query = MakeQuery(CMD_INSERT);
+  query->target_list = columns;
+  query->values = values;
+  return query;
 }
 
-Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
+Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(delete_stmt->type == NDELETE_STMT);
   assert(delete_stmt->table_name != nullptr);
   assert(delete_stmt->table_name->type == NIDENTIFIER);
@@ -138,10 +138,12 @@ Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(identifier->identifier != nullptr);
   auto table_name = std::string(identifier->identifier);
 
-  return DeleteQuery{delete_stmt->where_clause};
+  Query* query = (Query*)MakeQuery(CMD_DELETE);
+  query->where_clause = delete_stmt->where_clause;
+  return query;
 }
 
-Query AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
+Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
   assert(update != nullptr);
   assert(update->type == NUPDATE_STMT);
   assert(update->table_name != nullptr && update->table_name->type == NIDENTIFIER);
@@ -174,10 +176,13 @@ Query AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
     assign_exprs.push_back(expr);
   }
 
-  return UpdateQuery{assign_exprs, update->where_clause};
+  Query* query = (Query*)MakeQuery(CMD_UPDATE);
+  query->assign_exprs = assign_exprs;
+  query->where_clause = update->where_clause;
+  return query;
 }
 
-Query AnalyzeAndRewriteParseTree(ParseTree& tree) {
+Query* AnalyzeAndRewriteParseTree(ParseTree& tree) {
   assert(tree.tree != nullptr);
   ParseNode* node = tree.tree;
   switch (node->type) {
@@ -196,7 +201,7 @@ Query AnalyzeAndRewriteParseTree(ParseTree& tree) {
     default: {
       Panic("Invalid statement type when analying");
       // Just return something so the compiler doesn't complain. Fix this later.
-      return SelectQuery{};
+      return NULL;
     }
   }
 }
@@ -522,40 +527,37 @@ struct PlanState {
   std::unique_ptr<Plan> plan;
 };
 
-PlanState PlanQuery(Query& query) {
+PlanState PlanQuery(Query* query) {
+  assert(query != NULL);
   PlanState plan_state;
-  switch (query.index()) {
-    case 0: {
-      const SelectQuery& select_query = std::get<SelectQuery>(query);
+  switch (query->cmd) {
+    case CMD_SELECT: {
       auto plan = std::make_unique<SequentialScan>(
-          SequentialScan(select_query.target_list, select_query.where_clause));
-      plan_state.target_list = select_query.target_list;
+          SequentialScan(query->target_list, query->where_clause));
+      plan_state.target_list = query->target_list;
       plan_state.plan = std::move(plan);
       break;
     }
-    case 1: {
-      const InsertQuery& insert_query = std::get<InsertQuery>(query);
-      auto plan = std::make_unique<InsertScan>(InsertScan(insert_query.values_list));
+    case CMD_INSERT: {
+      auto plan = std::make_unique<InsertScan>(InsertScan(query->values));
       // TODO(ryan): This is also wonky.
-      plan_state.target_list = insert_query.column_list;
+      plan_state.target_list = query->target_list;
       plan_state.plan = std::move(plan);
       break;
     }
-    case 2: {
-      const DeleteQuery& delete_query = std::get<DeleteQuery>(query);
-      auto plan = std::make_unique<DeleteScan>(DeleteScan(delete_query.where_clause));
+    case CMD_DELETE: {
+      auto plan = std::make_unique<DeleteScan>(DeleteScan(query->where_clause));
       plan_state.plan = std::move(plan);
       break;
     }
-    case 3: {
-      const UpdateQuery& update_query = std::get<UpdateQuery>(query);
-      auto plan = std::make_unique<UpdateScan>(
-          UpdateScan(update_query.assign_exprs, update_query.where_clause));
+    case CMD_UPDATE: {
+      auto plan =
+          std::make_unique<UpdateScan>(UpdateScan(query->assign_exprs, query->where_clause));
       plan_state.plan = std::move(plan);
       break;
     }
     default:
-      Panic("Unknown Query Type");
+      Panic("Unknown Query Command Type");
   }
   return plan_state;
 }
@@ -611,7 +613,7 @@ int main() {
       std::cout << "Query not valid" << std::endl;
       continue;
     }
-    auto query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
+    auto* query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
     btdb::char_ptr_vec_it it = NULL;
