@@ -17,9 +17,12 @@ namespace btdb {
     type* buffer;                                                   \
   };                                                                \
                                                                     \
+  typedef type* name##_vec_it;                                      \
+                                                                    \
   name##_vec* make_##name##_vec() {                                 \
-    name##_vec* vec = (name##_vec*)calloc(10, sizeof(type));        \
+    name##_vec* vec = (name##_vec*)calloc(1, sizeof(name##_vec));   \
     assert(vec != NULL);                                            \
+    vec->buffer = (type*)calloc(10, sizeof(type));                  \
     vec->capacity = 10;                                             \
     return vec;                                                     \
   }                                                                 \
@@ -42,7 +45,7 @@ namespace btdb {
   type* get(name##_vec* vec, size_t i) {                            \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
-    if (i < 0 || i >= vec->length) {                                \
+    if (i >= vec->length) {                                         \
       return NULL;                                                  \
     }                                                               \
     return &vec->buffer[i];                                         \
@@ -58,7 +61,7 @@ namespace btdb {
     return;                                                         \
   }
 
-VEC_PROTOTYPE(int, int);
+VEC_PROTOTYPE(char_ptr, char*);
 
 }  // namespace btdb
 

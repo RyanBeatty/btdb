@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 #include "catalog.h"
+#include "collections.h"
 #include "node.hpp"
 #include "sql/context.hpp"
 #include "types.h"
@@ -381,13 +382,21 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
 struct SequentialScan : Iterator {
   uint64_t next_index = 0;
 
-  std::vector<std::string> target_list;
+  char_ptr_vec* target_list;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
   ParseNode* where_clause;
 
   SequentialScan(std::vector<std::string> target_list, ParseNode* where_clause)
-      : target_list(target_list), where_clause(where_clause) {}
+      : where_clause(where_clause) {
+    this->target_list = make_char_ptr_vec();
+    for (auto& elem : target_list) {
+      size_t len = elem.size() + 1;
+      char* data = (char*)calloc(len, sizeof(char));
+      strncpy(data, elem.c_str(), len);
+      push(this->target_list, data);
+    }
+  }
 
   void Open() {}
   MTuple GetNext() {
@@ -408,8 +417,9 @@ struct SequentialScan : Iterator {
 
       // Column projections.
       Tuple result_tpl;
-      for (const auto& target : target_list) {
-        auto it = cur_tpl.find(target);
+      char_ptr_vec_it target = NULL;
+      VEC_FOREACH(target, target_list) {
+        auto it = cur_tpl.find(*target);
         assert(it != cur_tpl.end());
         result_tpl[it->first] = it->second;
       }
