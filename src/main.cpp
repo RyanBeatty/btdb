@@ -18,25 +18,10 @@
 
 #include "node.hpp"
 #include "sql/context.hpp"
+#include "storage.h"
 #include "utils.h"
 
 namespace btdb {
-
-// void Panic(const std::string& msg) {
-//   std::cerr << "Panic: " << msg << std::endl;
-//   exit(EXIT_FAILURE);
-// }
-
-struct TableDef {
-  std::string name;
-  std::vector<std::string> col_names;
-};
-
-// TODO: Figure out what a tuple will actually look like.
-typedef std::unordered_map<std::string, std::string> Tuple;
-typedef std::unique_ptr<Tuple> MTuple;
-
-static std::vector<Tuple> Tuples;
 
 enum BType {
   T_UNKNOWN,
