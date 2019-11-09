@@ -69,7 +69,7 @@ struct SystemCatalog {
         return ValidateDeleteStmt((sql::NDeleteStmt*)node);
       }
       case sql::NUPDATE_STMT: {
-        return ValidateSelectStmt((sql::NUpdateStmt*)node);
+        return ValidateUpdateStmt((sql::NUpdateStmt*)node);
       }
       default: {
         Panic("Unknown statement type when validating");
@@ -203,7 +203,7 @@ struct SystemCatalog {
     return true;
   }
 
-  bool ValidateSelectStmt(sql::NUpdateStmt* update) {
+  bool ValidateUpdateStmt(sql::NUpdateStmt* update) {
     assert(update != nullptr);
     assert(update->type == btdb::sql::NUPDATE_STMT);
     assert(update->table_name != nullptr);
@@ -228,7 +228,7 @@ struct SystemCatalog {
     FOR_EACH(lc, assign_expr_list) {
       assert(lc->data != nullptr);
       sql::NAssignExpr* assign_expr = (sql::NAssignExpr*) lc->data;
-      assert(assign_expr->type == sql::NAssignExpr);
+      assert(assign_expr->type == sql::NASSIGN_EXPR);
       assert(assign_expr->column != nullptr);
       assert(assign_expr->value != nullptr);
 
@@ -339,7 +339,15 @@ struct DeleteQuery {
   sql::ParseNode* where_clause;
 };
 
-typedef std::variant<SelectQuery, InsertQuery, DeleteQuery> Query;
+struct UpdateQuery {
+  std::string table_name;
+  std::vector<std::vector<std::string>> assign_exprs;
+  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
+  // ownership transfer eventually.
+  sql::ParseNode* where_clause;
+};
+
+typedef std::variant<SelectQuery, InsertQuery, DeleteQuery, UpdateQuery> Query;
 
 Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
   assert(node != nullptr);
@@ -427,6 +435,42 @@ Query AnalyzeAndRewriteDeleteStmt(sql::NDeleteStmt* delete_stmt) {
   return DeleteQuery{table_name, delete_stmt->where_clause};
 }
 
+Query AnalyzeAndRewriteUpdateStmt(sql::NUpdateStmt* update) {
+  assert(update != nullptr);
+  assert(update->type == sql::NUPDATE_STMT);
+  assert(update->table_name != nullptr && update->table_name->type == sql::NIDENTIFIER);
+  sql::NIdentifier* identifier = (sql::NIdentifier*)update->table_name;
+  auto table_name = std::string(identifier->identifier);
+
+  assert(update->assign_expr_list != nullptr);
+  assert(update->assign_expr_list->type = sql::T_PARSENODE);
+  auto* assign_expr_list = update->assign_expr_list;
+  std::vector<std::vector<std::string>> assign_exprs;
+  sql::ListCell* lc = nullptr;
+  FOR_EACH(lc, assign_expr_list) {
+    assert(lc->data != nullptr);
+    sql::NAssignExpr* assign_expr = (sql::NAssignExpr*) lc->data;
+    assert(assign_expr->type == sql::NASSIGN_EXPR);
+    assert(assign_expr->column != nullptr);
+    assert(assign_expr->value != nullptr);
+
+    sql::NIdentifier* col = (sql::NIdentifier*) assign_expr->column;
+    assert(col->type == sql::NIDENTIFIER);
+    assert(col->identifier != nullptr);
+
+    sql::NStringLit* str_lit = (sql::NStringLit*) assign_expr->value;
+    assert(str_lit->type == sql::NSTRING_LIT);
+    assert(str_lit->str_lit != nullptr);
+
+    std::vector<std::string> expr;
+    expr.push_back(col->identifier);
+    expr.push_back(str_lit->str_lit);
+    assign_exprs.push_back(expr);
+  }
+
+  return UpdateQuery{table_name, assign_exprs, update->where_clause};
+}
+
 Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
   assert(tree.tree != nullptr);
   ParseNode* node = tree.tree;
@@ -439,6 +483,9 @@ Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
     }
     case sql::NDELETE_STMT: {
       return AnalyzeAndRewriteDeleteStmt((sql::NDeleteStmt*)node);
+    }
+    case sql::NUPDATE_STMT: {
+      return AnalyzeAndRewriteUpdateStmt((sql::NUpdateStmt*)node);
     }
     default: {
       Panic("Invalid statement type when analying");
