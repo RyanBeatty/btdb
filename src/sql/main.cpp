@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "sql/context.hpp"
-#include "sql/node.hpp"
+#include "node.hpp"
 
 int main() {
   for (std::string line; std::getline(std::cin, line);) {

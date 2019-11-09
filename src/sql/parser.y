@@ -9,7 +9,7 @@
 
 // This code goes in parser.hpp
 %code requires {
-  #include "sql/node.hpp"
+  #include "node.hpp"
 
   using btdb::sql::ParseNode;
   using btdb::sql::ParseTree;

@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 #include "sql/context.hpp"
-#include "sql/node.hpp"
+#include "node.hpp"
 
 namespace btdb {
 

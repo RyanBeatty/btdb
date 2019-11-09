@@ -1,4 +1,4 @@
-#include "sql/node.hpp"
+#include "node.hpp"
 
 #include <map>
 #include <sstream>
