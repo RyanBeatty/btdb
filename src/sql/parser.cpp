@@ -621,7 +621,7 @@ namespace yy {
 #line 107 "parser.y"
     {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
-  select->type = btdb::sql::NSELECT_STMT;
+  select->type = btdb::NSELECT_STMT;
   select->target_list = yystack_[3].value.as < List* > ();
   select->table_name = yystack_[2].value.as < ParseNode* > ();
   select->where_clause = yystack_[1].value.as < ParseNode* > ();
@@ -635,12 +635,12 @@ namespace yy {
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
 
-      List* target_list = make_list(btdb::sql::T_PARSENODE);
+      List* target_list = make_list(btdb::T_PARSENODE);
       push_list(target_list, identifier);
       yylhs.value.as < List* > () = target_list;
     }
@@ -652,7 +652,7 @@ namespace yy {
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[2].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
@@ -675,7 +675,7 @@ namespace yy {
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
@@ -703,7 +703,7 @@ namespace yy {
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
@@ -720,7 +720,7 @@ namespace yy {
       yystack_[0].value.as < std::string > () = yystack_[0].value.as < std::string > ().substr(1, yystack_[0].value.as < std::string > ().length() - 2);
       NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
       assert(str_lit != NULL);
-      str_lit->type = btdb::sql::NSTRING_LIT;
+      str_lit->type = btdb::NSTRING_LIT;
       str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(str_lit->str_lit != NULL);
       strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
@@ -734,8 +734,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::EQ;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::EQ;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -748,8 +748,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::NEQ;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::NEQ;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -762,8 +762,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::GT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::GT;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -776,8 +776,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::GE;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::GE;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -790,8 +790,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::LT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::LT;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -804,8 +804,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::LE;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::LE;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -818,8 +818,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::PLUS;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::PLUS;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -832,8 +832,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::MINUS;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::MINUS;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -846,8 +846,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::MULT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::MULT;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -860,8 +860,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::DIV;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::DIV;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -874,8 +874,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::AND;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::AND;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -888,8 +888,8 @@ namespace yy {
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::OR;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::OR;
       bin_expr->lhs = yystack_[2].value.as < ParseNode* > ();
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
@@ -902,11 +902,11 @@ namespace yy {
     {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
   assert(insert != nullptr);
-  insert->type = btdb::sql::NINSERT_STMT;
+  insert->type = btdb::NINSERT_STMT;
 
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc(yystack_[3].value.as < std::string > ().length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[3].value.as < std::string > ().c_str(), yystack_[3].value.as < std::string > ().length());
@@ -931,12 +931,12 @@ namespace yy {
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
 
-      List* column_list = make_list(btdb::sql::T_PARSENODE);
+      List* column_list = make_list(btdb::T_PARSENODE);
       push_list(column_list, identifier);
       yylhs.value.as < List* > () = column_list;
    }
@@ -948,7 +948,7 @@ namespace yy {
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
@@ -969,7 +969,7 @@ namespace yy {
   case 32:
 #line 359 "parser.y"
     {
-      List* values_list = make_list(btdb::sql::T_LIST);
+      List* values_list = make_list(btdb::T_LIST);
       push_list(values_list, yystack_[1].value.as < List* > ());
       yylhs.value.as < List* > () = values_list;
   }
@@ -989,7 +989,7 @@ namespace yy {
   case 34:
 #line 371 "parser.y"
     {
-      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      List* value_items = make_list(btdb::T_PARSENODE);
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
@@ -1011,13 +1011,13 @@ namespace yy {
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc(yystack_[2].value.as < std::string > ().length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
 
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
-  delete_stmt->type = btdb::sql::NDELETE_STMT;
+  delete_stmt->type = btdb::NDELETE_STMT;
   delete_stmt->table_name = (ParseNode*) identifier;
   delete_stmt->where_clause = yystack_[1].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) delete_stmt;
@@ -1030,13 +1030,13 @@ namespace yy {
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc(yystack_[4].value.as < std::string > ().length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[4].value.as < std::string > ().c_str(), yystack_[4].value.as < std::string > ().length());
 
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
-  update->type = btdb::sql::NUPDATE_STMT;
+  update->type = btdb::NUPDATE_STMT;
   update->table_name = (ParseNode*) identifier;
   update->assign_expr_list = yystack_[2].value.as < List* > ();
   update->where_clause = yystack_[1].value.as < ParseNode* > ();
@@ -1048,7 +1048,7 @@ namespace yy {
   case 38:
 #line 414 "parser.y"
     {
-      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      List* value_items = make_list(btdb::T_PARSENODE);
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
@@ -1070,7 +1070,7 @@ namespace yy {
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc(yystack_[2].value.as < std::string > ().length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
@@ -1080,13 +1080,13 @@ namespace yy {
   yystack_[0].value.as < std::string > () = yystack_[0].value.as < std::string > ().substr(1, yystack_[0].value.as < std::string > ().length() - 2);
   NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
   assert(str_lit != NULL);
-  str_lit->type = btdb::sql::NSTRING_LIT;
+  str_lit->type = btdb::NSTRING_LIT;
   str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
   assert(str_lit->str_lit != NULL);
   strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
 
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
-  assign_expr->type = btdb::sql::NASSIGN_EXPR;
+  assign_expr->type = btdb::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
   assign_expr->value = (ParseNode*) str_lit;
   yylhs.value.as < ParseNode* > () = (ParseNode*) assign_expr;

@@ -12,9 +12,6 @@
 #include <vector>
 
 namespace btdb {
-namespace sql {
-
-void Panic(const std::string& msg);
 
 struct PrintContext {
   PrintContext() : indent(0) {}
@@ -178,6 +175,5 @@ struct ParseTree {
   ParseNode* tree;
 };
 
-}  // namespace sql
 }  // namespace btdb
 #endif  // CONTEXT_HH

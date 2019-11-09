@@ -16,15 +16,16 @@
 #include <string>
 #include <unordered_map>
 
-#include "sql/context.hpp"
 #include "node.hpp"
+#include "sql/context.hpp"
+#include "utils.h"
 
 namespace btdb {
 
-void Panic(const std::string& msg) {
-  std::cerr << "Panic: " << msg << std::endl;
-  exit(EXIT_FAILURE);
-}
+// void Panic(const std::string& msg) {
+//   std::cerr << "Panic: " << msg << std::endl;
+//   exit(EXIT_FAILURE);
+// }
 
 struct TableDef {
   std::string name;
@@ -54,22 +55,22 @@ struct Datum {
 struct SystemCatalog {
   std::vector<TableDef> tables;
 
-  bool ValidateParseTree(sql::ParseTree& tree) {
+  bool ValidateParseTree(ParseTree& tree) {
     assert(tree.tree != nullptr);
-    sql::ParseNode* node = tree.tree;
+    ParseNode* node = tree.tree;
 
     switch (node->type) {
-      case sql::NSELECT_STMT: {
-        return ValidateSelectStmt((sql::NSelectStmt*)node);
+      case NSELECT_STMT: {
+        return ValidateSelectStmt((NSelectStmt*)node);
       }
-      case sql::NINSERT_STMT: {
-        return ValidateInsertStmt((sql::NInsertStmt*)node);
+      case NINSERT_STMT: {
+        return ValidateInsertStmt((NInsertStmt*)node);
       }
-      case sql::NDELETE_STMT: {
-        return ValidateDeleteStmt((sql::NDeleteStmt*)node);
+      case NDELETE_STMT: {
+        return ValidateDeleteStmt((NDeleteStmt*)node);
       }
-      case sql::NUPDATE_STMT: {
-        return ValidateUpdateStmt((sql::NUpdateStmt*)node);
+      case NUPDATE_STMT: {
+        return ValidateUpdateStmt((NUpdateStmt*)node);
       }
       default: {
         Panic("Unknown statement type when validating");
@@ -78,10 +79,10 @@ struct SystemCatalog {
     }
   }
 
-  bool ValidateSelectStmt(sql::NSelectStmt* select) {
+  bool ValidateSelectStmt(NSelectStmt* select) {
     assert(select != nullptr);
-    assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
-    auto* table_id = (sql::NIdentifier*)select->table_name;
+    assert(select->table_name != nullptr && select->table_name->type == NIDENTIFIER);
+    auto* table_id = (NIdentifier*)select->table_name;
     auto table_def_it = tables.begin();
     for (; table_def_it != tables.end(); ++table_def_it) {
       if (table_def_it->name == table_id->identifier) {
@@ -95,12 +96,12 @@ struct SystemCatalog {
     // Validate target list contains valid references to columns.
     auto* target_list = select->target_list;
     assert(target_list != nullptr);
-    assert(target_list->type == sql::T_PARSENODE);
-    sql::ListCell* lc = nullptr;
+    assert(target_list->type == T_PARSENODE);
+    ListCell* lc = nullptr;
     FOR_EACH(lc, target_list) {
       assert(lc->data != nullptr);
-      sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
-      assert(col->type == sql::NIDENTIFIER);
+      NIdentifier* col = (NIdentifier*)lc->data;
+      assert(col->type == NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
                     col->identifier) == table_def_it->col_names.end()) {
@@ -116,16 +117,16 @@ struct SystemCatalog {
     return true;
   }
 
-  bool ValidateInsertStmt(sql::NInsertStmt* insert) {
+  bool ValidateInsertStmt(NInsertStmt* insert) {
     assert(insert != nullptr);
-    assert(insert->type == sql::NINSERT_STMT);
+    assert(insert->type == NINSERT_STMT);
     assert(insert->table_name != nullptr);
     assert(insert->column_list != nullptr);
     assert(insert->values_list != nullptr);
 
     // Validate insert table name exists.
-    sql::NIdentifier* table_name = (sql::NIdentifier*)insert->table_name;
-    assert(table_name->type == sql::NIDENTIFIER);
+    NIdentifier* table_name = (NIdentifier*)insert->table_name;
+    assert(table_name->type == NIDENTIFIER);
     assert(table_name->identifier != nullptr);
     auto table_def_it = tables.begin();
     for (; table_def_it != tables.end(); ++table_def_it) {
@@ -140,12 +141,12 @@ struct SystemCatalog {
     // Validate column list contains valid references to columns.
     auto* column_list = insert->column_list;
     assert(column_list != nullptr);
-    assert(column_list->type == sql::T_PARSENODE);
-    sql::ListCell* lc = nullptr;
+    assert(column_list->type == T_PARSENODE);
+    ListCell* lc = nullptr;
     FOR_EACH(lc, column_list) {
       assert(lc->data != nullptr);
-      sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
-      assert(col->type == sql::NIDENTIFIER);
+      NIdentifier* col = (NIdentifier*)lc->data;
+      assert(col->type == NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
                     col->identifier) == table_def_it->col_names.end()) {
@@ -154,22 +155,22 @@ struct SystemCatalog {
     }
 
     auto* values_list = insert->values_list;
-    assert(values_list->type == sql::T_LIST);
+    assert(values_list->type == T_LIST);
     lc = nullptr;
     FOR_EACH(lc, values_list) {
       assert(lc->data != nullptr);
       List* value_items = (List*)lc->data;
-      assert(value_items->type == sql::T_PARSENODE);
+      assert(value_items->type == T_PARSENODE);
       if (value_items->length != column_list->length) {
         return false;
       }
 
-      sql::ListCell* lc2 = nullptr;
+      ListCell* lc2 = nullptr;
       FOR_EACH(lc2, value_items) {
         assert(lc2->data != nullptr);
         // TODO(ryan): Allow for more general expressions here.
-        sql::NStringLit* str_lit = (sql::NStringLit*)lc2->data;
-        if (str_lit->type != sql::NSTRING_LIT) {
+        NStringLit* str_lit = (NStringLit*)lc2->data;
+        if (str_lit->type != NSTRING_LIT) {
           return false;
         }
       }
@@ -177,14 +178,14 @@ struct SystemCatalog {
     return true;
   }
 
-  bool ValidateDeleteStmt(sql::NDeleteStmt* delete_stmt) {
+  bool ValidateDeleteStmt(NDeleteStmt* delete_stmt) {
     assert(delete_stmt != nullptr);
-    assert(delete_stmt->type == sql::NDELETE_STMT);
+    assert(delete_stmt->type == NDELETE_STMT);
     assert(delete_stmt->table_name != nullptr);
 
     // Validate table name exists and get definition.
-    sql::NIdentifier* table_name = (sql::NIdentifier*)delete_stmt->table_name;
-    assert(table_name->type == sql::NIDENTIFIER);
+    NIdentifier* table_name = (NIdentifier*)delete_stmt->table_name;
+    assert(table_name->type == NIDENTIFIER);
     assert(table_name->identifier != nullptr);
     auto table_def_it = tables.begin();
     for (; table_def_it != tables.end(); ++table_def_it) {
@@ -203,13 +204,13 @@ struct SystemCatalog {
     return true;
   }
 
-  bool ValidateUpdateStmt(sql::NUpdateStmt* update) {
+  bool ValidateUpdateStmt(NUpdateStmt* update) {
     assert(update != nullptr);
-    assert(update->type == btdb::sql::NUPDATE_STMT);
+    assert(update->type == btdb::NUPDATE_STMT);
     assert(update->table_name != nullptr);
     assert(update->assign_expr_list != nullptr);
 
-    sql::NIdentifier* table_name = (sql::NIdentifier*) update->table_name;
+    NIdentifier* table_name = (NIdentifier*)update->table_name;
     assert(table_name->identifier != nullptr);
     auto table_def_it = tables.begin();
     for (; table_def_it != tables.end(); ++table_def_it) {
@@ -223,25 +224,25 @@ struct SystemCatalog {
 
     auto* assign_expr_list = update->assign_expr_list;
     assert(assign_expr_list != nullptr);
-    assert(assign_expr_list->type == sql::T_PARSENODE);
-    sql::ListCell* lc = nullptr;
+    assert(assign_expr_list->type == T_PARSENODE);
+    ListCell* lc = nullptr;
     FOR_EACH(lc, assign_expr_list) {
       assert(lc->data != nullptr);
-      sql::NAssignExpr* assign_expr = (sql::NAssignExpr*) lc->data;
-      assert(assign_expr->type == sql::NASSIGN_EXPR);
+      NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+      assert(assign_expr->type == NASSIGN_EXPR);
       assert(assign_expr->column != nullptr);
       assert(assign_expr->value != nullptr);
 
-      sql::NIdentifier* col = (sql::NIdentifier*) assign_expr->column;
-      assert(col->type == sql::NIDENTIFIER);
+      NIdentifier* col = (NIdentifier*)assign_expr->column;
+      assert(col->type == NIDENTIFIER);
       assert(col->identifier != nullptr);
       if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
                     col->identifier) == table_def_it->col_names.end()) {
         return false;
       }
 
-      sql::NStringLit* str_lit = (sql::NStringLit*) assign_expr->value;
-      if (str_lit->type != sql::NSTRING_LIT) {
+      NStringLit* str_lit = (NStringLit*)assign_expr->value;
+      if (str_lit->type != NSTRING_LIT) {
         return false;
       }
       assert(str_lit->str_lit != nullptr);
@@ -255,15 +256,15 @@ struct SystemCatalog {
     return true;
   }
 
-  BType CheckType(sql::ParseNode* node, TableDef& table_def) {
+  BType CheckType(ParseNode* node, TableDef& table_def) {
     assert(node != nullptr);
     switch (node->type) {
-      case sql::NSTRING_LIT: {
+      case NSTRING_LIT: {
         return T_STRING;
       }
-      case sql::NIDENTIFIER: {
+      case NIDENTIFIER: {
         // TODO(ryan): Not true in the future.
-        sql::NIdentifier* identifier = (NIdentifier*)node;
+        NIdentifier* identifier = (NIdentifier*)node;
         assert(identifier->identifier != nullptr);
         if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
                       identifier->identifier) == table_def.col_names.end()) {
@@ -271,8 +272,8 @@ struct SystemCatalog {
         }
         return T_STRING;
       }
-      case sql::NBIN_EXPR: {
-        sql::NBinExpr* expr = (sql::NBinExpr*)node;
+      case NBIN_EXPR: {
+        NBinExpr* expr = (NBinExpr*)node;
         assert(expr->lhs != nullptr);
         assert(expr->rhs != nullptr);
         auto lhs_type = CheckType(expr->lhs, table_def);
@@ -281,24 +282,24 @@ struct SystemCatalog {
           return T_UNKNOWN;
         }
         switch (expr->op) {
-          case sql::AND:
-          case sql::OR: {
+          case AND:
+          case OR: {
             if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
               return T_UNKNOWN;
             }
             return T_BOOL;
           }
-          case sql::EQ:
-          case sql::NEQ: {
+          case EQ:
+          case NEQ: {
             if (lhs_type != rhs_type) {
               return T_UNKNOWN;
             }
             return T_BOOL;
           }
-          case sql::GT:
-          case sql::GE:
-          case sql::LT:
-          case sql::LE: {
+          case GT:
+          case GE:
+          case LT:
+          case LE: {
             if (lhs_type != T_STRING || rhs_type != T_STRING) {
               return T_UNKNOWN;
             }
@@ -323,7 +324,7 @@ struct SelectQuery {
   std::vector<std::string> range_table;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 };
 
 struct InsertQuery {
@@ -336,7 +337,7 @@ struct DeleteQuery {
   std::string table;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 };
 
 struct UpdateQuery {
@@ -344,74 +345,74 @@ struct UpdateQuery {
   std::vector<std::vector<std::string>> assign_exprs;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 };
 
 typedef std::variant<SelectQuery, InsertQuery, DeleteQuery, UpdateQuery> Query;
 
-Query AnalyzeAndRewriteSelectStmt(sql::NSelectStmt* node) {
+Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
   assert(node != nullptr);
-  assert(node->type == sql::NSELECT_STMT);
-  sql::NSelectStmt* select = (NSelectStmt*)node;
-  assert(select->table_name != nullptr && select->table_name->type == sql::NIDENTIFIER);
-  sql::NIdentifier* identifier = (sql::NIdentifier*)select->table_name;
+  assert(node->type == NSELECT_STMT);
+  NSelectStmt* select = (NSelectStmt*)node;
+  assert(select->table_name != nullptr && select->table_name->type == NIDENTIFIER);
+  NIdentifier* identifier = (NIdentifier*)select->table_name;
   auto table_name = std::string(identifier->identifier);
 
   assert(select->target_list != nullptr);
-  assert(select->target_list->type = sql::T_PARSENODE);
+  assert(select->target_list->type = T_PARSENODE);
   auto* target_list = select->target_list;
   std::vector<std::string> targets;
-  sql::ListCell* lc = nullptr;
+  ListCell* lc = nullptr;
   FOR_EACH(lc, target_list) {
     assert(lc->data != nullptr);
-    sql::NIdentifier* target = (sql::NIdentifier*)lc->data;
-    assert(target->type == sql::NIDENTIFIER);
+    NIdentifier* target = (NIdentifier*)lc->data;
+    assert(target->type == NIDENTIFIER);
     targets.push_back(target->identifier);
   }
 
   return SelectQuery{targets, std::vector<std::string>{table_name}, select->where_clause};
 }
 
-Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
+Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
   assert(node != nullptr);
-  assert(node->type == sql::NINSERT_STMT);
+  assert(node->type == NINSERT_STMT);
 
-  sql::NIdentifier* table_name = (sql::NIdentifier*)node->table_name;
+  NIdentifier* table_name = (NIdentifier*)node->table_name;
   assert(table_name != nullptr);
-  assert(table_name->type == sql::NIDENTIFIER);
+  assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != nullptr);
 
   std::vector<std::string> columns;
   auto* column_list = node->column_list;
   assert(column_list != nullptr);
-  assert(column_list->type == sql::T_PARSENODE);
-  sql::ListCell* lc = nullptr;
+  assert(column_list->type == T_PARSENODE);
+  ListCell* lc = nullptr;
   FOR_EACH(lc, column_list) {
     assert(lc->data != nullptr);
-    sql::NIdentifier* col = (sql::NIdentifier*)lc->data;
-    assert(col->type == sql::NIDENTIFIER);
+    NIdentifier* col = (NIdentifier*)lc->data;
+    assert(col->type == NIDENTIFIER);
     assert(col->identifier != nullptr);
     columns.push_back(col->identifier);
   }
 
   std::vector<Tuple> values;
   auto* values_list = node->values_list;
-  assert(values_list->type == sql::T_LIST);
+  assert(values_list->type == T_LIST);
   lc = nullptr;
   FOR_EACH(lc, values_list) {
     assert(lc->data != nullptr);
     List* value_items = (List*)lc->data;
-    assert(value_items->type == sql::T_PARSENODE);
+    assert(value_items->type == T_PARSENODE);
     assert(value_items->length == column_list->length);
 
     Tuple tuple;
     uint64_t col_index = 0;
-    sql::ListCell* lc2 = nullptr;
+    ListCell* lc2 = nullptr;
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != nullptr);
       // TODO(ryan): Allow for more general expressions here.
-      sql::NStringLit* str_lit = (sql::NStringLit*)lc2->data;
-      assert(str_lit->type == sql::NSTRING_LIT);
+      NStringLit* str_lit = (NStringLit*)lc2->data;
+      assert(str_lit->type == NSTRING_LIT);
       assert(str_lit->str_lit != nullptr);
       tuple[columns[col_index]] = str_lit->str_lit;
       ++col_index;
@@ -422,44 +423,44 @@ Query AnalyzeAndRewriteInsertStmt(sql::NInsertStmt* node) {
   return InsertQuery{table_name->identifier, columns, values};
 }
 
-Query AnalyzeAndRewriteDeleteStmt(sql::NDeleteStmt* delete_stmt) {
+Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(delete_stmt != nullptr);
-  assert(delete_stmt->type == sql::NDELETE_STMT);
+  assert(delete_stmt->type == NDELETE_STMT);
   assert(delete_stmt->table_name != nullptr);
-  assert(delete_stmt->table_name->type == sql::NIDENTIFIER);
+  assert(delete_stmt->table_name->type == NIDENTIFIER);
 
-  sql::NIdentifier* identifier = (sql::NIdentifier*)delete_stmt->table_name;
+  NIdentifier* identifier = (NIdentifier*)delete_stmt->table_name;
   assert(identifier->identifier != nullptr);
   auto table_name = std::string(identifier->identifier);
 
   return DeleteQuery{table_name, delete_stmt->where_clause};
 }
 
-Query AnalyzeAndRewriteUpdateStmt(sql::NUpdateStmt* update) {
+Query AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
   assert(update != nullptr);
-  assert(update->type == sql::NUPDATE_STMT);
-  assert(update->table_name != nullptr && update->table_name->type == sql::NIDENTIFIER);
-  sql::NIdentifier* identifier = (sql::NIdentifier*)update->table_name;
+  assert(update->type == NUPDATE_STMT);
+  assert(update->table_name != nullptr && update->table_name->type == NIDENTIFIER);
+  NIdentifier* identifier = (NIdentifier*)update->table_name;
   auto table_name = std::string(identifier->identifier);
 
   assert(update->assign_expr_list != nullptr);
-  assert(update->assign_expr_list->type = sql::T_PARSENODE);
+  assert(update->assign_expr_list->type = T_PARSENODE);
   auto* assign_expr_list = update->assign_expr_list;
   std::vector<std::vector<std::string>> assign_exprs;
-  sql::ListCell* lc = nullptr;
+  ListCell* lc = nullptr;
   FOR_EACH(lc, assign_expr_list) {
     assert(lc->data != nullptr);
-    sql::NAssignExpr* assign_expr = (sql::NAssignExpr*) lc->data;
-    assert(assign_expr->type == sql::NASSIGN_EXPR);
+    NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+    assert(assign_expr->type == NASSIGN_EXPR);
     assert(assign_expr->column != nullptr);
     assert(assign_expr->value != nullptr);
 
-    sql::NIdentifier* col = (sql::NIdentifier*) assign_expr->column;
-    assert(col->type == sql::NIDENTIFIER);
+    NIdentifier* col = (NIdentifier*)assign_expr->column;
+    assert(col->type == NIDENTIFIER);
     assert(col->identifier != nullptr);
 
-    sql::NStringLit* str_lit = (sql::NStringLit*) assign_expr->value;
-    assert(str_lit->type == sql::NSTRING_LIT);
+    NStringLit* str_lit = (NStringLit*)assign_expr->value;
+    assert(str_lit->type == NSTRING_LIT);
     assert(str_lit->str_lit != nullptr);
 
     std::vector<std::string> expr;
@@ -471,21 +472,21 @@ Query AnalyzeAndRewriteUpdateStmt(sql::NUpdateStmt* update) {
   return UpdateQuery{table_name, assign_exprs, update->where_clause};
 }
 
-Query AnalyzeAndRewriteParseTree(sql::ParseTree& tree) {
+Query AnalyzeAndRewriteParseTree(ParseTree& tree) {
   assert(tree.tree != nullptr);
   ParseNode* node = tree.tree;
   switch (node->type) {
-    case sql::NSELECT_STMT: {
-      return AnalyzeAndRewriteSelectStmt((sql::NSelectStmt*)node);
+    case NSELECT_STMT: {
+      return AnalyzeAndRewriteSelectStmt((NSelectStmt*)node);
     }
-    case sql::NINSERT_STMT: {
-      return AnalyzeAndRewriteInsertStmt((sql::NInsertStmt*)node);
+    case NINSERT_STMT: {
+      return AnalyzeAndRewriteInsertStmt((NInsertStmt*)node);
     }
-    case sql::NDELETE_STMT: {
-      return AnalyzeAndRewriteDeleteStmt((sql::NDeleteStmt*)node);
+    case NDELETE_STMT: {
+      return AnalyzeAndRewriteDeleteStmt((NDeleteStmt*)node);
     }
-    case sql::NUPDATE_STMT: {
-      return AnalyzeAndRewriteUpdateStmt((sql::NUpdateStmt*)node);
+    case NUPDATE_STMT: {
+      return AnalyzeAndRewriteUpdateStmt((NUpdateStmt*)node);
     }
     default: {
       Panic("Invalid statement type when analying");
@@ -513,27 +514,27 @@ typedef Iterator Plan;
 
 Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
   switch (node->type) {
-    case sql::NSTRING_LIT: {
-      sql::NStringLit* str_lit = (sql::NStringLit*)node;
+    case NSTRING_LIT: {
+      NStringLit* str_lit = (NStringLit*)node;
       assert(str_lit->str_lit != nullptr);
       return Datum(T_STRING, new std::string(str_lit->str_lit));
     }
-    case sql::NIDENTIFIER: {
+    case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
-      sql::NIdentifier* identifier = (NIdentifier*)node;
+      NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != nullptr);
       auto it = cur_tuple.find(identifier->identifier);
       assert(it != cur_tuple.end());
       return Datum(T_STRING, new std::string(it->second));
     }
-    case sql::NBIN_EXPR: {
-      sql::NBinExpr* expr = (sql::NBinExpr*)node;
+    case NBIN_EXPR: {
+      NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != nullptr);
       assert(expr->rhs != nullptr);
       auto lhs_value = ExecPred(expr->lhs, cur_tuple);
       auto rhs_value = ExecPred(expr->rhs, cur_tuple);
       switch (expr->op) {
-        case sql::AND: {
+        case AND: {
           assert(lhs_value.type == T_BOOL);
           assert(rhs_value.type == T_BOOL);
           assert(lhs_value.data != nullptr);
@@ -542,7 +543,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data && *rhs_data));
         }
-        case sql::OR: {
+        case OR: {
           assert(lhs_value.type == T_BOOL);
           assert(rhs_value.type == T_BOOL);
           assert(lhs_value.data != nullptr);
@@ -551,7 +552,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data || *rhs_data));
         }
-        case sql::EQ: {
+        case EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -569,7 +570,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_UNKNOWN, nullptr);
           }
         }
-        case sql::NEQ: {
+        case NEQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -587,7 +588,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_UNKNOWN, nullptr);
           }
         }
-        case sql::GT: {
+        case GT: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -605,7 +606,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_UNKNOWN, nullptr);
           }
         }
-        case sql::GE: {
+        case GE: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -623,7 +624,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_UNKNOWN, nullptr);
           }
         }
-        case sql::LT: {
+        case LT: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -641,7 +642,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_UNKNOWN, nullptr);
           }
         }
-        case sql::LE: {
+        case LE: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
           assert(lhs_value.data != nullptr);
@@ -678,9 +679,9 @@ struct SequentialScan : Iterator {
   std::vector<std::string> target_list;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 
-  SequentialScan(std::vector<std::string> target_list, sql::ParseNode* where_clause)
+  SequentialScan(std::vector<std::string> target_list, ParseNode* where_clause)
       : target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
@@ -738,9 +739,9 @@ struct InsertScan : Iterator {
 
 struct DeleteScan : Iterator {
   uint64_t next_index = 0;
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 
-  DeleteScan(sql::ParseNode* where_clause) : where_clause(where_clause) {}
+  DeleteScan(ParseNode* where_clause) : where_clause(where_clause) {}
 
   void Open() {}
 
@@ -777,9 +778,9 @@ struct UpdateScan : Iterator {
   std::vector<std::vector<std::string>> assign_exprs;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
-  sql::ParseNode* where_clause;
+  ParseNode* where_clause;
 
-  UpdateScan(std::vector<std::vector<std::string>> assign_exprs, sql::ParseNode* where_clause)
+  UpdateScan(std::vector<std::vector<std::string>> assign_exprs, ParseNode* where_clause)
       : assign_exprs(assign_exprs), where_clause(where_clause) {}
 
   void Open() {}
@@ -842,7 +843,8 @@ PlanState PlanQuery(Query& query) {
     }
     case 3: {
       const UpdateQuery& update_query = std::get<UpdateQuery>(query);
-      auto plan = std::make_unique<UpdateScan>(UpdateScan(update_query.assign_exprs, update_query.where_clause));
+      auto plan = std::make_unique<UpdateScan>(
+          UpdateScan(update_query.assign_exprs, update_query.where_clause));
       plan_state.plan = std::move(plan);
       break;
     }

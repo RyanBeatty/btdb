@@ -18,6 +18,8 @@ add_library(btdb_sql_parser
     ${BISON_btdb_parser_OUTPUTS}
     "../node.hpp"
     "../node.cpp"
+    "../utils.h"
+    "../utils.cpp"
 )
 
 add_executable(parse_sql

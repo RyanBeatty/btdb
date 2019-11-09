@@ -19,7 +19,7 @@ namespace sql {
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 
 struct ParserContext {
-  std::unique_ptr<btdb::sql::ParseTree> tree;
+  std::unique_ptr<btdb::ParseTree> tree;
   YY_BUFFER_STATE buffer_state;
 
   ParserContext(std::string sql) { BeginScan(sql); }

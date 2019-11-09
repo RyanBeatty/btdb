@@ -11,19 +11,19 @@
 %code requires {
   #include "node.hpp"
 
-  using btdb::sql::ParseNode;
-  using btdb::sql::ParseTree;
-  using btdb::sql::NIdentifier;
-  using btdb::sql::NStringLit;
-  using btdb::sql::NBinExpr;
-  using btdb::sql::List;
-  using btdb::sql::NSelectStmt;
-  using btdb::sql::NInsertStmt;
-  using btdb::sql::NDeleteStmt;
-  using btdb::sql::NUpdateStmt;
-  using btdb::sql::NAssignExpr;
-  using btdb::sql::make_list;
-  using btdb::sql::push_list;
+  using btdb::ParseNode;
+  using btdb::ParseTree;
+  using btdb::NIdentifier;
+  using btdb::NStringLit;
+  using btdb::NBinExpr;
+  using btdb::List;
+  using btdb::NSelectStmt;
+  using btdb::NInsertStmt;
+  using btdb::NDeleteStmt;
+  using btdb::NUpdateStmt;
+  using btdb::NAssignExpr;
+  using btdb::make_list;
+  using btdb::push_list;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.
@@ -106,7 +106,7 @@ stmt:
 
 select_stmt: SELECT target_list from_clause where_clause ";" {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
-  select->type = btdb::sql::NSELECT_STMT;
+  select->type = btdb::NSELECT_STMT;
   select->target_list = $2;
   select->table_name = $3;
   select->where_clause = $4;
@@ -117,19 +117,19 @@ target_list:
   STRING_GROUP { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
-      List* target_list = make_list(btdb::sql::T_PARSENODE);
+      List* target_list = make_list(btdb::T_PARSENODE);
       push_list(target_list, identifier);
       $$ = target_list;
     }
   | STRING_GROUP "," target_list { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
@@ -144,7 +144,7 @@ from_clause:
   | FROM STRING_GROUP {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($2.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $2.c_str(), $2.length());
@@ -155,7 +155,7 @@ from_clause:
 //   STRING_GROUP {
 //       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
 //       assert(identifier != NULL);
-//       identifier->type = btdb::sql::NIDENTIFIER;
+//       identifier->type = btdb::NIDENTIFIER;
 //       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
 //       assert(identifier->identifier != NULL);
 //       strncpy(identifier->identifier, $1.c_str(), $1.length());
@@ -180,7 +180,7 @@ expr:
   STRING_GROUP {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
@@ -192,7 +192,7 @@ expr:
       $1 = $1.substr(1, $1.length() - 2);
       NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
       assert(str_lit != NULL);
-      str_lit->type = btdb::sql::NSTRING_LIT;
+      str_lit->type = btdb::NSTRING_LIT;
       str_lit->str_lit = (char*)calloc($1.length(), sizeof(char));
       assert(str_lit->str_lit != NULL);
       strncpy(str_lit->str_lit, $1.c_str(), $1.length());
@@ -201,8 +201,8 @@ expr:
   | expr "=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::EQ;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::EQ;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -210,8 +210,8 @@ expr:
   | expr "!=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::NEQ;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::NEQ;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -219,8 +219,8 @@ expr:
   | expr ">" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::GT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::GT;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -228,8 +228,8 @@ expr:
   | expr ">=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::GE;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::GE;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -237,8 +237,8 @@ expr:
   | expr "<" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::LT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::LT;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -246,8 +246,8 @@ expr:
   | expr "<=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::LE;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::LE;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -255,8 +255,8 @@ expr:
   | expr "+" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::PLUS;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::PLUS;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -264,8 +264,8 @@ expr:
   | expr "-" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::MINUS;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::MINUS;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -273,8 +273,8 @@ expr:
   | expr "*" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::MULT;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::MULT;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -282,8 +282,8 @@ expr:
   | expr "/" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::DIV;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::DIV;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -291,8 +291,8 @@ expr:
   | expr AND expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::AND;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::AND;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -300,8 +300,8 @@ expr:
   | expr OR expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
-      bin_expr->type = btdb::sql::NBIN_EXPR;
-      bin_expr->op = btdb::sql::OR;
+      bin_expr->type = btdb::NBIN_EXPR;
+      bin_expr->op = btdb::OR;
       bin_expr->lhs = $1;
       bin_expr->rhs = $3;
       $$ = (ParseNode*)bin_expr;
@@ -310,11 +310,11 @@ expr:
 insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";" {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
   assert(insert != nullptr);
-  insert->type = btdb::sql::NINSERT_STMT;
+  insert->type = btdb::NINSERT_STMT;
 
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc($3.length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, $3.c_str(), $3.length());
@@ -332,19 +332,19 @@ column_list:
    STRING_GROUP {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
-      List* column_list = make_list(btdb::sql::T_PARSENODE);
+      List* column_list = make_list(btdb::T_PARSENODE);
       push_list(column_list, identifier);
       $$ = column_list;
    }
   | column_list "," STRING_GROUP {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
-      identifier->type = btdb::sql::NIDENTIFIER;
+      identifier->type = btdb::NIDENTIFIER;
       identifier->identifier = (char*)calloc($3.length(), sizeof(char));
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $3.c_str(), $3.length());
@@ -357,7 +357,7 @@ column_list:
 insert_values_clause: VALUES insert_values_list { $$ = $2; }
 insert_values_list:
   "(" insert_value_items ")" {
-      List* values_list = make_list(btdb::sql::T_LIST);
+      List* values_list = make_list(btdb::T_LIST);
       push_list(values_list, $2);
       $$ = values_list;
   }
@@ -369,7 +369,7 @@ insert_values_list:
 
 insert_value_items:
   expr {
-      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      List* value_items = make_list(btdb::T_PARSENODE);
       push_list(value_items, $1);
       $$ = value_items;
   }
@@ -382,13 +382,13 @@ insert_value_items:
 delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc($3.length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, $3.c_str(), $3.length());
 
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
-  delete_stmt->type = btdb::sql::NDELETE_STMT;
+  delete_stmt->type = btdb::NDELETE_STMT;
   delete_stmt->table_name = (ParseNode*) identifier;
   delete_stmt->where_clause = $4;
   $$ = (ParseNode*) delete_stmt;
@@ -397,13 +397,13 @@ delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
 update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc($2.length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, $2.c_str(), $2.length());
 
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
-  update->type = btdb::sql::NUPDATE_STMT;
+  update->type = btdb::NUPDATE_STMT;
   update->table_name = (ParseNode*) identifier;
   update->assign_expr_list = $4;
   update->where_clause = $5;
@@ -412,7 +412,7 @@ update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
 
 update_assign_expr_list:
   assign_expr {
-      List* value_items = make_list(btdb::sql::T_PARSENODE);
+      List* value_items = make_list(btdb::T_PARSENODE);
       push_list(value_items, $1);
       $$ = value_items;
   }
@@ -425,7 +425,7 @@ update_assign_expr_list:
 assign_expr: STRING_GROUP "=" STRING_LITERAL {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
-  identifier->type = btdb::sql::NIDENTIFIER;
+  identifier->type = btdb::NIDENTIFIER;
   identifier->identifier = (char*)calloc($1.length(), sizeof(char));
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, $1.c_str(), $1.length());
@@ -435,13 +435,13 @@ assign_expr: STRING_GROUP "=" STRING_LITERAL {
   $3 = $3.substr(1, $3.length() - 2);
   NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
   assert(str_lit != NULL);
-  str_lit->type = btdb::sql::NSTRING_LIT;
+  str_lit->type = btdb::NSTRING_LIT;
   str_lit->str_lit = (char*)calloc($3.length(), sizeof(char));
   assert(str_lit->str_lit != NULL);
   strncpy(str_lit->str_lit, $3.c_str(), $3.length());
 
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
-  assign_expr->type = btdb::sql::NASSIGN_EXPR;
+  assign_expr->type = btdb::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
   assign_expr->value = (ParseNode*) str_lit;
   $$ = (ParseNode*) assign_expr;

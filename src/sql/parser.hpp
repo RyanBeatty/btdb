@@ -48,19 +48,19 @@
 
   #include "node.hpp"
 
-  using btdb::sql::ParseNode;
-  using btdb::sql::ParseTree;
-  using btdb::sql::NIdentifier;
-  using btdb::sql::NStringLit;
-  using btdb::sql::NBinExpr;
-  using btdb::sql::List;
-  using btdb::sql::NSelectStmt;
-  using btdb::sql::NInsertStmt;
-  using btdb::sql::NDeleteStmt;
-  using btdb::sql::NUpdateStmt;
-  using btdb::sql::NAssignExpr;
-  using btdb::sql::make_list;
-  using btdb::sql::push_list;
+  using btdb::ParseNode;
+  using btdb::ParseTree;
+  using btdb::NIdentifier;
+  using btdb::NStringLit;
+  using btdb::NBinExpr;
+  using btdb::List;
+  using btdb::NSelectStmt;
+  using btdb::NInsertStmt;
+  using btdb::NDeleteStmt;
+  using btdb::NUpdateStmt;
+  using btdb::NAssignExpr;
+  using btdb::make_list;
+  using btdb::push_list;
 
   // Can't include btdb::sql stuff or else we get circular import,
   // so need to forward declare stuff.

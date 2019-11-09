@@ -1,4 +1,5 @@
 #include "node.hpp"
+#include "utils.h"
 
 #include <map>
 #include <sstream>
@@ -7,12 +8,6 @@
 #include <vector>
 
 namespace btdb {
-namespace sql {
-
-void Panic(const std::string& msg) {
-  std::cerr << "Panic: " << msg << std::endl;
-  exit(EXIT_FAILURE);
-};
 
 List* make_list(ListType type) {
   List* list = (List*)calloc(1, sizeof(List));
@@ -355,5 +350,4 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
   return;
 }
 
-}  // namespace sql
 }  // namespace btdb
