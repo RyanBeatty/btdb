@@ -161,9 +161,9 @@ void free_parse_node(ParseNode* node) {
     case NASSIGN_EXPR: {
       NAssignExpr* assign_expr = (NAssignExpr*)node;
       assert(assign_expr->column != nullptr);
-      assert(assign_expr->expr != nullptr);
+      assert(assign_expr->value != nullptr);
       free_parse_node(assign_expr->column);
-      free_parse_node(assign_expr->expr);
+      free_parse_node(assign_expr->value);
       free(assign_expr);
       break;
     }
@@ -323,7 +323,7 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       print_parse_node(assign_expr->column, ctx);
       ctx.EndObject();
       ctx.PrintObject("expr");
-      print_parse_node(assign_expr->expr, ctx);
+      print_parse_node(assign_expr->value, ctx);
       ctx.EndObject();
       ctx.EndObject();
       break;

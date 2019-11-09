@@ -68,6 +68,9 @@ struct SystemCatalog {
       case sql::NDELETE_STMT: {
         return ValidateDeleteStmt((sql::NDeleteStmt*)node);
       }
+      case sql::NUPDATE_STMT: {
+        return ValidateSelectStmt((sql::NUpdateStmt*)node);
+      }
       default: {
         Panic("Unknown statement type when validating");
         return false;
@@ -197,6 +200,58 @@ struct SystemCatalog {
       return CheckType(delete_stmt->where_clause, *table_def_it);
     }
 
+    return true;
+  }
+
+  bool ValidateSelectStmt(sql::NUpdateStmt* update) {
+    assert(update != nullptr);
+    assert(update->type == btdb::sql::NUPDATE_STMT);
+    assert(update->table_name != nullptr);
+    assert(update->assign_expr_list != nullptr);
+
+    sql::NIdentifier* table_name = (sql::NIdentifier*) update->table_name;
+    assert(table_name->identifier != nullptr);
+    auto table_def_it = tables.begin();
+    for (; table_def_it != tables.end(); ++table_def_it) {
+      if (table_def_it->name == table_name->identifier) {
+        break;
+      }
+    }
+    if (table_def_it == tables.end()) {
+      return false;
+    }
+
+    auto* assign_expr_list = update->assign_expr_list;
+    assert(assign_expr_list != nullptr);
+    assert(assign_expr_list->type == sql::T_PARSENODE);
+    sql::ListCell* lc = nullptr;
+    FOR_EACH(lc, assign_expr_list) {
+      assert(lc->data != nullptr);
+      sql::NAssignExpr* assign_expr = (sql::NAssignExpr*) lc->data;
+      assert(assign_expr->type == sql::NAssignExpr);
+      assert(assign_expr->column != nullptr);
+      assert(assign_expr->value != nullptr);
+
+      sql::NIdentifier* col = (sql::NIdentifier*) assign_expr->column;
+      assert(col->type == sql::NIDENTIFIER);
+      assert(col->identifier != nullptr);
+      if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
+                    col->identifier) == table_def_it->col_names.end()) {
+        return false;
+      }
+
+      sql::NStringLit* str_lit = (sql::NStringLit*) assign_expr->value;
+      if (str_lit->type != sql::NSTRING_LIT) {
+        return false;
+      }
+      assert(str_lit->str_lit != nullptr);
+    }
+
+    if (update->where_clause != nullptr) {
+      if (CheckType(update->where_clause, *table_def_it) != T_BOOL) {
+        return false;
+      }
+    }
     return true;
   }
 

@@ -1075,17 +1075,27 @@ namespace yy {
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
 
+  // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
+  assert(yystack_[0].value.as < std::string > ().length() >= 2);
+  yystack_[0].value.as < std::string > () = yystack_[0].value.as < std::string > ().substr(1, yystack_[0].value.as < std::string > ().length() - 2);
+  NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
+  assert(str_lit != NULL);
+  str_lit->type = btdb::sql::NSTRING_LIT;
+  str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
+  assert(str_lit->str_lit != NULL);
+  strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
+
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
   assign_expr->type = btdb::sql::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
-  assign_expr->expr = yystack_[0].value.as < ParseNode* > ();
+  assign_expr->value = (ParseNode*) str_lit;
   yylhs.value.as < ParseNode* > () = (ParseNode*) assign_expr;
 }
-#line 1085 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1095 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 1089 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1099 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -1269,15 +1279,15 @@ namespace yy {
   const signed char
   parser::yypact_[] =
   {
-      10,    11,    53,    49,    34,    63,   -25,   -25,   -25,   -25,
-      50,    54,    37,    39,    59,   -25,    11,    41,    55,    61,
-      55,    44,   -25,   -25,   -10,    60,    46,    67,    64,    58,
+      10,    -9,    53,    49,    11,    62,   -25,   -25,   -25,   -25,
+      50,    51,    37,    38,    58,   -25,    -9,    41,    55,    61,
+      55,    44,   -25,   -25,   -11,    60,    46,    67,    63,    59,
       40,   -25,   -25,   -25,   -15,   -25,   -25,    26,    68,    66,
-     -25,   -10,    44,    69,   -10,   -10,   -10,   -10,   -10,   -10,
-     -10,   -10,   -10,   -10,   -10,   -10,   -25,    52,   -10,    70,
-     -25,   -15,   -25,   -25,    25,    25,     9,     9,     9,     9,
+     -25,    39,    44,    69,   -11,   -11,   -11,   -11,   -11,   -11,
+     -11,   -11,   -11,   -11,   -11,   -11,   -25,    52,   -11,    70,
+     -25,   -25,   -25,   -25,    25,    25,     9,     9,     9,     9,
        9,     9,    32,    32,   -25,   -25,   -25,   -15,    27,    71,
-     -25,   -10,   -10,   -15,    42,   -25
+     -25,   -11,   -11,   -15,    42,   -25
   };
 
   const unsigned char
@@ -1312,13 +1322,13 @@ namespace yy {
   parser::yytable_[] =
   {
       34,    44,    45,    46,    47,    48,    49,    50,    51,    52,
-      53,    54,    55,     1,     2,     3,     4,    61,    32,    33,
+      53,    54,    55,     1,     2,     3,     4,    32,    33,    10,
       64,    65,    66,    67,    68,    69,    70,    71,    72,    73,
-      74,    75,    28,    52,    53,    54,    55,    56,    80,    10,
+      74,    75,    28,    52,    53,    54,    55,    56,    80,    14,
       57,    81,    43,    46,    47,    48,    49,    50,    51,    52,
       53,    54,    55,    85,    42,    24,    81,    83,    54,    55,
-      12,    13,    14,    15,    16,    19,    17,    20,    21,    23,
-      24,    26,    29,    35,    36,    38,    41,    40,    58,    60,
+      12,    13,    15,    17,    16,    19,    20,    21,    61,    23,
+      24,    26,    29,    35,    36,    38,    40,    41,    58,    60,
       76,    82,    63,    84,    79,    62,     0,     0,    22
   };
 
@@ -1326,13 +1336,13 @@ namespace yy {
   parser::yycheck_[] =
   {
       24,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,     3,     4,     5,     6,    41,    28,    29,
+      25,    26,    27,     3,     4,     5,     6,    28,    29,    28,
       44,    45,    46,    47,    48,    49,    50,    51,    52,    53,
       54,    55,    20,    24,    25,    26,    27,    11,    11,    28,
       14,    14,    30,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    11,    14,    15,    14,    81,    26,    27,
-       7,    12,    28,     0,    14,    28,    12,    28,     9,    28,
-      15,    10,    28,    13,    28,     8,    18,    13,    10,    13,
+       7,    12,     0,    12,    14,    28,    28,     9,    29,    28,
+      15,    10,    28,    13,    28,     8,    13,    18,    10,    13,
       28,    10,    13,    82,    14,    42,    -1,    -1,    16
   };
 
@@ -1345,7 +1355,7 @@ namespace yy {
       45,    46,    28,    29,    36,    13,    28,    39,     8,    40,
       13,    18,    14,    35,    16,    17,    18,    19,    20,    21,
       22,    23,    24,    25,    26,    27,    11,    14,    10,    41,
-      13,    36,    46,    13,    36,    36,    36,    36,    36,    36,
+      13,    29,    46,    13,    36,    36,    36,    36,    36,    36,
       36,    36,    36,    36,    36,    36,    28,    36,    42,    14,
       11,    14,    10,    36,    42,    11
   };
@@ -1430,9 +1440,9 @@ namespace yy {
 
 
 } // yy
-#line 1434 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1444 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 441 "parser.y"
+#line 451 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {
