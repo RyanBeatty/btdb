@@ -771,6 +771,45 @@ struct DeleteScan : Iterator {
   void Close() {}
 };
 
+struct UpdateScan : Iterator {
+  uint64_t next_index = 0;
+
+  std::vector<std::vector<std::string>> assign_exprs;
+  // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
+  // ownership transfer eventually.
+  sql::ParseNode* where_clause;
+
+  UpdateScan(std::vector<std::vector<std::string>> assign_exprs, sql::ParseNode* where_clause)
+      : assign_exprs(assign_exprs), where_clause(where_clause) {}
+
+  void Open() {}
+  MTuple GetNext() {
+    while (next_index < Tuples.size()) {
+      auto& cur_tpl = Tuples[next_index];
+      ++next_index;
+
+      // Evaluate predicate if any.
+      if (where_clause != nullptr) {
+        auto result_val = ExecPred(where_clause, cur_tpl);
+        assert(result_val.type == T_BOOL);
+        assert(result_val.data != nullptr);
+        bool* result = (bool*)result_val.data;
+        if (!*result) {
+          continue;
+        }
+      }
+
+      for (const auto& assign_expr : assign_exprs) {
+        cur_tpl[assign_expr[0]] = assign_expr[1];
+      }
+      return std::make_unique<Tuple>(cur_tpl);
+    }
+
+    return nullptr;
+  }
+  void Close() {}
+};
+
 struct PlanState {
   std::vector<std::string> target_list;
   std::unique_ptr<Plan> plan;
@@ -798,6 +837,12 @@ PlanState PlanQuery(Query& query) {
     case 2: {
       const DeleteQuery& delete_query = std::get<DeleteQuery>(query);
       auto plan = std::make_unique<DeleteScan>(DeleteScan(delete_query.where_clause));
+      plan_state.plan = std::move(plan);
+      break;
+    }
+    case 3: {
+      const UpdateQuery& update_query = std::get<UpdateQuery>(query);
+      auto plan = std::make_unique<UpdateScan>(UpdateScan(update_query.assign_exprs, update_query.where_clause));
       plan_state.plan = std::move(plan);
       break;
     }
