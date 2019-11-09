@@ -123,6 +123,7 @@ target_list:
       strncpy(identifier->identifier, $1.c_str(), $1.length());
 
       List* target_list = make_list(btdb::T_PARSENODE);
+      target_list->type = btdb::T_PARSENODE;
       push_list(target_list, identifier);
       $$ = target_list;
     }

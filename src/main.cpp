@@ -27,7 +27,9 @@ namespace btdb {
 
 struct SelectQuery {
   char_ptr_vec* target_list;
-  std::vector<std::string> range_table;
+  // TODO(ryan): Actually use this
+  // std::vector<std::string> range_table;
+
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
   ParseNode* where_clause;
@@ -35,7 +37,7 @@ struct SelectQuery {
 
 struct InsertQuery {
   std::string table;
-  std::vector<std::string> column_list;
+  char_ptr_vec* column_list;
   std::vector<Tuple> values_list;
 };
 
@@ -65,7 +67,7 @@ Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
   auto table_name = std::string(identifier->identifier);
 
   assert(select->target_list != nullptr);
-  assert(select->target_list->type = T_PARSENODE);
+  assert(select->target_list->type == T_PARSENODE);
   auto* target_list = select->target_list;
   char_ptr_vec* targets = make_char_ptr_vec();
   ListCell* lc = nullptr;
@@ -76,7 +78,7 @@ Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
     push(targets, target->identifier);
   }
 
-  return SelectQuery{targets, std::vector<std::string>{table_name}, select->where_clause};
+  return SelectQuery{targets, select->where_clause};
 }
 
 Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
@@ -88,7 +90,7 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != nullptr);
 
-  std::vector<std::string> columns;
+  char_ptr_vec* columns = make_char_ptr_vec();
   auto* column_list = node->column_list;
   assert(column_list != nullptr);
   assert(column_list->type == T_PARSENODE);
@@ -98,7 +100,7 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != nullptr);
-    columns.push_back(col->identifier);
+    push(columns, col->identifier);
   }
 
   std::vector<Tuple> values;
@@ -120,7 +122,8 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
       NStringLit* str_lit = (NStringLit*)lc2->data;
       assert(str_lit->type == NSTRING_LIT);
       assert(str_lit->str_lit != nullptr);
-      tuple[columns[col_index]] = str_lit->str_lit;
+      std::string key(*get(columns, col_index));
+      tuple[key] = str_lit->str_lit;
       ++col_index;
     }
     values.push_back(tuple);
@@ -130,7 +133,6 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
 }
 
 Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
-  assert(delete_stmt != nullptr);
   assert(delete_stmt->type == NDELETE_STMT);
   assert(delete_stmt->table_name != nullptr);
   assert(delete_stmt->table_name->type == NIDENTIFIER);
@@ -538,8 +540,7 @@ PlanState PlanQuery(Query& query) {
       const InsertQuery& insert_query = std::get<InsertQuery>(query);
       auto plan = std::make_unique<InsertScan>(InsertScan(insert_query.values_list));
       // TODO(ryan): This is also wonky.
-      // plan_state.target_list = insert_query.column_list;
-      plan_state.target_list = NULL;
+      plan_state.target_list = insert_query.column_list;
       plan_state.plan = std::move(plan);
       break;
     }
@@ -617,8 +618,8 @@ int main() {
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
     btdb::char_ptr_vec_it it = NULL;
-    VEC_FOREACH(it, results.columns) { std::cout << std::string(*it) << "\t"; }
-    std::cout << std::endl;
+    VEC_FOREACH(it, results.columns) { printf("%s\t", *it); }
+    printf("\n");
     std::cout << "===============" << std::endl;
     for (auto&& mtuple : results.tuples) {
       assert(mtuple != nullptr);
