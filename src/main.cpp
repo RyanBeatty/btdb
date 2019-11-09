@@ -18,24 +18,10 @@
 
 #include "node.hpp"
 #include "sql/context.hpp"
-#include "storage.h"
+#include "types.h"
 #include "utils.h"
 
 namespace btdb {
-
-enum BType {
-  T_UNKNOWN,
-  T_STRING,
-  T_BOOL,
-};
-
-struct Datum {
-  Datum(BType type, void* data) : type(type), data(data) {}
-
-  BType type;
-  // TODO(ryan): REMEMBER TO FIGURE OUT BEST WAY TO DELETE THIS, WE LEAK MEM HERE.
-  void* data;
-};
 
 struct SystemCatalog {
   std::vector<TableDef> tables;

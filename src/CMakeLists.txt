@@ -8,7 +8,7 @@ add_executable(btdb
     main.cpp
     utils.h
     utils.cpp
-    storage.h
+    types.h
 )
 target_link_libraries(btdb btdb_sql_parser)
 target_compile_options(btdb
