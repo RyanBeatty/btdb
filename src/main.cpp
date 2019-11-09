@@ -36,20 +36,17 @@ struct SelectQuery {
 };
 
 struct InsertQuery {
-  std::string table;
   char_ptr_vec* column_list;
   std::vector<Tuple> values_list;
 };
 
 struct DeleteQuery {
-  std::string table;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
   ParseNode* where_clause;
 };
 
 struct UpdateQuery {
-  std::string table_name;
   std::vector<std::vector<std::string>> assign_exprs;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
@@ -129,7 +126,7 @@ Query AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
     values.push_back(tuple);
   }
 
-  return InsertQuery{table_name->identifier, columns, values};
+  return InsertQuery{columns, values};
 }
 
 Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
@@ -141,7 +138,7 @@ Query AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(identifier->identifier != nullptr);
   auto table_name = std::string(identifier->identifier);
 
-  return DeleteQuery{table_name, delete_stmt->where_clause};
+  return DeleteQuery{delete_stmt->where_clause};
 }
 
 Query AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
@@ -177,7 +174,7 @@ Query AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
     assign_exprs.push_back(expr);
   }
 
-  return UpdateQuery{table_name, assign_exprs, update->where_clause};
+  return UpdateQuery{assign_exprs, update->where_clause};
 }
 
 Query AnalyzeAndRewriteParseTree(ParseTree& tree) {
