@@ -7,14 +7,17 @@
 
 namespace btdb {
 
+#define VEC_FOREACH(it, vec) \
+  for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
+
 #define VEC_PROTOTYPE(name, type)                                   \
   struct name##_vec {                                               \
-    uint64_t length;                                                \
-    uint64_t capacity;                                              \
+    size_t length;                                                  \
+    size_t capacity;                                                \
     type* buffer;                                                   \
   };                                                                \
                                                                     \
-  name##_vec* make_name##_vec() {                                   \
+  name##_vec* make_##name##_vec() {                                 \
     name##_vec* vec = (name##_vec*)calloc(10, sizeof(type));        \
     assert(vec != NULL);                                            \
     vec->capacity = 10;                                             \
@@ -36,7 +39,7 @@ namespace btdb {
     return;                                                         \
   }                                                                 \
                                                                     \
-  type* get(name##_vec* vec, uint64_t i) {                          \
+  type* get(name##_vec* vec, size_t i) {                            \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (i < 0 || i >= vec->length) {                                \
