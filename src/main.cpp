@@ -26,7 +26,7 @@
 namespace btdb {
 
 struct SelectQuery {
-  std::vector<std::string> target_list;
+  char_ptr_vec* target_list;
   std::vector<std::string> range_table;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
@@ -67,13 +67,13 @@ Query AnalyzeAndRewriteSelectStmt(NSelectStmt* node) {
   assert(select->target_list != nullptr);
   assert(select->target_list->type = T_PARSENODE);
   auto* target_list = select->target_list;
-  std::vector<std::string> targets;
+  char_ptr_vec* targets = make_char_ptr_vec();
   ListCell* lc = nullptr;
   FOR_EACH(lc, target_list) {
     assert(lc->data != nullptr);
     NIdentifier* target = (NIdentifier*)lc->data;
     assert(target->type == NIDENTIFIER);
-    targets.push_back(target->identifier);
+    push(targets, target->identifier);
   }
 
   return SelectQuery{targets, std::vector<std::string>{table_name}, select->where_clause};
@@ -387,16 +387,8 @@ struct SequentialScan : Iterator {
   // ownership transfer eventually.
   ParseNode* where_clause;
 
-  SequentialScan(std::vector<std::string> target_list, ParseNode* where_clause)
-      : where_clause(where_clause) {
-    this->target_list = make_char_ptr_vec();
-    for (auto& elem : target_list) {
-      size_t len = elem.size() + 1;
-      char* data = (char*)calloc(len, sizeof(char));
-      strncpy(data, elem.c_str(), len);
-      push(this->target_list, data);
-    }
-  }
+  SequentialScan(char_ptr_vec* target_list, ParseNode* where_clause)
+      : target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
   MTuple GetNext() {
@@ -527,7 +519,7 @@ struct UpdateScan : Iterator {
 };
 
 struct PlanState {
-  std::vector<std::string> target_list;
+  char_ptr_vec* target_list;
   std::unique_ptr<Plan> plan;
 };
 
@@ -546,7 +538,8 @@ PlanState PlanQuery(Query& query) {
       const InsertQuery& insert_query = std::get<InsertQuery>(query);
       auto plan = std::make_unique<InsertScan>(InsertScan(insert_query.values_list));
       // TODO(ryan): This is also wonky.
-      plan_state.target_list = insert_query.column_list;
+      // plan_state.target_list = insert_query.column_list;
+      plan_state.target_list = NULL;
       plan_state.plan = std::move(plan);
       break;
     }
@@ -570,7 +563,7 @@ PlanState PlanQuery(Query& query) {
 }
 
 struct Result {
-  std::vector<std::string> columns;
+  char_ptr_vec* columns;
   std::vector<MTuple> tuples;
 };
 
@@ -623,14 +616,15 @@ int main() {
     auto query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
-    for (const auto& column : results.columns) {
-      std::cout << column << "\t";
-    }
+    btdb::char_ptr_vec_it it = NULL;
+    VEC_FOREACH(it, results.columns) { std::cout << std::string(*it) << "\t"; }
     std::cout << std::endl;
     std::cout << "===============" << std::endl;
     for (auto&& mtuple : results.tuples) {
       assert(mtuple != nullptr);
-      for (const auto& column : results.columns) {
+      it = NULL;
+      VEC_FOREACH(it, results.columns) {
+        std::string column(*it);
         auto it = mtuple->find(column);
         if (it != mtuple->end()) {
           std::cout << it->second;
