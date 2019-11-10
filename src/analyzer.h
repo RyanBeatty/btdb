@@ -10,17 +10,6 @@ namespace btdb {
 
 static std::vector<TableDef> Tables = {{"foo", {"bar", "baz"}}};
 
-// struct SystemCatalog {
-//   std::vector<TableDef> tables;
-
-//   bool ValidateParseTree(ParseTree& tree);
-//   bool ValidateSelectStmt(NSelectStmt* select);
-//   bool ValidateInsertStmt(NInsertStmt* insert);
-//   bool ValidateDeleteStmt(NDeleteStmt* delete_stmt);
-//   bool ValidateUpdateStmt(NUpdateStmt* update);
-//   BType CheckType(ParseNode* node, TableDef& table_def);
-// };
-
 enum CmdType {
   CMD_SELECT,
   CMD_INSERT,
@@ -46,13 +35,6 @@ Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
 BType CheckType(ParseNode*, TableDef&);
-
-
-// Query* AnalyzeAndRewriteParseTree(ParseTree&);
-// Query* AnalyzeAndRewriteSelectStmt(NSelectStmt*);
-// Query* AnalyzeAndRewriteInsertStmt(NInsertStmt*);
-// Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt*);
-// Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt*);
 
 }  // namespace btdb
 #endif  // ANALYZER_H
