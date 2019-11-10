@@ -10,6 +10,139 @@
 
 namespace btdb {
 
+Query* AnalyzeParseTree(ParseNode* node) {
+  assert(node != NULL);
+  switch (node->type) {
+    case NSELECT_STMT: {
+      return AnalyzeSelectStmt((NSelectStmt*)node);
+    }
+    // case NINSERT_STMT: {
+    //   return ValidateInsertStmt((NInsertStmt*)node);
+    // }
+    // case NDELETE_STMT: {
+    //   return ValidateDeleteStmt((NDeleteStmt*)node);
+    // }
+    // case NUPDATE_STMT: {
+    //   return ValidateUpdateStmt((NUpdateStmt*)node);
+    // }
+    default: {
+      Panic("Unknown statement type when validating");
+      return NULL;
+    }
+  }
+}
+
+Query* AnalyzeSelectStmt(NSelectStmt* select) {
+  assert(select != nullptr);
+  
+  NIdentifier* table_name = (NIdentifier*)select->table_name;
+  assert(table_name != NULL);
+  assert(table_name->type == NIDENTIFIER);
+  assert(table_name->identifier != NULL);
+  auto table_def_it = Tables.begin();
+  for (; table_def_it != Tables.end(); ++table_def_it) {
+    if (table_def_it->name == table_name->identifier) {
+      break;
+    }
+  }
+  if (table_def_it == Tables.end()) {
+    return NULL;
+  }
+
+  // Validate target list contains valid references to columns.
+  CharPtrVec* targets = MakeCharPtrVec();
+  List* target_list = select->target_list;
+  assert(target_list != NULL);
+  assert(target_list->type == T_PARSENODE);
+  ListCell* lc = NULL;
+  FOR_EACH(lc, target_list) {
+    assert(lc->data != NULL);
+    NIdentifier* col = (NIdentifier*)lc->data;
+    assert(col->type == NIDENTIFIER);
+    assert(col->identifier != NULL);
+    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
+                  col->identifier) == table_def_it->col_names.end()) {
+      return NULL;
+    }
+    PushBack(targets, col->identifier);
+  }
+
+  if (select->where_clause != nullptr) {
+    if (CheckType(select->where_clause, *table_def_it) != T_BOOL) {
+      return NULL;
+    }
+  }
+
+  Query* query = MakeQuery(CMD_SELECT);
+  query->table_name = table_name->identifier;
+  query->target_list = targets;
+  query->where_clause = select->where_clause;
+  return query;
+}
+
+BType CheckType(ParseNode* node, TableDef& table_def) {
+  assert(node != nullptr);
+  switch (node->type) {
+    case NSTRING_LIT: {
+      return T_STRING;
+    }
+    case NIDENTIFIER: {
+      // TODO(ryan): Not true in the future.
+      NIdentifier* identifier = (NIdentifier*)node;
+      assert(identifier->identifier != nullptr);
+      if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
+                    identifier->identifier) == table_def.col_names.end()) {
+        Panic("Invalid column name in bin expr");
+      }
+      return T_STRING;
+    }
+    case NBIN_EXPR: {
+      NBinExpr* expr = (NBinExpr*)node;
+      assert(expr->lhs != nullptr);
+      assert(expr->rhs != nullptr);
+      auto lhs_type = CheckType(expr->lhs, table_def);
+      auto rhs_type = CheckType(expr->rhs, table_def);
+      if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
+        return T_UNKNOWN;
+      }
+      switch (expr->op) {
+        case AND:
+        case OR: {
+          if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
+            return T_UNKNOWN;
+          }
+          return T_BOOL;
+        }
+        case EQ:
+        case NEQ: {
+          if (lhs_type != rhs_type) {
+            return T_UNKNOWN;
+          }
+          return T_BOOL;
+        }
+        case GT:
+        case GE:
+        case LT:
+        case LE: {
+          if (lhs_type != T_STRING || rhs_type != T_STRING) {
+            return T_UNKNOWN;
+          }
+          return T_BOOL;
+        }
+        default: {
+          Panic("Unknown or Unsupported BinExprOp!");
+          return T_UNKNOWN;
+        }
+      }
+    }
+    default: {
+      Panic("Unknown ParseNode type!");
+      return T_UNKNOWN;
+    }
+  }
+}
+
+
 bool SystemCatalog::ValidateParseTree(ParseTree& tree) {
   assert(tree.tree != nullptr);
   ParseNode* node = tree.tree;

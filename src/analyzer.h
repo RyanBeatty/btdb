@@ -7,6 +7,9 @@
 #include "types.h"
 
 namespace btdb {
+
+static std::vector<TableDef> Tables;
+
 struct SystemCatalog {
   std::vector<TableDef> tables;
 
@@ -36,12 +39,17 @@ struct Query {
   std::vector<Tuple> values;
 };
 
-Query* MakeQuery(CmdType cmd);
+Query* MakeQuery(CmdType);
+Query* AnalyzeParseTree(ParseNode*);
+Query* AnalyzeSelectStmt(NSelectStmt*);
+BType CheckType(ParseNode*, TableDef&);
+
+
+Query* AnalyzeAndRewriteParseTree(ParseTree&);
 Query* AnalyzeAndRewriteSelectStmt(NSelectStmt*);
 Query* AnalyzeAndRewriteInsertStmt(NInsertStmt*);
 Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt*);
 Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt*);
-Query* AnalyzeAndRewriteParseTree(ParseTree&);
 
 }  // namespace btdb
 #endif  // ANALYZER_H
