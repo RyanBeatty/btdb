@@ -37,7 +37,7 @@ struct Query {
   CmdType cmd;
 
   char* table_name;
-  char_ptr_vec* target_list;
+  CharPtrVec* target_list;
   ParseNode* where_clause;
   std::vector<std::vector<std::string>> assign_exprs;
   std::vector<Tuple> values;
@@ -59,13 +59,13 @@ Query* AnalyzeAndRewriteSelectStmt(NSelectStmt* select) {
   assert(select->target_list != nullptr);
   assert(select->target_list->type == T_PARSENODE);
   auto* target_list = select->target_list;
-  char_ptr_vec* targets = make_char_ptr_vec();
+  CharPtrVec* targets = MakeCharPtrVec();
   ListCell* lc = nullptr;
   FOR_EACH(lc, target_list) {
     assert(lc->data != nullptr);
     NIdentifier* target = (NIdentifier*)lc->data;
     assert(target->type == NIDENTIFIER);
-    push(targets, target->identifier);
+    PushBack(targets, target->identifier);
   }
 
   Query* query = MakeQuery(CMD_SELECT);
@@ -84,7 +84,7 @@ Query* AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != nullptr);
 
-  char_ptr_vec* columns = make_char_ptr_vec();
+  CharPtrVec* columns = MakeCharPtrVec();
   auto* column_list = node->column_list;
   assert(column_list != nullptr);
   assert(column_list->type == T_PARSENODE);
@@ -94,7 +94,7 @@ Query* AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != nullptr);
-    push(columns, col->identifier);
+    PushBack(columns, col->identifier);
   }
 
   std::vector<Tuple> values;
@@ -116,7 +116,7 @@ Query* AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
       NStringLit* str_lit = (NStringLit*)lc2->data;
       assert(str_lit->type == NSTRING_LIT);
       assert(str_lit->str_lit != nullptr);
-      std::string key(*get(columns, col_index));
+      std::string key(*Get(columns, col_index));
       tuple[key] = str_lit->str_lit;
       ++col_index;
     }
@@ -386,12 +386,12 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
 struct SequentialScan : Iterator {
   uint64_t next_index = 0;
 
-  char_ptr_vec* target_list;
+  CharPtrVec* target_list;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
   ParseNode* where_clause;
 
-  SequentialScan(char_ptr_vec* target_list, ParseNode* where_clause)
+  SequentialScan(CharPtrVec* target_list, ParseNode* where_clause)
       : target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
@@ -413,7 +413,7 @@ struct SequentialScan : Iterator {
 
       // Column projections.
       Tuple result_tpl;
-      char_ptr_vec_it target = NULL;
+      CharPtrVecIt target = NULL;
       VEC_FOREACH(target, target_list) {
         auto it = cur_tpl.find(*target);
         assert(it != cur_tpl.end());
@@ -523,7 +523,7 @@ struct UpdateScan : Iterator {
 };
 
 struct PlanState {
-  char_ptr_vec* target_list;
+  CharPtrVec* target_list;
   std::unique_ptr<Plan> plan;
 };
 
@@ -563,7 +563,7 @@ PlanState PlanQuery(Query* query) {
 }
 
 struct Result {
-  char_ptr_vec* columns;
+  CharPtrVec* columns;
   std::vector<MTuple> tuples;
 };
 
@@ -616,7 +616,7 @@ int main() {
     auto* query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
-    btdb::char_ptr_vec_it it = NULL;
+    btdb::CharPtrVecIt it = NULL;
     VEC_FOREACH(it, results.columns) { printf("%s\t", *it); }
     printf("\n");
     std::cout << "===============" << std::endl;
