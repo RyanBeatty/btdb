@@ -45,29 +45,29 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
   switch (node->type) {
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
-      assert(str_lit->str_lit != nullptr);
+      assert(str_lit->str_lit != NULL);
       return Datum(T_STRING, new std::string(str_lit->str_lit));
     }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
-      assert(identifier->identifier != nullptr);
+      assert(identifier->identifier != NULL);
       auto it = cur_tuple.find(identifier->identifier);
       assert(it != cur_tuple.end());
       return Datum(T_STRING, new std::string(it->second));
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
-      assert(expr->lhs != nullptr);
-      assert(expr->rhs != nullptr);
+      assert(expr->lhs != NULL);
+      assert(expr->rhs != NULL);
       auto lhs_value = ExecPred(expr->lhs, cur_tuple);
       auto rhs_value = ExecPred(expr->rhs, cur_tuple);
       switch (expr->op) {
         case AND: {
           assert(lhs_value.type == T_BOOL);
           assert(rhs_value.type == T_BOOL);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data && *rhs_data));
@@ -75,8 +75,8 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
         case OR: {
           assert(lhs_value.type == T_BOOL);
           assert(rhs_value.type == T_BOOL);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
           return Datum(T_BOOL, new bool(*lhs_data || *rhs_data));
@@ -84,8 +84,8 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
         case EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -96,14 +96,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         case NEQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -114,14 +114,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         case GT: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -132,14 +132,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         case GE: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -150,14 +150,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         case LT: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -168,14 +168,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         case LE: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
           assert(rhs_value.type == T_BOOL || rhs_value.type == T_STRING);
-          assert(lhs_value.data != nullptr);
-          assert(rhs_value.data != nullptr);
+          assert(lhs_value.data != NULL);
+          assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
@@ -186,18 +186,18 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
             return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
-            return Datum(T_UNKNOWN, nullptr);
+            return Datum(T_UNKNOWN, NULL);
           }
         }
         default: {
           Panic("Unknown or Unsupported BinExprOp!");
-          return Datum(T_UNKNOWN, nullptr);
+          return Datum(T_UNKNOWN, NULL);
         }
       }
     }
     default: {
       Panic("Unknown ParseNode type!");
-      return Datum(T_UNKNOWN, nullptr);
+      return Datum(T_UNKNOWN, NULL);
     }
   }
 }
@@ -220,10 +220,10 @@ struct SequentialScan : Iterator {
       ++next_index;
 
       // Evaluate predicate if any.
-      if (where_clause != nullptr) {
+      if (where_clause != NULL) {
         auto result_val = ExecPred(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
-        assert(result_val.data != nullptr);
+        assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
         if (!*result) {
           continue;
@@ -241,7 +241,7 @@ struct SequentialScan : Iterator {
       return std::make_unique<Tuple>(result_tpl);
     }
 
-    return nullptr;
+    return NULL;
   }
   void Close() {}
 };
@@ -255,7 +255,7 @@ struct InsertScan : Iterator {
 
   MTuple GetNext() {
     if (tuples.size() == 0) {
-      return nullptr;
+      return NULL;
     }
     auto& tuple = tuples.back();
     Tuples.push_back(tuple);
@@ -280,10 +280,10 @@ struct DeleteScan : Iterator {
       const auto& cur_tpl = Tuples[next_index];
 
       // Evaluate predicate if any.
-      if (where_clause != nullptr) {
+      if (where_clause != NULL) {
         auto result_val = ExecPred(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
-        assert(result_val.data != nullptr);
+        assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
         if (!*result) {
           ++next_index;
@@ -296,7 +296,7 @@ struct DeleteScan : Iterator {
       return result;
     }
 
-    return nullptr;
+    return NULL;
   }
 
   void Close() {}
@@ -320,10 +320,10 @@ struct UpdateScan : Iterator {
       ++next_index;
 
       // Evaluate predicate if any.
-      if (where_clause != nullptr) {
+      if (where_clause != NULL) {
         auto result_val = ExecPred(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
-        assert(result_val.data != nullptr);
+        assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
         if (!*result) {
           continue;
@@ -336,7 +336,7 @@ struct UpdateScan : Iterator {
       return std::make_unique<Tuple>(cur_tpl);
     }
 
-    return nullptr;
+    return NULL;
   }
   void Close() {}
 };
@@ -393,7 +393,7 @@ Result execute_plan(PlanState& plan_state) {
   results.columns = plan_state.target_list;
   auto* plan = plan_state.plan.get();
   auto mtuple = plan->GetNext();
-  while (mtuple != nullptr) {
+  while (mtuple != NULL) {
     results.tuples.push_back(std::move(mtuple));
     mtuple = plan->GetNext();
   }
@@ -443,7 +443,7 @@ int main() {
       printf("\n");
       printf("===============\n");
       for (auto&& mtuple : results.tuples) {
-        assert(mtuple != nullptr);
+        assert(mtuple != NULL);
         btdb::CharPtrVecIt it = NULL;
         VEC_FOREACH(it, results.columns) {
           std::string column(*it);
