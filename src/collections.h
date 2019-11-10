@@ -19,7 +19,7 @@ namespace btdb {
                                                                     \
   typedef type* name##VecIt;                                        \
                                                                     \
-  name##Vec* Make##name##Vec() {                                    \
+  inline name##Vec* Make##name##Vec() {                             \
     name##Vec* vec = (name##Vec*)calloc(1, sizeof(name##Vec));      \
     assert(vec != NULL);                                            \
     vec->buffer = (type*)calloc(10, sizeof(type));                  \
@@ -27,7 +27,7 @@ namespace btdb {
     return vec;                                                     \
   }                                                                 \
                                                                     \
-  void PushBack(name##Vec* vec, type data) {                        \
+  inline void PushBack(name##Vec* vec, type data) {                 \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (vec->length >= vec->capacity) {                             \
@@ -42,7 +42,7 @@ namespace btdb {
     return;                                                         \
   }                                                                 \
                                                                     \
-  type* Get(name##Vec* vec, size_t i) {                             \
+  inline type* Get(name##Vec* vec, size_t i) {                      \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (i >= vec->length) {                                         \
@@ -51,7 +51,7 @@ namespace btdb {
     return &vec->buffer[i];                                         \
   }                                                                 \
                                                                     \
-  void free_vec(name##Vec* vec) {                                   \
+  inline void free_vec(name##Vec* vec) {                            \
     if (vec == NULL) {                                              \
       return;                                                       \
     }                                                               \

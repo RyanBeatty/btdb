@@ -6,11 +6,8 @@ add_subdirectory(sql)
 
 add_executable(btdb
     main.cpp
-    utils.h
     utils.cpp
-    types.h
-    catalog.h
-    catalog.cpp
+    analyzer.cpp
 )
 target_link_libraries(btdb btdb_sql_parser)
 target_compile_options(btdb
