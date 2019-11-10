@@ -264,7 +264,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   }
 
   assert(update->assign_expr_list != NULL);
-  assert(update->assign_expr_list->type = T_PARSENODE);
+  assert(update->assign_expr_list->type == T_PARSENODE);
   auto* assign_expr_list = update->assign_expr_list;
   std::vector<std::vector<std::string>> assign_exprs;
   ListCell* lc = NULL;
