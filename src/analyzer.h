@@ -8,7 +8,7 @@
 
 namespace btdb {
 
-static std::vector<TableDef> Tables;
+static std::vector<TableDef> Tables = {{"foo", {"bar", "baz"}}};
 
 // struct SystemCatalog {
 //   std::vector<TableDef> tables;

@@ -401,10 +401,8 @@ Result execute_plan(PlanState& plan_state) {
 }  // namespace btdb
 
 int main() {
-  std::cout << "Starting btdb" << std::endl;
+  printf("Starting btdb\n");
 
-  btdb::TableDef table = {"foo", {"bar", "baz"}};
-  auto catalog = btdb::SystemCatalog{{table}};
   btdb::Tuple t1;
   t1["bar"] = "hello";
   t1["baz"] = "the quick brown fox";
@@ -428,11 +426,11 @@ int main() {
       continue;
     }
     auto tree = std::move(parser.tree);
-    if (!catalog.ValidateParseTree(*tree.get())) {
-      std::cout << "Query not valid" << std::endl;
+    btdb::Query* query = btdb::AnalyzeParseTree(tree.get()->tree);
+    if (query == NULL) {
+      printf("Query not valid\n");
       continue;
     }
-    auto* query = btdb::AnalyzeAndRewriteParseTree(*tree.get());
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
     btdb::CharPtrVecIt it = NULL;

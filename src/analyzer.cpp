@@ -10,6 +10,12 @@
 
 namespace btdb {
 
+Query* MakeQuery(CmdType cmd) {
+  Query* query = (Query*)calloc(1, sizeof(Query));
+  query->cmd = cmd;
+  return query;
+}
+
 Query* AnalyzeParseTree(ParseNode* node) {
   assert(node != NULL);
   switch (node->type) {
@@ -33,7 +39,7 @@ Query* AnalyzeParseTree(ParseNode* node) {
 }
 
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
-  assert(select != nullptr);
+  assert(select != NULL);
   
   NIdentifier* table_name = (NIdentifier*)select->table_name;
   assert(table_name != NULL);
@@ -67,7 +73,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     PushBack(targets, col->identifier);
   }
 
-  if (select->where_clause != nullptr) {
+  if (select->where_clause != NULL) {
     if (CheckType(select->where_clause, *table_def_it) != T_BOOL) {
       return NULL;
     }
@@ -81,7 +87,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
 }
 
 BType CheckType(ParseNode* node, TableDef& table_def) {
-  assert(node != nullptr);
+  assert(node != NULL);
   switch (node->type) {
     case NSTRING_LIT: {
       return T_STRING;
@@ -89,7 +95,7 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
-      assert(identifier->identifier != nullptr);
+      assert(identifier->identifier != NULL);
       if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
                     identifier->identifier) == table_def.col_names.end()) {
         Panic("Invalid column name in bin expr");
@@ -98,8 +104,8 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
-      assert(expr->lhs != nullptr);
-      assert(expr->rhs != nullptr);
+      assert(expr->lhs != NULL);
+      assert(expr->rhs != NULL);
       auto lhs_type = CheckType(expr->lhs, table_def);
       auto rhs_type = CheckType(expr->rhs, table_def);
       if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
@@ -182,7 +188,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   List* values_list = insert->values_list;
   assert(values_list != NULL);
   assert(values_list->type == T_LIST);
-  lc = nullptr;
+  lc = NULL;
   FOR_EACH(lc, values_list) {
     assert(lc->data != NULL);
     List* value_items = (List*)lc->data;
@@ -191,13 +197,13 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
 
     Tuple tuple;
     uint64_t col_index = 0;
-    ListCell* lc2 = nullptr;
+    ListCell* lc2 = NULL;
     FOR_EACH(lc2, value_items) {
-      assert(lc2->data != nullptr);
+      assert(lc2->data != NULL);
       // TODO(ryan): Allow for more general expressions here.
       NStringLit* str_lit = (NStringLit*)lc2->data;
       assert(str_lit->type == NSTRING_LIT);
-      assert(str_lit->str_lit != nullptr);
+      assert(str_lit->str_lit != NULL);
       std::string key(*Get(targets, col_index));
       tuple[key] = str_lit->str_lit;
       ++col_index;
@@ -229,7 +235,7 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
     return NULL;
   }
 
-  if (delete_stmt->where_clause != nullptr && CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
+  if (delete_stmt->where_clause != NULL && CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
     return NULL;
   }
 
@@ -280,7 +286,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     NStringLit* str_lit = (NStringLit*)assign_expr->value;
     assert(str_lit->str_lit != NULL);
     if (str_lit->type != NSTRING_LIT) {
-      NULL;
+      return NULL;
     }
 
     std::vector<std::string> expr;
@@ -289,7 +295,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     assign_exprs.push_back(expr);
   }
 
-  if (update->where_clause != nullptr && CheckType(update->where_clause, *table_def_it) != T_BOOL) {
+  if (update->where_clause != NULL && CheckType(update->where_clause, *table_def_it) != T_BOOL) {
     return NULL;
   }
 
@@ -297,126 +303,6 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   query->table_name = table_name->identifier;
   query->assign_exprs = assign_exprs;
   query->where_clause = update->where_clause;
-  return query;
-}
-
-bool SystemCatalog::ValidateUpdateStmt(NUpdateStmt* update) {
-  assert(update != nullptr);
-  assert(update->type == btdb::NUPDATE_STMT);
-  assert(update->table_name != nullptr);
-  assert(update->assign_expr_list != nullptr);
-
-  NIdentifier* table_name = (NIdentifier*)update->table_name;
-  assert(table_name->identifier != nullptr);
-  auto table_def_it = tables.begin();
-  for (; table_def_it != tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_name->identifier) {
-      break;
-    }
-  }
-  if (table_def_it == tables.end()) {
-    return false;
-  }
-
-  auto* assign_expr_list = update->assign_expr_list;
-  assert(assign_expr_list != nullptr);
-  assert(assign_expr_list->type == T_PARSENODE);
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, assign_expr_list) {
-    assert(lc->data != nullptr);
-    NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
-    assert(assign_expr->type == NASSIGN_EXPR);
-    assert(assign_expr->column != nullptr);
-    assert(assign_expr->value != nullptr);
-
-    NIdentifier* col = (NIdentifier*)assign_expr->column;
-    assert(col->type == NIDENTIFIER);
-    assert(col->identifier != nullptr);
-    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
-                  col->identifier) == table_def_it->col_names.end()) {
-      return false;
-    }
-
-    NStringLit* str_lit = (NStringLit*)assign_expr->value;
-    if (str_lit->type != NSTRING_LIT) {
-      return false;
-    }
-    assert(str_lit->str_lit != nullptr);
-  }
-
-  if (update->where_clause != nullptr) {
-    if (CheckType(update->where_clause, *table_def_it) != T_BOOL) {
-      return false;
-    }
-  }
-  return true;
-}
-
-BType SystemCatalog::CheckType(ParseNode* node, TableDef& table_def) {
-  assert(node != nullptr);
-  switch (node->type) {
-    case NSTRING_LIT: {
-      return T_STRING;
-    }
-    case NIDENTIFIER: {
-      // TODO(ryan): Not true in the future.
-      NIdentifier* identifier = (NIdentifier*)node;
-      assert(identifier->identifier != nullptr);
-      if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
-                    identifier->identifier) == table_def.col_names.end()) {
-        Panic("Invalid column name in bin expr");
-      }
-      return T_STRING;
-    }
-    case NBIN_EXPR: {
-      NBinExpr* expr = (NBinExpr*)node;
-      assert(expr->lhs != nullptr);
-      assert(expr->rhs != nullptr);
-      auto lhs_type = CheckType(expr->lhs, table_def);
-      auto rhs_type = CheckType(expr->rhs, table_def);
-      if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
-        return T_UNKNOWN;
-      }
-      switch (expr->op) {
-        case AND:
-        case OR: {
-          if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
-            return T_UNKNOWN;
-          }
-          return T_BOOL;
-        }
-        case EQ:
-        case NEQ: {
-          if (lhs_type != rhs_type) {
-            return T_UNKNOWN;
-          }
-          return T_BOOL;
-        }
-        case GT:
-        case GE:
-        case LT:
-        case LE: {
-          if (lhs_type != T_STRING || rhs_type != T_STRING) {
-            return T_UNKNOWN;
-          }
-          return T_BOOL;
-        }
-        default: {
-          Panic("Unknown or Unsupported BinExprOp!");
-          return T_UNKNOWN;
-        }
-      }
-    }
-    default: {
-      Panic("Unknown ParseNode type!");
-      return T_UNKNOWN;
-    }
-  }
-}
-
-Query* MakeQuery(CmdType cmd) {
-  Query* query = (Query*)calloc(1, sizeof(Query));
-  query->cmd = cmd;
   return query;
 }
 
