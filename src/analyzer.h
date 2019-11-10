@@ -10,16 +10,16 @@ namespace btdb {
 
 static std::vector<TableDef> Tables;
 
-struct SystemCatalog {
-  std::vector<TableDef> tables;
+// struct SystemCatalog {
+//   std::vector<TableDef> tables;
 
-  bool ValidateParseTree(ParseTree& tree);
-  bool ValidateSelectStmt(NSelectStmt* select);
-  bool ValidateInsertStmt(NInsertStmt* insert);
-  bool ValidateDeleteStmt(NDeleteStmt* delete_stmt);
-  bool ValidateUpdateStmt(NUpdateStmt* update);
-  BType CheckType(ParseNode* node, TableDef& table_def);
-};
+//   bool ValidateParseTree(ParseTree& tree);
+//   bool ValidateSelectStmt(NSelectStmt* select);
+//   bool ValidateInsertStmt(NInsertStmt* insert);
+//   bool ValidateDeleteStmt(NDeleteStmt* delete_stmt);
+//   bool ValidateUpdateStmt(NUpdateStmt* update);
+//   BType CheckType(ParseNode* node, TableDef& table_def);
+// };
 
 enum CmdType {
   CMD_SELECT,
@@ -42,14 +42,17 @@ struct Query {
 Query* MakeQuery(CmdType);
 Query* AnalyzeParseTree(ParseNode*);
 Query* AnalyzeSelectStmt(NSelectStmt*);
+Query* AnalyzeInsertStmt(NInsertStmt*);
+Query* AnalyzeDeleteStmt(NDeleteStmt*);
+Query* AnalyzeUpdateStmt(NUpdateStmt*);
 BType CheckType(ParseNode*, TableDef&);
 
 
-Query* AnalyzeAndRewriteParseTree(ParseTree&);
-Query* AnalyzeAndRewriteSelectStmt(NSelectStmt*);
-Query* AnalyzeAndRewriteInsertStmt(NInsertStmt*);
-Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt*);
-Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt*);
+// Query* AnalyzeAndRewriteParseTree(ParseTree&);
+// Query* AnalyzeAndRewriteSelectStmt(NSelectStmt*);
+// Query* AnalyzeAndRewriteInsertStmt(NInsertStmt*);
+// Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt*);
+// Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt*);
 
 }  // namespace btdb
 #endif  // ANALYZER_H

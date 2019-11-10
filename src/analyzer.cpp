@@ -16,15 +16,15 @@ Query* AnalyzeParseTree(ParseNode* node) {
     case NSELECT_STMT: {
       return AnalyzeSelectStmt((NSelectStmt*)node);
     }
-    // case NINSERT_STMT: {
-    //   return ValidateInsertStmt((NInsertStmt*)node);
-    // }
-    // case NDELETE_STMT: {
-    //   return ValidateDeleteStmt((NDeleteStmt*)node);
-    // }
-    // case NUPDATE_STMT: {
-    //   return ValidateUpdateStmt((NUpdateStmt*)node);
-    // }
+    case NINSERT_STMT: {
+      return AnalyzeInsertStmt((NInsertStmt*)node);
+    }
+    case NDELETE_STMT: {
+      return AnalyzeDeleteStmt((NDeleteStmt*)node);
+    }
+    case NUPDATE_STMT: {
+      return AnalyzeUpdateStmt((NUpdateStmt*)node);
+    }
     default: {
       Panic("Unknown statement type when validating");
       return NULL;
@@ -142,154 +142,162 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
   }
 }
 
-
-bool SystemCatalog::ValidateParseTree(ParseTree& tree) {
-  assert(tree.tree != nullptr);
-  ParseNode* node = tree.tree;
-
-  switch (node->type) {
-    case NSELECT_STMT: {
-      return ValidateSelectStmt((NSelectStmt*)node);
-    }
-    case NINSERT_STMT: {
-      return ValidateInsertStmt((NInsertStmt*)node);
-    }
-    case NDELETE_STMT: {
-      return ValidateDeleteStmt((NDeleteStmt*)node);
-    }
-    case NUPDATE_STMT: {
-      return ValidateUpdateStmt((NUpdateStmt*)node);
-    }
-    default: {
-      Panic("Unknown statement type when validating");
-      return false;
-    }
-  }
-}
-
-bool SystemCatalog::ValidateSelectStmt(NSelectStmt* select) {
-  assert(select != nullptr);
-  assert(select->table_name != nullptr && select->table_name->type == NIDENTIFIER);
-  auto* table_id = (NIdentifier*)select->table_name;
-  auto table_def_it = tables.begin();
-  for (; table_def_it != tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_id->identifier) {
-      break;
-    }
-  }
-  if (table_def_it == tables.end()) {
-    return false;
-  }
-
-  // Validate target list contains valid references to columns.
-  auto* target_list = select->target_list;
-  assert(target_list != nullptr);
-  assert(target_list->type == T_PARSENODE);
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, target_list) {
-    assert(lc->data != nullptr);
-    NIdentifier* col = (NIdentifier*)lc->data;
-    assert(col->type == NIDENTIFIER);
-    assert(col->identifier != nullptr);
-    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
-                  col->identifier) == table_def_it->col_names.end()) {
-      return false;
-    }
-  }
-
-  if (select->where_clause != nullptr) {
-    if (CheckType(select->where_clause, *table_def_it) != T_BOOL) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool SystemCatalog::ValidateInsertStmt(NInsertStmt* insert) {
-  assert(insert != nullptr);
+Query* AnalyzeInsertStmt(NInsertStmt* insert) {
+  assert(insert != NULL);
   assert(insert->type == NINSERT_STMT);
-  assert(insert->table_name != nullptr);
-  assert(insert->column_list != nullptr);
-  assert(insert->values_list != nullptr);
 
-  // Validate insert table name exists.
   NIdentifier* table_name = (NIdentifier*)insert->table_name;
+  assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != nullptr);
-  auto table_def_it = tables.begin();
-  for (; table_def_it != tables.end(); ++table_def_it) {
+  assert(table_name->identifier != NULL);
+  auto table_def_it = Tables.begin();
+  for (; table_def_it != Tables.end(); ++table_def_it) {
     if (table_def_it->name == table_name->identifier) {
       break;
     }
   }
-  if (table_def_it == tables.end()) {
-    return false;
+  if (table_def_it == Tables.end()) {
+    return NULL;
   }
 
-  // Validate column list contains valid references to columns.
-  auto* column_list = insert->column_list;
-  assert(column_list != nullptr);
-  assert(column_list->type == T_PARSENODE);
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, column_list) {
-    assert(lc->data != nullptr);
+  // Validate target list contains valid references to columns.
+  CharPtrVec* targets = MakeCharPtrVec();
+  List* target_list = insert->column_list;
+  assert(target_list != NULL);
+  assert(target_list->type == T_PARSENODE);
+  ListCell* lc = NULL;
+  FOR_EACH(lc, target_list) {
+    assert(lc->data != NULL);
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
-    assert(col->identifier != nullptr);
+    assert(col->identifier != NULL);
     if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
                   col->identifier) == table_def_it->col_names.end()) {
-      return false;
+      return NULL;
     }
+    PushBack(targets, col->identifier);
   }
 
-  auto* values_list = insert->values_list;
+  std::vector<Tuple> values;
+  List* values_list = insert->values_list;
+  assert(values_list != NULL);
   assert(values_list->type == T_LIST);
   lc = nullptr;
   FOR_EACH(lc, values_list) {
-    assert(lc->data != nullptr);
+    assert(lc->data != NULL);
     List* value_items = (List*)lc->data;
     assert(value_items->type == T_PARSENODE);
-    if (value_items->length != column_list->length) {
-      return false;
-    }
+    assert(value_items->length == target_list->length);
 
+    Tuple tuple;
+    uint64_t col_index = 0;
     ListCell* lc2 = nullptr;
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != nullptr);
       // TODO(ryan): Allow for more general expressions here.
       NStringLit* str_lit = (NStringLit*)lc2->data;
-      if (str_lit->type != NSTRING_LIT) {
-        return false;
-      }
+      assert(str_lit->type == NSTRING_LIT);
+      assert(str_lit->str_lit != nullptr);
+      std::string key(*Get(targets, col_index));
+      tuple[key] = str_lit->str_lit;
+      ++col_index;
     }
+    values.push_back(tuple);
   }
-  return true;
+
+  Query* query = MakeQuery(CMD_INSERT);
+  query->table_name = table_name->identifier;
+  query->target_list = targets;
+  query->values = values;
+  return query;
 }
 
-bool SystemCatalog::ValidateDeleteStmt(NDeleteStmt* delete_stmt) {
-  assert(delete_stmt != nullptr);
+Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(delete_stmt->type == NDELETE_STMT);
-  assert(delete_stmt->table_name != nullptr);
 
-  // Validate table name exists and get definition.
   NIdentifier* table_name = (NIdentifier*)delete_stmt->table_name;
-  assert(table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != nullptr);
-  auto table_def_it = tables.begin();
-  for (; table_def_it != tables.end(); ++table_def_it) {
+  assert(delete_stmt->table_name != NULL);
+  assert(delete_stmt->table_name->type == NIDENTIFIER);
+  assert(table_name->identifier != NULL);
+  auto table_def_it = Tables.begin();
+  for (; table_def_it != Tables.end(); ++table_def_it) {
     if (table_def_it->name == table_name->identifier) {
       break;
     }
   }
-  if (table_def_it == tables.end()) {
-    return false;
+  if (table_def_it == Tables.end()) {
+    return NULL;
   }
 
-  if (delete_stmt->where_clause != nullptr) {
-    return CheckType(delete_stmt->where_clause, *table_def_it);
+  if (delete_stmt->where_clause != nullptr && CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
+    return NULL;
   }
 
-  return true;
+  Query* query = (Query*)MakeQuery(CMD_DELETE);
+  query->table_name = table_name->identifier;
+  query->where_clause = delete_stmt->where_clause;
+  return query;
+}
+
+Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
+  assert(update != NULL);
+  assert(update->type == NUPDATE_STMT);
+
+  NIdentifier* table_name = (NIdentifier*)update->table_name;
+  assert(table_name != NULL);
+  assert(table_name->type == NIDENTIFIER);
+  assert(table_name->identifier != NULL);
+  auto table_def_it = Tables.begin();
+  for (; table_def_it != Tables.end(); ++table_def_it) {
+    if (table_def_it->name == table_name->identifier) {
+      break;
+    }
+  }
+  if (table_def_it == Tables.end()) {
+    return NULL;
+  }
+
+  assert(update->assign_expr_list != NULL);
+  assert(update->assign_expr_list->type = T_PARSENODE);
+  auto* assign_expr_list = update->assign_expr_list;
+  std::vector<std::vector<std::string>> assign_exprs;
+  ListCell* lc = NULL;
+  FOR_EACH(lc, assign_expr_list) {
+    assert(lc->data != NULL);
+    NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+    assert(assign_expr->type == NASSIGN_EXPR);
+    assert(assign_expr->column != NULL);
+    assert(assign_expr->value != NULL);
+
+    NIdentifier* col = (NIdentifier*)assign_expr->column;
+    assert(col->type == NIDENTIFIER);
+    assert(col->identifier != NULL);
+    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
+                  col->identifier) == table_def_it->col_names.end()) {
+      return NULL;
+    }
+
+    NStringLit* str_lit = (NStringLit*)assign_expr->value;
+    assert(str_lit->str_lit != NULL);
+    if (str_lit->type != NSTRING_LIT) {
+      NULL;
+    }
+
+    std::vector<std::string> expr;
+    expr.push_back(col->identifier);
+    expr.push_back(str_lit->str_lit);
+    assign_exprs.push_back(expr);
+  }
+
+  if (update->where_clause != nullptr && CheckType(update->where_clause, *table_def_it) != T_BOOL) {
+    return NULL;
+  }
+
+  Query* query = (Query*)MakeQuery(CMD_UPDATE);
+  query->table_name = table_name->identifier;
+  query->assign_exprs = assign_exprs;
+  query->where_clause = update->where_clause;
+  return query;
 }
 
 bool SystemCatalog::ValidateUpdateStmt(NUpdateStmt* update) {
@@ -410,163 +418,6 @@ Query* MakeQuery(CmdType cmd) {
   Query* query = (Query*)calloc(1, sizeof(Query));
   query->cmd = cmd;
   return query;
-}
-
-Query* AnalyzeAndRewriteSelectStmt(NSelectStmt* select) {
-  assert(select != nullptr);
-  assert(select->type == NSELECT_STMT);
-  assert(select->table_name != nullptr && select->table_name->type == NIDENTIFIER);
-  NIdentifier* identifier = (NIdentifier*)select->table_name;
-  auto table_name = std::string(identifier->identifier);
-
-  assert(select->target_list != nullptr);
-  assert(select->target_list->type == T_PARSENODE);
-  auto* target_list = select->target_list;
-  CharPtrVec* targets = MakeCharPtrVec();
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, target_list) {
-    assert(lc->data != nullptr);
-    NIdentifier* target = (NIdentifier*)lc->data;
-    assert(target->type == NIDENTIFIER);
-    PushBack(targets, target->identifier);
-  }
-
-  Query* query = MakeQuery(CMD_SELECT);
-  query->table_name = NULL;
-  query->target_list = targets;
-  query->where_clause = select->where_clause;
-  return query;
-}
-
-Query* AnalyzeAndRewriteInsertStmt(NInsertStmt* node) {
-  assert(node != nullptr);
-  assert(node->type == NINSERT_STMT);
-
-  NIdentifier* table_name = (NIdentifier*)node->table_name;
-  assert(table_name != nullptr);
-  assert(table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != nullptr);
-
-  CharPtrVec* columns = MakeCharPtrVec();
-  auto* column_list = node->column_list;
-  assert(column_list != nullptr);
-  assert(column_list->type == T_PARSENODE);
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, column_list) {
-    assert(lc->data != nullptr);
-    NIdentifier* col = (NIdentifier*)lc->data;
-    assert(col->type == NIDENTIFIER);
-    assert(col->identifier != nullptr);
-    PushBack(columns, col->identifier);
-  }
-
-  std::vector<Tuple> values;
-  auto* values_list = node->values_list;
-  assert(values_list->type == T_LIST);
-  lc = nullptr;
-  FOR_EACH(lc, values_list) {
-    assert(lc->data != nullptr);
-    List* value_items = (List*)lc->data;
-    assert(value_items->type == T_PARSENODE);
-    assert(value_items->length == column_list->length);
-
-    Tuple tuple;
-    uint64_t col_index = 0;
-    ListCell* lc2 = nullptr;
-    FOR_EACH(lc2, value_items) {
-      assert(lc2->data != nullptr);
-      // TODO(ryan): Allow for more general expressions here.
-      NStringLit* str_lit = (NStringLit*)lc2->data;
-      assert(str_lit->type == NSTRING_LIT);
-      assert(str_lit->str_lit != nullptr);
-      std::string key(*Get(columns, col_index));
-      tuple[key] = str_lit->str_lit;
-      ++col_index;
-    }
-    values.push_back(tuple);
-  }
-
-  Query* query = MakeQuery(CMD_INSERT);
-  query->target_list = columns;
-  query->values = values;
-  return query;
-}
-
-Query* AnalyzeAndRewriteDeleteStmt(NDeleteStmt* delete_stmt) {
-  assert(delete_stmt->type == NDELETE_STMT);
-  assert(delete_stmt->table_name != nullptr);
-  assert(delete_stmt->table_name->type == NIDENTIFIER);
-
-  NIdentifier* identifier = (NIdentifier*)delete_stmt->table_name;
-  assert(identifier->identifier != nullptr);
-  auto table_name = std::string(identifier->identifier);
-
-  Query* query = (Query*)MakeQuery(CMD_DELETE);
-  query->where_clause = delete_stmt->where_clause;
-  return query;
-}
-
-Query* AnalyzeAndRewriteUpdateStmt(NUpdateStmt* update) {
-  assert(update != nullptr);
-  assert(update->type == NUPDATE_STMT);
-  assert(update->table_name != nullptr && update->table_name->type == NIDENTIFIER);
-  NIdentifier* identifier = (NIdentifier*)update->table_name;
-  auto table_name = std::string(identifier->identifier);
-
-  assert(update->assign_expr_list != nullptr);
-  assert(update->assign_expr_list->type = T_PARSENODE);
-  auto* assign_expr_list = update->assign_expr_list;
-  std::vector<std::vector<std::string>> assign_exprs;
-  ListCell* lc = nullptr;
-  FOR_EACH(lc, assign_expr_list) {
-    assert(lc->data != nullptr);
-    NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
-    assert(assign_expr->type == NASSIGN_EXPR);
-    assert(assign_expr->column != nullptr);
-    assert(assign_expr->value != nullptr);
-
-    NIdentifier* col = (NIdentifier*)assign_expr->column;
-    assert(col->type == NIDENTIFIER);
-    assert(col->identifier != nullptr);
-
-    NStringLit* str_lit = (NStringLit*)assign_expr->value;
-    assert(str_lit->type == NSTRING_LIT);
-    assert(str_lit->str_lit != nullptr);
-
-    std::vector<std::string> expr;
-    expr.push_back(col->identifier);
-    expr.push_back(str_lit->str_lit);
-    assign_exprs.push_back(expr);
-  }
-
-  Query* query = (Query*)MakeQuery(CMD_UPDATE);
-  query->assign_exprs = assign_exprs;
-  query->where_clause = update->where_clause;
-  return query;
-}
-
-Query* AnalyzeAndRewriteParseTree(ParseTree& tree) {
-  assert(tree.tree != nullptr);
-  ParseNode* node = tree.tree;
-  switch (node->type) {
-    case NSELECT_STMT: {
-      return AnalyzeAndRewriteSelectStmt((NSelectStmt*)node);
-    }
-    case NINSERT_STMT: {
-      return AnalyzeAndRewriteInsertStmt((NInsertStmt*)node);
-    }
-    case NDELETE_STMT: {
-      return AnalyzeAndRewriteDeleteStmt((NDeleteStmt*)node);
-    }
-    case NUPDATE_STMT: {
-      return AnalyzeAndRewriteUpdateStmt((NUpdateStmt*)node);
-    }
-    default: {
-      Panic("Invalid statement type when analying");
-      // Just return something so the compiler doesn't complain. Fix this later.
-      return NULL;
-    }
-  }
 }
 
 }  // namespace btdb
