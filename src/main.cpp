@@ -203,7 +203,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
 }
 
 struct SequentialScan : Iterator {
-  uint64_t next_index = 0;
+  uint64_t next_index;
 
   CharPtrVec* target_list;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
@@ -211,7 +211,7 @@ struct SequentialScan : Iterator {
   ParseNode* where_clause;
 
   SequentialScan(CharPtrVec* target_list, ParseNode* where_clause)
-      : target_list(target_list), where_clause(where_clause) {}
+      : next_index(0), target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
   MTuple GetNext() {
@@ -268,10 +268,10 @@ struct InsertScan : Iterator {
 };
 
 struct DeleteScan : Iterator {
-  uint64_t next_index = 0;
+  uint64_t next_index;
   ParseNode* where_clause;
 
-  DeleteScan(ParseNode* where_clause) : where_clause(where_clause) {}
+  DeleteScan(ParseNode* where_clause) : next_index(0), where_clause(where_clause) {}
 
   void Open() {}
 
@@ -366,12 +366,14 @@ PlanState PlanQuery(Query* query) {
     }
     case CMD_DELETE: {
       auto plan = std::make_unique<DeleteScan>(DeleteScan(query->where_clause));
+      plan_state.target_list = NULL;
       plan_state.plan = std::move(plan);
       break;
     }
     case CMD_UPDATE: {
       auto plan =
           std::make_unique<UpdateScan>(UpdateScan(query->assign_exprs, query->where_clause));
+      plan_state.target_list = NULL;
       plan_state.plan = std::move(plan);
       break;
     }
@@ -433,22 +435,28 @@ int main() {
     }
     auto plan_state = btdb::PlanQuery(query);
     auto results = btdb::execute_plan(plan_state);
-    btdb::CharPtrVecIt it = NULL;
-    VEC_FOREACH(it, results.columns) { printf("%s\t", *it); }
-    printf("\n");
-    std::cout << "===============" << std::endl;
-    for (auto&& mtuple : results.tuples) {
-      assert(mtuple != nullptr);
-      it = NULL;
+    if (results.columns != NULL) {
+      btdb::CharPtrVecIt it = NULL;
       VEC_FOREACH(it, results.columns) {
-        std::string column(*it);
-        auto it = mtuple->find(column);
-        if (it != mtuple->end()) {
-          std::cout << it->second;
-        }
-        std::cout << "\t";
+        printf("%s\t", *it);
       }
-      std::cout << std::endl;
+      printf("\n");
+      printf("===============\n");
+      for (auto&& mtuple : results.tuples) {
+        assert(mtuple != nullptr);
+        btdb::CharPtrVecIt it = NULL;
+        VEC_FOREACH(it, results.columns) {
+          std::string column(*it);
+          auto it = mtuple->find(column);
+          if (it != mtuple->end()) {
+            std::cout << it->second;
+          }
+          std::cout << "\t";
+        }
+        std::cout << std::endl;
+      }
+    } else {
+        printf("===============\n");
     }
   }
   if (std::cin.bad()) {
