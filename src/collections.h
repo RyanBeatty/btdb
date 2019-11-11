@@ -61,6 +61,71 @@ namespace btdb {
     return;                                                         \
   }
 
+#define MAP_PROTOTYPE(name, key_t, val_t, hash_func, cmp_func)         \
+  struct name##MapEntry {                                              \
+    key_t key;                                                         \
+    val_t val;                                                         \
+    bool is_filled;                                                    \
+  };                                                                   \
+                                                                       \
+  struct name##Map {                                                   \
+    size_t size;                                                       \
+    size_t capacity;                                                   \
+    name##MapEntry* buffer;                                            \
+  };                                                                   \
+                                                                       \
+  inline name##Map* Make##name##Map() {                                \
+    name##Map* map = (name##Map*)calloc(1, sizeof(name##Map));         \
+    map->buffer = (name##MapEntry*)calloc(10, sizeof(name##MapEntry)); \
+    map->size = 0;                                                     \
+    map->capacity = 10;                                                \
+  }                                                                    \
+                                                                       \
+  inline name##MapEntry* MapGet(name##Map* map, key_t key) {           \
+    if (!map->size) {                                                  \
+      return NULL;                                                     \
+    }                                                                  \
+    size_t hash = hash_func(key);                                      \
+    size_t i = hash % map->capacity;                                   \
+    size_t end = (i - 1 + map->capacity) % map->capacity;              \
+    for (; i != end; ++i % map->capacity) {                            \
+      name##MapEntry* entry = &map->buffer[i];                         \
+      if (entry->is_filled && cmp_func(key, entry->key)) {             \
+        return entry;                                                  \
+      }                                                                \
+    }                                                                  \
+    return NULL;                                                       \
+  }                                                                    \
+                                                                       \
+  inline name##MapEntry* MapSet(name##Map* map, key_t key) {           \
+    assert(map->size < map->capacity);                                 \
+    size_t hash = hash_func(key);                                      \
+    size_t i = hash % map->capacity;                                   \
+    size_t end = (i - 1 + map->capacity) % map->capacity;              \
+    for (; i != end; ++i % map->capacity) {                            \
+      name##MapEntry* entry = &map->buffer[i];                         \
+      if (!entry->is_filled) {                                         \
+        return entry;                                                  \
+      }                                                                \
+      if (cmp_func(key, entry->key)) {                                 \
+        return entry;                                                  \
+      }                                                                \
+    }                                                                  \
+    return NULL;                                                       \
+  }
+
+// http://www.cse.yorku.ca/~oz/hash.html
+size_t hash_djb2(char* str) {
+  size_t hash = 5381;
+  int c;
+
+  while (c = *str++) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+  return hash;
+}
+
+MAP_PROTOTYPE(StrStr, char*, char*, hash_djb2, strcmp);
+
 VEC_PROTOTYPE(CharPtr, char*);
 
 }  // namespace btdb
