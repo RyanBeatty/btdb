@@ -18,7 +18,11 @@ typedef unsigned char* HeapTuple;
 
 VEC_PROTOTYPE(HeapTuple, HeapTuple);
 
-static HeapTupleVec Tuples2;
+static HeapTupleVec* Buffer = MakeHeapTupleVec();
+
+void WriteHeapTuple(HeapTuple, size_t);
+HeapTupleVecIt GetHeapTuple(size_t);
+void DeleteHeapTuple(size_t);
 
 // TODO: Figure out what a tuple will actually look like.
 typedef std::unordered_map<std::string, std::string> Tuple;

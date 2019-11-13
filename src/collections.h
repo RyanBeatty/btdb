@@ -4,11 +4,14 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace btdb {
 
 #define VEC_FOREACH(it, vec) \
   for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
+
+#define VEC_LENGTH(vec_ptr) vec_ptr->length;
 
 #define VEC_PROTOTYPE(name, type)                                   \
   struct name##Vec {                                                \
@@ -40,6 +43,15 @@ namespace btdb {
     vec->buffer[vec->length] = data;                                \
     ++vec->length;                                                  \
     return;                                                         \
+  }                                                                 \
+                                                                    \
+  inline void Erase(name##Vec* vec, size_t index) {                 \
+    assert(vec != NULL);                                            \
+    assert(vec->buffer != NULL);                                    \
+    assert(index < vec->length);                                    \
+    vec->buffer[index] = vec->buffer[vec->length - 1];              \
+    memset(&vec->buffer[vec->length - 1], (int)0, sizeof(type));    \
+    --vec->length;                                                  \
   }                                                                 \
                                                                     \
   inline type* Get(name##Vec* vec, size_t i) {                      \
