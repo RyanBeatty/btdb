@@ -20,6 +20,7 @@
 #include "collections.h"
 #include "node.hpp"
 #include "sql/context.hpp"
+#include "storage.h"
 #include "types.h"
 #include "utils.h"
 
@@ -437,9 +438,7 @@ int main() {
     auto results = btdb::execute_plan(plan_state);
     if (results.columns != NULL) {
       btdb::CharPtrVecIt it = NULL;
-      VEC_FOREACH(it, results.columns) {
-        printf("%s\t", *it);
-      }
+      VEC_FOREACH(it, results.columns) { printf("%s\t", *it); }
       printf("\n");
       printf("===============\n");
       for (auto&& mtuple : results.tuples) {
@@ -456,7 +455,7 @@ int main() {
         std::cout << std::endl;
       }
     } else {
-        printf("===============\n");
+      printf("===============\n");
     }
   }
   if (std::cin.bad()) {

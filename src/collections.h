@@ -115,16 +115,16 @@ namespace btdb {
   }
 
 // http://www.cse.yorku.ca/~oz/hash.html
-size_t hash_djb2(char* str) {
-  size_t hash = 5381;
-  int c;
+// size_t hash_djb2(unsigned char* str) {
+//   size_t hash = 5381;
+//   int c;
 
-  while (c = *str++) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+//   while (c = *str++) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
-  return hash;
-}
+//   return hash;
+// }
 
-MAP_PROTOTYPE(StrStr, char*, char*, hash_djb2, strcmp);
+// MAP_PROTOTYPE(StrStr, char*, char*, hash_djb2, strcmp);
 
 VEC_PROTOTYPE(CharPtr, char*);
 

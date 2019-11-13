@@ -7,17 +7,6 @@
 
 namespace btdb {
 
-struct TableDef {
-  std::string name;
-  std::vector<std::string> col_names;
-};
-
-// TODO: Figure out what a tuple will actually look like.
-typedef std::unordered_map<std::string, std::string> Tuple;
-typedef std::unique_ptr<Tuple> MTuple;
-
-static std::vector<Tuple> Tuples;
-
 enum BType {
   T_UNKNOWN,
   T_STRING,

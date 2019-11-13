@@ -5,6 +5,7 @@
 #include "analyzer.h"
 #include "collections.h"
 #include "sql/context.hpp"
+#include "storage.h"
 #include "types.h"
 #include "utils.h"
 
@@ -40,7 +41,7 @@ Query* AnalyzeParseTree(ParseNode* node) {
 
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(select != NULL);
-  
+
   NIdentifier* table_name = (NIdentifier*)select->table_name;
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
@@ -235,7 +236,8 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
     return NULL;
   }
 
-  if (delete_stmt->where_clause != NULL && CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
+  if (delete_stmt->where_clause != NULL &&
+      CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
     return NULL;
   }
 
@@ -295,7 +297,8 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     assign_exprs.push_back(expr);
   }
 
-  if (update->where_clause != NULL && CheckType(update->where_clause, *table_def_it) != T_BOOL) {
+  if (update->where_clause != NULL &&
+      CheckType(update->where_clause, *table_def_it) != T_BOOL) {
     return NULL;
   }
 
