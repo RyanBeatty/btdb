@@ -11,7 +11,7 @@ namespace btdb {
 #define VEC_FOREACH(it, vec) \
   for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
 
-#define VEC_LENGTH(vec_ptr) vec_ptr->length;
+#define VEC_LENGTH(vec_ptr) vec_ptr->length
 
 #define VEC_PROTOTYPE(name, type)                                   \
   struct name##Vec {                                                \

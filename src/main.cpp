@@ -216,9 +216,15 @@ struct SequentialScan : Iterator {
 
   void Open() {}
   MTuple GetNext() {
-    while (next_index < Tuples.size()) {
-      const auto& cur_tpl = Tuples[next_index];
+    for (;;) {
+      TuplePtrVecIt it = GetTuple(next_index);
+      if (it == NULL) {
+        return NULL;
+      }
       ++next_index;
+
+      assert(*it != NULL);
+      const Tuple& cur_tpl = **it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -241,8 +247,6 @@ struct SequentialScan : Iterator {
       }
       return std::make_unique<Tuple>(result_tpl);
     }
-
-    return NULL;
   }
   void Close() {}
 };
@@ -259,7 +263,8 @@ struct InsertScan : Iterator {
       return NULL;
     }
     auto& tuple = tuples.back();
-    Tuples.push_back(tuple);
+    Tuple* new_tuple = new Tuple(tuple);
+    InsertTuple(new_tuple);
     tuples.pop_back();
     // TODO(ryan): This is sort of wonky, figure out how to do insert scans.
     return std::make_unique<Tuple>(tuple);
@@ -277,8 +282,13 @@ struct DeleteScan : Iterator {
   void Open() {}
 
   MTuple GetNext() {
-    while (next_index < Tuples.size()) {
-      const auto& cur_tpl = Tuples[next_index];
+    for (;;) {
+      TuplePtrVecIt it = GetTuple(next_index);
+      if (it == NULL) {
+        return NULL;
+      }
+      assert(*it != NULL);
+      const Tuple& cur_tpl = **it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -293,7 +303,7 @@ struct DeleteScan : Iterator {
       }
 
       auto result = std::make_unique<Tuple>(cur_tpl);
-      Tuples.erase(Tuples.begin() + next_index);
+      DeleteHeapTuple(next_index);
       return result;
     }
 
@@ -316,8 +326,13 @@ struct UpdateScan : Iterator {
 
   void Open() {}
   MTuple GetNext() {
-    while (next_index < Tuples.size()) {
-      auto& cur_tpl = Tuples[next_index];
+    for (;;) {
+      TuplePtrVecIt it = GetTuple(next_index);
+      if (it == NULL) {
+        return NULL;
+      }
+      assert(*it != NULL);
+      Tuple& cur_tpl = **it; 
       ++next_index;
 
       // Evaluate predicate if any.
@@ -406,14 +421,20 @@ Result execute_plan(PlanState& plan_state) {
 int main() {
   printf("Starting btdb\n");
 
-  btdb::Tuple t1;
-  t1["bar"] = "hello";
-  t1["baz"] = "the quick brown fox";
-  btdb::Tuple t2;
-  t2["bar"] = "world";
-  t2["baz"] = "jumped over the lazy dog";
-  btdb::Tuples.push_back(t1);
-  btdb::Tuples.push_back(t2);
+  btdb::Tuple* t1 = new btdb::Tuple(
+    {
+      {"bar", "hello"},
+      {"baz", "goodbye"},
+    }
+  );
+  btdb::Tuple* t2 = new btdb::Tuple(
+    {
+      {"bar", "world"},
+      {"baz", "bob"},
+    }
+  );
+  btdb::InsertTuple(t1);
+  btdb::InsertTuple(t2);
   while (true) {
     std::cout << "btdb> ";
     std::string line;

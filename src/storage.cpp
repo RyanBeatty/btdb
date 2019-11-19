@@ -3,29 +3,33 @@
 
 namespace btdb {
 
-void WriteField(MemTuple* mtuple, byte* data, size_t size) {
-  assert(mtuple != NULL);
-  assert(mtuple->htuple != NULL);
-  assert(data != NULL);
-  assert(size < mtuple->size);
-  memcpy(mtuple->htuple, data, size);
+// void WriteField(MemTuple* mtuple, byte* data, size_t size) {
+//   assert(mtuple != NULL);
+//   assert(mtuple->htuple != NULL);
+//   assert(data != NULL);
+//   assert(size < mtuple->size);
+//   memcpy(mtuple->htuple, data, size);
+//   return;
+// }
+
+void InsertTuple(Tuple* tuple) {
+  PushBack(Tuples, tuple);
   return;
 }
 
-void WriteHeapTuple(HeapTuple tuple, size_t index) {
-  size_t length = VEC_LENGTH(Buffer);
-  if (index < length) {
-    HeapTupleVecIt item = Get(Buffer, index);
-    *item = tuple;
-    return;
-  }
+TuplePtrVecIt GetTuple(size_t index) { return Get(Tuples, index); }
 
-  PushBack(Buffer, tuple);
-  return;
+void UpdateTuple(Tuple* tuple, size_t index) {
+    if (index >= VEC_LENGTH(Tuples)) {
+        return ;
+    }
+
+    TuplePtrVecIt it = GetTuple(index);
+    assert(it != NULL);
+    *it = tuple;
+    return ;    
 }
 
-HeapTupleVecIt GetHeapTuple(size_t index) { return Get(Buffer, index); }
-
-void DeleteHeapTuple(size_t index) { Erase(Buffer, index); }
+void DeleteHeapTuple(size_t index) { Erase(Tuples, index); }
 
 }  // namespace btdb
