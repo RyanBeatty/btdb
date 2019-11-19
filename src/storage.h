@@ -14,11 +14,18 @@ struct TableDef {
   std::vector<std::string> col_names;
 };
 
-typedef unsigned char* HeapTuple;
+typedef unsigned char byte;
+typedef byte* HeapTuple;
 
 VEC_PROTOTYPE(HeapTuple, HeapTuple);
-
 static HeapTupleVec* Buffer = MakeHeapTupleVec();
+
+struct MemTuple {
+  size_t size;
+  HeapTuple htuple;
+};
+
+void WriteField(MemTuple* mtuple, byte* data, size_t size);
 
 void WriteHeapTuple(HeapTuple, size_t);
 HeapTupleVecIt GetHeapTuple(size_t);

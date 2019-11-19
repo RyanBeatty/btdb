@@ -3,6 +3,15 @@
 
 namespace btdb {
 
+void WriteField(MemTuple* mtuple, byte* data, size_t size) {
+  assert(mtuple != NULL);
+  assert(mtuple->htuple != NULL);
+  assert(data != NULL);
+  assert(size < mtuple->size);
+  memcpy(mtuple->htuple, data, size);
+  return;
+}
+
 void WriteHeapTuple(HeapTuple tuple, size_t index) {
   size_t length = VEC_LENGTH(Buffer);
   if (index < length) {
