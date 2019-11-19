@@ -347,7 +347,7 @@ struct UpdateScan : Iterator {
       }
 
       for (const auto& assign_expr : assign_exprs) {
-        // cur_tpl[assign_expr[0]] = assign_expr[1];
+        cur_tpl[assign_expr[0]] = MakeDatum(T_STRING, new std::string(assign_expr[1]));
       }
       return std::make_unique<Tuple>(cur_tpl);
     }
