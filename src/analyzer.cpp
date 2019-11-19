@@ -206,7 +206,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       assert(str_lit->type == NSTRING_LIT);
       assert(str_lit->str_lit != NULL);
       std::string key(*Get(targets, col_index));
-      tuple[key] = str_lit->str_lit;
+      tuple[key] = MakeDatum(T_STRING, new std::string(str_lit->str_lit));
       ++col_index;
     }
     values.push_back(tuple);

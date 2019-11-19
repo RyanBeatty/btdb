@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "collections.h"
+#include "types.h"
 
 namespace btdb {
 
@@ -29,7 +30,7 @@ struct TableDef {
 
 
 // TODO: Figure out what a tuple will actually look like.
-typedef std::unordered_map<std::string, std::string> Tuple;
+typedef std::unordered_map<std::string, Datum> Tuple;
 typedef std::unique_ptr<Tuple> MTuple;
 
 VEC_PROTOTYPE(TuplePtr, Tuple*);

@@ -47,7 +47,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
       assert(str_lit->str_lit != NULL);
-      return Datum(T_STRING, new std::string(str_lit->str_lit));
+      return MakeDatum(T_STRING, new std::string(str_lit->str_lit));
     }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
@@ -55,7 +55,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
       assert(identifier->identifier != NULL);
       auto it = cur_tuple.find(identifier->identifier);
       assert(it != cur_tuple.end());
-      return Datum(T_STRING, new std::string(it->second));
+      return it->second;
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
@@ -71,7 +71,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
-          return Datum(T_BOOL, new bool(*lhs_data && *rhs_data));
+          return MakeDatum(T_BOOL, new bool(*lhs_data && *rhs_data));
         }
         case OR: {
           assert(lhs_value.type == T_BOOL);
@@ -80,7 +80,7 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
-          return Datum(T_BOOL, new bool(*lhs_data || *rhs_data));
+          return MakeDatum(T_BOOL, new bool(*lhs_data || *rhs_data));
         }
         case EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
@@ -90,14 +90,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data == *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         case NEQ: {
@@ -108,14 +108,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data != *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         case GT: {
@@ -126,14 +126,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data > *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         case GE: {
@@ -144,14 +144,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         case LT: {
@@ -162,14 +162,14 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data < *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         case LE: {
@@ -180,25 +180,25 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
             std::string* lhs_data = (std::string*)lhs_value.data;
             std::string* rhs_data = (std::string*)rhs_value.data;
-            return Datum(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
-            return Datum(T_UNKNOWN, NULL);
+            return MakeDatum(T_UNKNOWN, NULL);
           }
         }
         default: {
           Panic("Unknown or Unsupported BinExprOp!");
-          return Datum(T_UNKNOWN, NULL);
+          return MakeDatum(T_UNKNOWN, NULL);
         }
       }
     }
     default: {
       Panic("Unknown ParseNode type!");
-      return Datum(T_UNKNOWN, NULL);
+      return MakeDatum(T_UNKNOWN, NULL);
     }
   }
 }
@@ -347,7 +347,7 @@ struct UpdateScan : Iterator {
       }
 
       for (const auto& assign_expr : assign_exprs) {
-        cur_tpl[assign_expr[0]] = assign_expr[1];
+        // cur_tpl[assign_expr[0]] = assign_expr[1];
       }
       return std::make_unique<Tuple>(cur_tpl);
     }
@@ -423,14 +423,14 @@ int main() {
 
   btdb::Tuple* t1 = new btdb::Tuple(
     {
-      {"bar", "hello"},
-      {"baz", "goodbye"},
+      {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("hello"))},
+      {"baz", btdb::MakeDatum(btdb::T_STRING, new std::string("goodbye"))},
     }
   );
   btdb::Tuple* t2 = new btdb::Tuple(
     {
-      {"bar", "world"},
-      {"baz", "bob"},
+      {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("world"))},
+      {"baz", btdb::MakeDatum(btdb::T_STRING, new std::string("bob"))},
     }
   );
   btdb::InsertTuple(t1);
@@ -469,7 +469,11 @@ int main() {
           std::string column(*it);
           auto it = mtuple->find(column);
           if (it != mtuple->end()) {
-            std::cout << it->second;
+            btdb::Datum data = it->second;
+            assert(data.type == btdb::T_STRING);
+            // TODO(ryan): This is some hacky bs to be able to print this as a string.
+            // I'm going to need to do an overhaul of alot of this code in the future.
+            std::cout << *((std::string*) data.data);
           }
           std::cout << "\t";
         }
