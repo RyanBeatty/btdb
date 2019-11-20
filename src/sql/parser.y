@@ -433,6 +433,7 @@ update_assign_expr_list:
       $$ = value_items;
   }
 
+// TODO(ryan): Change to handle boollit + other types. Should probably use expr here.
 assign_expr: STRING_GROUP "=" STRING_LITERAL {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
