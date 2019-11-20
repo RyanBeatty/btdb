@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <stdbool.h>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -73,7 +74,8 @@ enum ParseNodeType {
   NINSERT_STMT,
   NDELETE_STMT,
   NUPDATE_STMT,
-  NASSIGN_EXPR
+  NASSIGN_EXPR,
+  NBOOL_LIT,
 };
 
 struct ParseNode {
@@ -120,6 +122,13 @@ struct NStringLit {
   char* str_lit;
 };
 static_assert(std::is_pod<NStringLit>::value);
+
+struct NBoolLit {
+  ParseNodeType type;
+
+  bool bool_lit;
+};
+static_assert(std::is_pod<NBoolLit>::value);
 
 struct NSelectStmt {
   ParseNodeType type;

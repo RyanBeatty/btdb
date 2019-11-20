@@ -52,6 +52,7 @@
   using btdb::ParseTree;
   using btdb::NIdentifier;
   using btdb::NStringLit;
+  using btdb::NBoolLit;
   using btdb::NBinExpr;
   using btdb::List;
   using btdb::NSelectStmt;
@@ -69,7 +70,7 @@
       struct ParserContext;
     }}
 
-#line 73 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 74 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -184,7 +185,7 @@
 #endif
 
 namespace yy {
-#line 188 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 189 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -407,9 +408,12 @@ namespace yy {
       // assign_expr
       char dummy2[sizeof (ParseNode*)];
 
+      // BOOLEAN_LITERAL
+      char dummy3[sizeof (bool)];
+
       // STRING_GROUP
       // STRING_LITERAL
-      char dummy3[sizeof (std::string)];
+      char dummy4[sizeof (std::string)];
     };
 
     /// The size of the largest semantic type.
@@ -478,7 +482,8 @@ namespace yy {
         TOK_MULT = 281,
         TOK_DIV = 282,
         TOK_STRING_GROUP = 283,
-        TOK_STRING_LITERAL = 284
+        TOK_STRING_LITERAL = 284,
+        TOK_BOOLEAN_LITERAL = 285
       };
     };
 
@@ -552,6 +557,17 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, bool&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const bool& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
@@ -585,25 +601,29 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 33: // target_list
-      case 38: // insert_column_list
-      case 39: // column_list
-      case 40: // insert_values_clause
-      case 41: // insert_values_list
-      case 42: // insert_value_items
-      case 45: // update_assign_expr_list
+      case 34: // target_list
+      case 39: // insert_column_list
+      case 40: // column_list
+      case 41: // insert_values_clause
+      case 42: // insert_values_list
+      case 43: // insert_value_items
+      case 46: // update_assign_expr_list
         value.template destroy< List* > ();
         break;
 
-      case 32: // select_stmt
-      case 34: // from_clause
-      case 35: // where_clause
-      case 36: // expr
-      case 37: // insert_stmt
-      case 43: // delete_stmt
-      case 44: // update_stmt
-      case 46: // assign_expr
+      case 33: // select_stmt
+      case 35: // from_clause
+      case 36: // where_clause
+      case 37: // expr
+      case 38: // insert_stmt
+      case 44: // delete_stmt
+      case 45: // update_stmt
+      case 47: // assign_expr
         value.template destroy< ParseNode* > ();
+        break;
+
+      case 30: // BOOLEAN_LITERAL
+        value.template destroy< bool > ();
         break;
 
       case 28: // STRING_GROUP
@@ -694,6 +714,19 @@ switch (yytype)
         : super_type(token_type (tok))
       {
         YYASSERT (tok == token::TOK_EOF || tok == token::TOK_SELECT || tok == token::TOK_INSERT || tok == token::TOK_DELETE || tok == token::TOK_UPDATE || tok == token::TOK_INTO || tok == token::TOK_VALUES || tok == token::TOK_SET || tok == token::TOK_LPARENS || tok == token::TOK_RPARENS || tok == token::TOK_FROM || tok == token::TOK_SEMICOLON || tok == token::TOK_COMMA || tok == token::TOK_WHERE || tok == token::TOK_AND || tok == token::TOK_OR || tok == token::TOK_EQ || tok == token::TOK_NEQ || tok == token::TOK_GT || tok == token::TOK_GE || tok == token::TOK_LT || tok == token::TOK_LE || tok == token::TOK_PLUS || tok == token::TOK_MINUS || tok == token::TOK_MULT || tok == token::TOK_DIV);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, bool v)
+        : super_type(token_type (tok), std::move (v))
+      {
+        YYASSERT (tok == token::TOK_BOOLEAN_LITERAL);
+      }
+#else
+      symbol_type (int tok, const bool& v)
+        : super_type(token_type (tok), v)
+      {
+        YYASSERT (tok == token::TOK_BOOLEAN_LITERAL);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1165,6 +1198,21 @@ switch (yytype)
         return symbol_type (token::TOK_STRING_LITERAL, v);
       }
 #endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_BOOLEAN_LITERAL (bool v)
+      {
+        return symbol_type (token::TOK_BOOLEAN_LITERAL, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_BOOLEAN_LITERAL (const bool& v)
+      {
+        return symbol_type (token::TOK_BOOLEAN_LITERAL, v);
+      }
+#endif
 
 
   private:
@@ -1473,7 +1521,7 @@ switch (yytype)
       yyfinal_ = 15, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 30  ///< Number of tokens.
+      yyntokens_ = 31  ///< Number of tokens.
     };
 
 
@@ -1519,9 +1567,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29
+      25,    26,    27,    28,    29,    30
     };
-    const unsigned user_token_number_max_ = 284;
+    const unsigned user_token_number_max_ = 285;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1541,25 +1589,29 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 33: // target_list
-      case 38: // insert_column_list
-      case 39: // column_list
-      case 40: // insert_values_clause
-      case 41: // insert_values_list
-      case 42: // insert_value_items
-      case 45: // update_assign_expr_list
+      case 34: // target_list
+      case 39: // insert_column_list
+      case 40: // column_list
+      case 41: // insert_values_clause
+      case 42: // insert_values_list
+      case 43: // insert_value_items
+      case 46: // update_assign_expr_list
         value.move< List* > (std::move (that.value));
         break;
 
-      case 32: // select_stmt
-      case 34: // from_clause
-      case 35: // where_clause
-      case 36: // expr
-      case 37: // insert_stmt
-      case 43: // delete_stmt
-      case 44: // update_stmt
-      case 46: // assign_expr
+      case 33: // select_stmt
+      case 35: // from_clause
+      case 36: // where_clause
+      case 37: // expr
+      case 38: // insert_stmt
+      case 44: // delete_stmt
+      case 45: // update_stmt
+      case 47: // assign_expr
         value.move< ParseNode* > (std::move (that.value));
+        break;
+
+      case 30: // BOOLEAN_LITERAL
+        value.move< bool > (std::move (that.value));
         break;
 
       case 28: // STRING_GROUP
@@ -1581,25 +1633,29 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 33: // target_list
-      case 38: // insert_column_list
-      case 39: // column_list
-      case 40: // insert_values_clause
-      case 41: // insert_values_list
-      case 42: // insert_value_items
-      case 45: // update_assign_expr_list
+      case 34: // target_list
+      case 39: // insert_column_list
+      case 40: // column_list
+      case 41: // insert_values_clause
+      case 42: // insert_values_list
+      case 43: // insert_value_items
+      case 46: // update_assign_expr_list
         value.copy< List* > (YY_MOVE (that.value));
         break;
 
-      case 32: // select_stmt
-      case 34: // from_clause
-      case 35: // where_clause
-      case 36: // expr
-      case 37: // insert_stmt
-      case 43: // delete_stmt
-      case 44: // update_stmt
-      case 46: // assign_expr
+      case 33: // select_stmt
+      case 35: // from_clause
+      case 36: // where_clause
+      case 37: // expr
+      case 38: // insert_stmt
+      case 44: // delete_stmt
+      case 45: // update_stmt
+      case 47: // assign_expr
         value.copy< ParseNode* > (YY_MOVE (that.value));
+        break;
+
+      case 30: // BOOLEAN_LITERAL
+        value.copy< bool > (YY_MOVE (that.value));
         break;
 
       case 28: // STRING_GROUP
@@ -1629,25 +1685,29 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 33: // target_list
-      case 38: // insert_column_list
-      case 39: // column_list
-      case 40: // insert_values_clause
-      case 41: // insert_values_list
-      case 42: // insert_value_items
-      case 45: // update_assign_expr_list
+      case 34: // target_list
+      case 39: // insert_column_list
+      case 40: // column_list
+      case 41: // insert_values_clause
+      case 42: // insert_values_list
+      case 43: // insert_value_items
+      case 46: // update_assign_expr_list
         value.move< List* > (YY_MOVE (s.value));
         break;
 
-      case 32: // select_stmt
-      case 34: // from_clause
-      case 35: // where_clause
-      case 36: // expr
-      case 37: // insert_stmt
-      case 43: // delete_stmt
-      case 44: // update_stmt
-      case 46: // assign_expr
+      case 33: // select_stmt
+      case 35: // from_clause
+      case 36: // where_clause
+      case 37: // expr
+      case 38: // insert_stmt
+      case 44: // delete_stmt
+      case 45: // update_stmt
+      case 47: // assign_expr
         value.move< ParseNode* > (YY_MOVE (s.value));
+        break;
+
+      case 30: // BOOLEAN_LITERAL
+        value.move< bool > (YY_MOVE (s.value));
         break;
 
       case 28: // STRING_GROUP
@@ -1720,13 +1780,14 @@ switch (yytype)
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1730 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1791 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

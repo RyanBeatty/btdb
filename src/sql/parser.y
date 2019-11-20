@@ -15,6 +15,7 @@
   using btdb::ParseTree;
   using btdb::NIdentifier;
   using btdb::NStringLit;
+  using btdb::NBoolLit;
   using btdb::NBinExpr;
   using btdb::List;
   using btdb::NSelectStmt;
@@ -42,6 +43,7 @@
   #include <stdlib.h>
   #include <iostream>
   #include <memory>
+  #include <stdbool.h>
   #include <string.h>
   #include "sql/context.hpp"
 }
@@ -82,6 +84,7 @@
 ;
 %token <std::string> STRING_GROUP
 %token <std::string> STRING_LITERAL
+%token <bool> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
 %type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr
@@ -199,6 +202,13 @@ expr:
       strncpy(str_lit->str_lit, $1.c_str(), $1.length());
       $$ = (ParseNode*)str_lit;
     }
+  | BOOLEAN_LITERAL {
+    NBoolLit* bool_lit = (NBoolLit*)calloc(1, sizeof(NBoolLit));
+    assert(bool_lit != NULL);
+    bool_lit->type = btdb::NBOOL_LIT;
+    bool_lit->bool_lit = $1;
+    $$ = (ParseNode*)bool_lit;
+  }
   | expr "=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);

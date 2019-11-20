@@ -124,6 +124,11 @@ void free_parse_node(ParseNode* node) {
       free(str_lit);
       break;
     }
+    case NBOOL_LIT: {
+      NBoolLit* bool_lit = (NBoolLit*)(node);
+      free(bool_lit);
+      break;
+    }
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
       assert(select->target_list != nullptr);
@@ -257,6 +262,13 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       NStringLit* str_lit = (NStringLit*)(node);
       ctx.PrintObject("NStringLit");
       ctx.PrintChild("str_lit", str_lit->str_lit);
+      ctx.EndObject();
+      break;
+    }
+    case NBOOL_LIT: {
+      NBoolLit* bool_lit = (NBoolLit*)(node);
+      ctx.PrintObject("NBoolLit");
+      ctx.PrintChild("bool_lit", bool_lit->bool_lit ? "true" : "false");
       ctx.EndObject();
       break;
     }

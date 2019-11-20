@@ -1,5 +1,7 @@
 /* recognize tokens for the calculator and print them out */
 %{
+  #include <stdbool.h>
+
   #include "sql/parser.hpp"
   #include "sql/context.hpp"
 
@@ -45,6 +47,8 @@
 "/" return yy::parser::make_DIV();
 "(" return yy::parser::make_LPARENS();
 ")" return yy::parser::make_RPARENS();
+"true" return yy::parser::make_BOOLEAN_LITERAL(true);
+"false" return yy::parser::make_BOOLEAN_LITERAL(false);
 \'(\\.|[^'\\])*\' return yy::parser::make_STRING_LITERAL(yytext);
 [a-zA-Z]+ return yy::parser::make_STRING_GROUP(yytext);
 <<EOF>> return yy::parser::make_EOF ();
