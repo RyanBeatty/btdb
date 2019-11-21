@@ -9,8 +9,6 @@
 
 namespace btdb {
 
-static std::vector<TableDef> Tables = {{"foo", {"bar", "baz"}}};
-
 enum CmdType {
   CMD_SELECT,
   CMD_INSERT,

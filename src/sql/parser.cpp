@@ -1096,7 +1096,7 @@ namespace yy {
     break;
 
   case 41:
-#line 436 "parser.y"
+#line 437 "parser.y"
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
@@ -1436,7 +1436,7 @@ namespace yy {
      148,   174,   175,   184,   193,   205,   212,   221,   230,   239,
      248,   257,   266,   275,   284,   293,   302,   311,   321,   340,
      343,   355,   368,   370,   375,   382,   387,   393,   408,   425,
-     430,   436
+     430,   437
   };
 
   // Print the state stack on the debug stream.
@@ -1472,7 +1472,7 @@ namespace yy {
 } // yy
 #line 1474 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 462 "parser.y"
+#line 463 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {

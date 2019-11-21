@@ -15,6 +15,8 @@ struct TableDef {
   std::vector<std::string> col_names;
 };
 
+static std::vector<TableDef> Tables = {{"foo", {"bar", "baz"}}};
+
 // typedef unsigned char byte;
 // typedef byte* HeapTuple;
 
