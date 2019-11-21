@@ -49,6 +49,11 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
       assert(str_lit->str_lit != NULL);
       return MakeDatum(T_STRING, new std::string(str_lit->str_lit));
     }
+    case NBOOL_LIT: {
+      NBoolLit* bool_lit = (NBoolLit*)node;
+      assert(bool_lit != NULL);
+      return MakeDatum(T_BOOL, new bool(bool_lit->bool_lit));
+    }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
