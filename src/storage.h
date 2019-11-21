@@ -12,10 +12,10 @@ namespace btdb {
 
 struct TableDef {
   std::string name;
-  std::vector<std::string> col_names;
+  std::unordered_map<std::string, BType> tuple_desc;
 };
 
-static std::vector<TableDef> Tables = {{"foo", {"bar", "baz"}}};
+static std::vector<TableDef> Tables = {{"foo", {{"bar", T_STRING}, {"baz", T_STRING}}}};
 
 // typedef unsigned char byte;
 // typedef byte* HeapTuple;

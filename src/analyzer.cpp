@@ -67,8 +67,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
-                  col->identifier) == table_def_it->col_names.end()) {
+    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
       return NULL;
     }
     PushBack(targets, col->identifier);
@@ -97,11 +96,11 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      if (std::find(table_def.col_names.begin(), table_def.col_names.end(),
-                    identifier->identifier) == table_def.col_names.end()) {
+      const auto& col_type_it = table_def.tuple_desc.find(identifier->identifier);
+      if (col_type_it == table_def.tuple_desc.end()) {
         Panic("Invalid column name in bin expr");
       }
-      return T_STRING;
+      return col_type_it->second;
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
@@ -178,8 +177,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
-                  col->identifier) == table_def_it->col_names.end()) {
+    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
       return NULL;
     }
     PushBack(targets, col->identifier);
@@ -280,8 +278,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     NIdentifier* col = (NIdentifier*)assign_expr->column;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (std::find(table_def_it->col_names.begin(), table_def_it->col_names.end(),
-                  col->identifier) == table_def_it->col_names.end()) {
+    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
       return NULL;
     }
 
