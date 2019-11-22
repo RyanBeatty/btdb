@@ -15,7 +15,7 @@ struct TableDef {
   std::unordered_map<std::string, BType> tuple_desc;
 };
 
-static std::vector<TableDef> Tables = {{"foo", {{"bar", T_STRING}, {"baz", T_STRING}}}};
+static std::vector<TableDef> Tables = {{"foo", {{"bar", T_STRING}, {"baz", T_BOOL}}}};
 
 // typedef unsigned char byte;
 // typedef byte* HeapTuple;

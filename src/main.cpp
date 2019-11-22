@@ -443,13 +443,13 @@ int main() {
   btdb::Tuple* t1 = new btdb::Tuple(
     {
       {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("hello"))},
-      {"baz", btdb::MakeDatum(btdb::T_STRING, new std::string("goodbye"))},
+      {"baz", btdb::MakeDatum(btdb::T_BOOL, new bool(true))},
     }
   );
   btdb::Tuple* t2 = new btdb::Tuple(
     {
       {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("world"))},
-      {"baz", btdb::MakeDatum(btdb::T_STRING, new std::string("bob"))},
+      {"baz", btdb::MakeDatum(btdb::T_BOOL, new bool(false))},
     }
   );
   btdb::InsertTuple(t1);
@@ -489,10 +489,15 @@ int main() {
           auto it = mtuple->find(column);
           if (it != mtuple->end()) {
             btdb::Datum data = it->second;
-            assert(data.type == btdb::T_STRING);
             // TODO(ryan): This is some hacky bs to be able to print this as a string.
             // I'm going to need to do an overhaul of alot of this code in the future.
-            std::cout << *((std::string*) data.data);
+            if (data.type == btdb::T_STRING) {
+              std::cout << *((std::string*) data.data);
+            } else if (data.type == btdb::T_BOOL) {
+              std:: cout << (*((bool*) data.data) ? "true" : "false");
+            } else {
+              btdb::Panic("Only support printing strings or bools");
+            }
           }
           std::cout << "\t";
         }
