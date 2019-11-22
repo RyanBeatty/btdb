@@ -434,7 +434,7 @@ update_assign_expr_list:
   }
 
 // TODO(ryan): Change to handle boollit + other types. Should probably use expr here.
-assign_expr: STRING_GROUP "=" STRING_LITERAL {
+assign_expr: STRING_GROUP "=" expr {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = btdb::NIDENTIFIER;
@@ -443,19 +443,19 @@ assign_expr: STRING_GROUP "=" STRING_LITERAL {
   strncpy(identifier->identifier, $1.c_str(), $1.length());
 
   // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
-  assert($3.length() >= 2);
-  $3 = $3.substr(1, $3.length() - 2);
-  NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
-  assert(str_lit != NULL);
-  str_lit->type = btdb::NSTRING_LIT;
-  str_lit->str_lit = (char*)calloc($3.length(), sizeof(char));
-  assert(str_lit->str_lit != NULL);
-  strncpy(str_lit->str_lit, $3.c_str(), $3.length());
+  // assert($3.length() >= 2);
+  // $3 = $3.substr(1, $3.length() - 2);
+  // NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
+  // assert(str_lit != NULL);
+  // str_lit->type = btdb::NSTRING_LIT;
+  // str_lit->str_lit = (char*)calloc($3.length(), sizeof(char));
+  // assert(str_lit->str_lit != NULL);
+  // strncpy(str_lit->str_lit, $3.c_str(), $3.length());
 
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
   assign_expr->type = btdb::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
-  assign_expr->value = (ParseNode*) str_lit;
+  assign_expr->value_expr = $3;
   $$ = (ParseNode*) assign_expr;
 }
 

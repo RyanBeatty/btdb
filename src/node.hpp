@@ -160,8 +160,7 @@ struct NAssignExpr {
   ParseNodeType type;
 
   ParseNode* column;
-  // TODO(ryan): Make arbitrary expression
-  ParseNode* value;
+  ParseNode* value_expr;
 };
 static_assert(std::is_pod<NAssignExpr>::value);
 

@@ -1106,19 +1106,19 @@ namespace yy {
   strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
 
   // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
-  assert(yystack_[0].value.as < std::string > ().length() >= 2);
-  yystack_[0].value.as < std::string > () = yystack_[0].value.as < std::string > ().substr(1, yystack_[0].value.as < std::string > ().length() - 2);
-  NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
-  assert(str_lit != NULL);
-  str_lit->type = btdb::NSTRING_LIT;
-  str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
-  assert(str_lit->str_lit != NULL);
-  strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
+  // assert($3.length() >= 2);
+  // $3 = $3.substr(1, $3.length() - 2);
+  // NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
+  // assert(str_lit != NULL);
+  // str_lit->type = btdb::NSTRING_LIT;
+  // str_lit->str_lit = (char*)calloc($3.length(), sizeof(char));
+  // assert(str_lit->str_lit != NULL);
+  // strncpy(str_lit->str_lit, $3.c_str(), $3.length());
 
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
   assign_expr->type = btdb::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
-  assign_expr->value = (ParseNode*) str_lit;
+  assign_expr->value_expr = yystack_[0].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) assign_expr;
 }
 #line 1125 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
@@ -1309,15 +1309,15 @@ namespace yy {
   const signed char
   parser::yypact_[] =
   {
-      10,    31,    53,    49,    34,    63,   -25,   -25,   -25,   -25,
-      50,    54,    37,    39,    59,   -25,    31,    41,    55,    61,
-      55,    44,   -25,   -25,    12,    60,    46,    67,    64,    58,
-      40,   -25,   -25,   -25,   -25,   -15,   -25,   -25,    23,    68,
-      66,   -25,    51,    44,    69,    12,    12,    12,    12,    12,
-      12,    12,    12,    12,    12,    12,    12,   -25,    56,    12,
-      71,   -25,   -25,   -25,   -25,    26,    26,    -7,    -7,    -7,
-      -7,    -7,    -7,    30,    30,   -25,   -25,   -25,   -15,    24,
-      73,   -25,    12,    12,   -15,    25,   -25
+      10,    -9,    27,    50,    35,    64,   -25,   -25,   -25,   -25,
+      51,    54,    39,    40,    60,   -25,    -9,    42,    56,    62,
+      56,    45,   -25,   -25,    31,    61,    47,    68,    65,    59,
+      41,   -25,   -25,   -25,   -25,   -15,   -25,   -25,     6,    69,
+      67,   -25,    31,    45,    70,    31,    31,    31,    31,    31,
+      31,    31,    31,    31,    31,    31,    31,   -25,    53,    31,
+      71,   -25,   -15,   -25,   -25,    26,    26,    11,    11,    11,
+      11,    11,    11,    14,    14,   -25,   -25,   -25,   -15,    28,
+      72,   -25,    31,    31,   -15,    43,   -25
   };
 
   const unsigned char
@@ -1337,8 +1337,8 @@ namespace yy {
   const signed char
   parser::yypgoto_[] =
   {
-     -25,   -25,   -25,    65,   -25,    13,   -24,   -25,   -25,   -25,
-     -25,   -25,     3,   -25,   -25,   -25,    45
+     -25,   -25,   -25,    73,   -25,    13,   -24,   -25,   -25,   -25,
+     -25,   -25,     1,   -25,   -25,   -25,    44
   };
 
   const signed char
@@ -1352,28 +1352,28 @@ namespace yy {
   parser::yytable_[] =
   {
       35,    45,    46,    47,    48,    49,    50,    51,    52,    53,
-      54,    55,    56,     1,     2,     3,     4,    53,    54,    55,
-      56,    65,    66,    67,    68,    69,    70,    71,    72,    73,
-      74,    75,    76,    28,    57,    81,    86,    58,    82,    82,
-      32,    33,    34,    44,    47,    48,    49,    50,    51,    52,
-      53,    54,    55,    56,    43,    24,    55,    56,    84,    10,
-      12,    13,    14,    15,    16,    19,    17,    20,    21,    23,
-      24,    26,    29,    36,    37,    39,    42,    41,    59,    61,
-      62,    22,    64,    83,    77,    80,    85,     0,    63
+      54,    55,    56,     1,     2,     3,     4,    57,    62,    10,
+      58,    65,    66,    67,    68,    69,    70,    71,    72,    73,
+      74,    75,    76,    28,    12,    53,    54,    55,    56,    81,
+      55,    56,    82,    44,    47,    48,    49,    50,    51,    52,
+      53,    54,    55,    56,    86,    43,    24,    82,    84,    32,
+      33,    34,    13,    14,    15,    16,    17,    19,    20,    21,
+      23,    24,    26,    29,    36,    37,    39,    42,    41,    59,
+      61,    77,    83,    64,    85,    80,     0,    63,     0,    22
   };
 
   const signed char
   parser::yycheck_[] =
   {
       24,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,     3,     4,     5,     6,    24,    25,    26,
-      27,    45,    46,    47,    48,    49,    50,    51,    52,    53,
-      54,    55,    56,    20,    11,    11,    11,    14,    14,    14,
-      28,    29,    30,    30,    18,    19,    20,    21,    22,    23,
-      24,    25,    26,    27,    14,    15,    26,    27,    82,    28,
-       7,    12,    28,     0,    14,    28,    12,    28,     9,    28,
-      15,    10,    28,    13,    28,     8,    18,    13,    10,    13,
-      29,    16,    13,    10,    28,    14,    83,    -1,    43
+      25,    26,    27,     3,     4,     5,     6,    11,    42,    28,
+      14,    45,    46,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,    20,     7,    24,    25,    26,    27,    11,
+      26,    27,    14,    30,    18,    19,    20,    21,    22,    23,
+      24,    25,    26,    27,    11,    14,    15,    14,    82,    28,
+      29,    30,    12,    28,     0,    14,    12,    28,    28,     9,
+      28,    15,    10,    28,    13,    28,     8,    18,    13,    10,
+      13,    28,    10,    13,    83,    14,    -1,    43,    -1,    16
   };
 
   const unsigned char
@@ -1385,7 +1385,7 @@ namespace yy {
       46,    47,    28,    29,    30,    37,    13,    28,    40,     8,
       41,    13,    18,    14,    36,    16,    17,    18,    19,    20,
       21,    22,    23,    24,    25,    26,    27,    11,    14,    10,
-      42,    13,    29,    47,    13,    37,    37,    37,    37,    37,
+      42,    13,    37,    47,    13,    37,    37,    37,    37,    37,
       37,    37,    37,    37,    37,    37,    37,    28,    37,    43,
       14,    11,    14,    10,    37,    43,    11
   };
