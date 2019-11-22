@@ -23,7 +23,7 @@ struct Query {
   char* table_name;
   CharPtrVec* target_list;
   ParseNode* where_clause;
-  std::vector<std::vector<std::string>> assign_exprs;
+  List* assign_expr_list;
   std::vector<Tuple> values;
 };
 

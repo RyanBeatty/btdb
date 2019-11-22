@@ -42,7 +42,7 @@ struct Iterator {
 
 typedef Iterator Plan;
 
-Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
+Datum EvalExpr(ParseNode* node, const Tuple& cur_tuple) {
   switch (node->type) {
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
@@ -66,8 +66,8 @@ Datum ExecPred(ParseNode* node, const Tuple& cur_tuple) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
-      auto lhs_value = ExecPred(expr->lhs, cur_tuple);
-      auto rhs_value = ExecPred(expr->rhs, cur_tuple);
+      auto lhs_value = EvalExpr(expr->lhs, cur_tuple);
+      auto rhs_value = EvalExpr(expr->rhs, cur_tuple);
       switch (expr->op) {
         case AND: {
           assert(lhs_value.type == T_BOOL);
@@ -233,7 +233,7 @@ struct SequentialScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = ExecPred(where_clause, cur_tpl);
+        auto result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -297,7 +297,7 @@ struct DeleteScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = ExecPred(where_clause, cur_tpl);
+        auto result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -321,12 +321,12 @@ struct DeleteScan : Iterator {
 struct UpdateScan : Iterator {
   uint64_t next_index = 0;
 
-  std::vector<std::vector<std::string>> assign_exprs;
+  List* assign_exprs;
   // TODO(ryan): Memory will be deallocated in ParseTree desctructor. Figure out how to handle
   // ownership transfer eventually.
   ParseNode* where_clause;
 
-  UpdateScan(std::vector<std::vector<std::string>> assign_exprs, ParseNode* where_clause)
+  UpdateScan(List* assign_exprs, ParseNode* where_clause)
       : assign_exprs(assign_exprs), where_clause(where_clause) {}
 
   void Open() {}
@@ -342,7 +342,7 @@ struct UpdateScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = ExecPred(where_clause, cur_tpl);
+        auto result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -351,8 +351,22 @@ struct UpdateScan : Iterator {
         }
       }
 
-      for (const auto& assign_expr : assign_exprs) {
-        cur_tpl[assign_expr[0]] = MakeDatum(T_STRING, new std::string(assign_expr[1]));
+      ListCell* lc = NULL;
+      FOR_EACH(lc, assign_exprs) {
+        NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+        assert(assign_expr->type == NASSIGN_EXPR);
+        assert(assign_expr->column != NULL);
+        assert(assign_expr->value_expr != NULL);
+
+        NIdentifier* col = (NIdentifier*)assign_expr->column;
+        assert(col->type == NIDENTIFIER);
+        assert(col->identifier != NULL);
+        
+        auto it = cur_tpl.find(col->identifier);
+        assert(it != cur_tpl.end());
+        Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
+        assert(updated_value.type == it->second.type);
+        it->second = updated_value;
       }
       return std::make_unique<Tuple>(cur_tpl);
     }
@@ -393,7 +407,7 @@ PlanState PlanQuery(Query* query) {
     }
     case CMD_UPDATE: {
       auto plan =
-          std::make_unique<UpdateScan>(UpdateScan(query->assign_exprs, query->where_clause));
+          std::make_unique<UpdateScan>(UpdateScan(query->assign_expr_list, query->where_clause));
       plan_state.target_list = NULL;
       plan_state.plan = std::move(plan);
       break;

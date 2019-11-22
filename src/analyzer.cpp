@@ -269,32 +269,25 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   assert(update->assign_expr_list != NULL);
   assert(update->assign_expr_list->type == T_PARSENODE);
   auto* assign_expr_list = update->assign_expr_list;
-  std::vector<std::vector<std::string>> assign_exprs;
   ListCell* lc = NULL;
   FOR_EACH(lc, assign_expr_list) {
     assert(lc->data != NULL);
     NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
     assert(assign_expr->type == NASSIGN_EXPR);
     assert(assign_expr->column != NULL);
-    assert(assign_expr->value != NULL);
+    assert(assign_expr->value_expr != NULL);
 
     NIdentifier* col = (NIdentifier*)assign_expr->column;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
+    const auto& col_type_it = table_def_it->tuple_desc.find(col->identifier);
+    if (col_type_it == table_def_it->tuple_desc.end()) {
       return NULL;
     }
 
-    NStringLit* str_lit = (NStringLit*)assign_expr->value;
-    assert(str_lit->str_lit != NULL);
-    if (str_lit->type != NSTRING_LIT) {
+    if (col_type_it->second != CheckType(assign_expr->value_expr, *table_def_it)) {
       return NULL;
     }
-
-    std::vector<std::string> expr;
-    expr.push_back(col->identifier);
-    expr.push_back(str_lit->str_lit);
-    assign_exprs.push_back(expr);
   }
 
   if (update->where_clause != NULL &&
@@ -304,7 +297,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
 
   Query* query = (Query*)MakeQuery(CMD_UPDATE);
   query->table_name = table_name->identifier;
-  query->assign_exprs = assign_exprs;
+  query->assign_expr_list = assign_expr_list;
   query->where_clause = update->where_clause;
   return query;
 }
