@@ -165,3 +165,46 @@ def test_delete_everything():
     )
 
     proc.kill()
+
+
+def test_udpate():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    proc.stdin.write(b"update foo set bar = 'a';\n")
+    proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"update foo set bar = 'b' where baz = true;\n")
+    proc.stdin.write(b"select bar, baz from foo;\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> ===============
+        btdb>     bar    baz
+        ===============
+        a\ttrue\t
+        a\tfalse\t
+        btdb> ===============
+        btdb>     bar    baz
+        ===============
+        b\ttrue\t
+        a\tfalse\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
