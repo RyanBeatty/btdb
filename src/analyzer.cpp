@@ -203,11 +203,23 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != NULL);
       // TODO(ryan): Allow for more general expressions here.
-      NStringLit* str_lit = (NStringLit*)lc2->data;
-      assert(str_lit->type == NSTRING_LIT);
-      assert(str_lit->str_lit != NULL);
-      std::string key(*Get(targets, col_index));
-      tuple[key] = MakeDatum(T_STRING, new std::string(str_lit->str_lit));
+      BType type = CheckType((ParseNode*)lc2->data, *table_def_it);
+      if (type == T_UNKNOWN) {
+        return NULL;
+      }
+      assert(type == T_BOOL || type == T_STRING);
+      if (type == T_STRING) {
+        NStringLit* str_lit = (NStringLit*)lc2->data;
+        assert(str_lit->type == NSTRING_LIT);
+        assert(str_lit->str_lit != NULL);
+        std::string key(*Get(targets, col_index));
+        tuple[key] = MakeDatum(T_STRING, new std::string(str_lit->str_lit));
+      } else {
+        NBoolLit* bool_lit = (NBoolLit*)lc2->data;
+        assert(bool_lit->type == NBOOL_LIT);
+        std::string key(*Get(targets, col_index));
+        tuple[key] = MakeDatum(T_BOOL, new bool(bool_lit->bool_lit));
+      }
       ++col_index;
     }
     values.push_back(tuple);

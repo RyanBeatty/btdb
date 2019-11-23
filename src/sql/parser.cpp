@@ -1105,27 +1105,17 @@ namespace yy {
   assert(identifier->identifier != NULL);
   strncpy(identifier->identifier, yystack_[2].value.as < std::string > ().c_str(), yystack_[2].value.as < std::string > ().length());
 
-  // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
-  // assert($3.length() >= 2);
-  // $3 = $3.substr(1, $3.length() - 2);
-  // NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
-  // assert(str_lit != NULL);
-  // str_lit->type = btdb::NSTRING_LIT;
-  // str_lit->str_lit = (char*)calloc($3.length(), sizeof(char));
-  // assert(str_lit->str_lit != NULL);
-  // strncpy(str_lit->str_lit, $3.c_str(), $3.length());
-
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
   assign_expr->type = btdb::NASSIGN_EXPR;
   assign_expr->column = (ParseNode*) identifier;
   assign_expr->value_expr = yystack_[0].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) assign_expr;
 }
-#line 1125 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1115 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 1129 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1119 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -1470,9 +1460,9 @@ namespace yy {
 
 
 } // yy
-#line 1474 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1464 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
-#line 463 "parser.y"
+#line 453 "parser.y"
 
 
 void yy::parser::error(const std::string& m) {
