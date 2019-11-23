@@ -337,7 +337,7 @@ struct UpdateScan : Iterator {
         return NULL;
       }
       assert(*it != NULL);
-      Tuple& cur_tpl = **it; 
+      Tuple& cur_tpl = **it;
       ++next_index;
 
       // Evaluate predicate if any.
@@ -361,7 +361,7 @@ struct UpdateScan : Iterator {
         NIdentifier* col = (NIdentifier*)assign_expr->column;
         assert(col->type == NIDENTIFIER);
         assert(col->identifier != NULL);
-        
+
         auto it = cur_tpl.find(col->identifier);
         assert(it != cur_tpl.end());
         Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
@@ -406,8 +406,8 @@ PlanState PlanQuery(Query* query) {
       break;
     }
     case CMD_UPDATE: {
-      auto plan =
-          std::make_unique<UpdateScan>(UpdateScan(query->assign_expr_list, query->where_clause));
+      auto plan = std::make_unique<UpdateScan>(
+          UpdateScan(query->assign_expr_list, query->where_clause));
       plan_state.target_list = NULL;
       plan_state.plan = std::move(plan);
       break;
@@ -440,18 +440,14 @@ Result execute_plan(PlanState& plan_state) {
 int main() {
   printf("Starting btdb\n");
 
-  btdb::Tuple* t1 = new btdb::Tuple(
-    {
+  btdb::Tuple* t1 = new btdb::Tuple({
       {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("hello"))},
       {"baz", btdb::MakeDatum(btdb::T_BOOL, new bool(true))},
-    }
-  );
-  btdb::Tuple* t2 = new btdb::Tuple(
-    {
+  });
+  btdb::Tuple* t2 = new btdb::Tuple({
       {"bar", btdb::MakeDatum(btdb::T_STRING, new std::string("world"))},
       {"baz", btdb::MakeDatum(btdb::T_BOOL, new bool(false))},
-    }
-  );
+  });
   btdb::InsertTuple(t1);
   btdb::InsertTuple(t2);
   while (true) {
@@ -478,7 +474,7 @@ int main() {
     auto results = btdb::execute_plan(plan_state);
     if (results.columns != NULL) {
       btdb::CharPtrVecIt it = NULL;
-      VEC_FOREACH(it, results.columns) { printf("%s\t", *it); }
+      VEC_FOREACH(it, results.columns) { printf("    %s", *it); }
       printf("\n");
       printf("===============\n");
       for (auto&& mtuple : results.tuples) {
@@ -492,9 +488,9 @@ int main() {
             // TODO(ryan): This is some hacky bs to be able to print this as a string.
             // I'm going to need to do an overhaul of alot of this code in the future.
             if (data.type == btdb::T_STRING) {
-              std::cout << *((std::string*) data.data);
+              std::cout << *((std::string*)data.data);
             } else if (data.type == btdb::T_BOOL) {
-              std:: cout << (*((bool*) data.data) ? "true" : "false");
+              std::cout << (*((bool*)data.data) ? "true" : "false");
             } else {
               btdb::Panic("Only support printing strings or bools");
             }

@@ -155,21 +155,6 @@ from_clause:
       $$ = (ParseNode*)identifier;
     }
 
-// from_list:
-//   STRING_GROUP {
-//       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-//       assert(identifier != NULL);
-//       identifier->type = btdb::NIDENTIFIER;
-//       identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-//       assert(identifier->identifier != NULL);
-//       strncpy(identifier->identifier, $1.c_str(), $1.length());
-//       $$ = (ParseNode*)identifier;
-//   }
-//   | from_list "," STRING_GROUP {
-
-//   }
-
-
 where_clause:
   /* empty */ { $$ = nullptr; }
   | WHERE expr {
