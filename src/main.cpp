@@ -264,15 +264,15 @@ struct InsertScan : Iterator {
   void Open() {}
 
   MTuple GetNext() {
-    if (tuples.size() == 0) {
-      return NULL;
+    for (;;) {
+      if (tuples.size() == 0) {
+        return NULL;
+      }
+      auto& tuple = tuples.back();
+      Tuple* new_tuple = new Tuple(tuple);
+      InsertTuple(new_tuple);
+      tuples.pop_back();
     }
-    auto& tuple = tuples.back();
-    Tuple* new_tuple = new Tuple(tuple);
-    InsertTuple(new_tuple);
-    tuples.pop_back();
-    // TODO(ryan): This is sort of wonky, figure out how to do insert scans.
-    return std::make_unique<Tuple>(tuple);
   }
 
   void Close() {}
