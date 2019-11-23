@@ -93,29 +93,41 @@ def test_insert():
     proc.kill()
 
 
-# def test_delete():
-#     proc = subprocess.Popen(
-#         ["./bin/btdb"],
-#         stdin=subprocess.PIPE,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#     )
+def test_delete():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
-#     proc.stdin.write(b"delete from foo where baz = true;\n")
-#     proc.stdin.write(b"select bar, baz from foo;\n")
-#     try:
-#         output, err = proc.communicate(timeout=2)
-#     except subprocess.TimeoutExpired:
-#         proc.kill()
-#         proc.communicate()
-#         assert False
+    proc.stdin.write(b"delete from foo where baz = true;\n")
+    proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"delete from foo where bar = 'world';\n")
+    proc.stdin.write(b"select bar, baz from foo;\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
 
-#     assert not err
-#     assert output == (
-#         START_MSG + b"    bar    baz\n"
-#         b"===============\n" + PROMPT + b"    bar    baz"
-#         b"==============="
-#         b"world\tfalse\t\n" + SHUTDOWN_MSG
-#     )
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> ===============
+        btdb>     bar    baz
+        ===============
+        world\tfalse\t
+        btdb> ===============
+        btdb>     bar    baz
+        ===============
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
 
-#     proc.kill()
+    proc.kill()
