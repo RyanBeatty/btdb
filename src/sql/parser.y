@@ -130,15 +130,15 @@ target_list:
       push_list(target_list, identifier);
       $$ = target_list;
     }
-  | STRING_GROUP "," target_list { 
+  | target_list "," STRING_GROUP { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = btdb::NIDENTIFIER;
-      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
+      identifier->identifier = (char*)calloc($3.length(), sizeof(char));
       assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $1.c_str(), $1.length());
+      strncpy(identifier->identifier, $3.c_str(), $3.length());
 
-      auto* target_list = $3;
+      auto* target_list = $1;
       push_list(target_list, identifier);
       $$ = target_list;
     }
