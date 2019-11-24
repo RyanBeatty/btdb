@@ -1,16 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 #include <stdbool.h>
-#include <cassert>
-#include <iostream>
-#include <map>
 #include <memory>
-#include <optional>
-#include <sstream>
-#include <string>
-#include <type_traits>
-#include <variant>
-#include <vector>
 
 namespace btdb {
 
@@ -32,14 +23,12 @@ struct ListCell {
   void* data;
   ListCell* next;
 };
-static_assert(std::is_pod<ListCell>::value);
 
 struct List {
   ListType type;
   uint64_t length;
   ListCell* head;
 };
-static_assert(std::is_pod<List>::value);
 
 List* make_list(ListType);
 void push_list(List*, void*);
@@ -63,7 +52,6 @@ enum ParseNodeType {
 struct ParseNode {
   ParseNodeType type;
 };
-static_assert(std::is_pod<ParseNode>::value);
 
 enum BinExprOp {
   EQ,
@@ -89,28 +77,24 @@ struct NBinExpr {
   ParseNode* lhs;
   ParseNode* rhs;
 };
-static_assert(std::is_pod<NBinExpr>::value);
 
 struct NIdentifier {
   ParseNodeType type;
 
   char* identifier;
 };
-static_assert(std::is_pod<NIdentifier>::value);
 
 struct NStringLit {
   ParseNodeType type;
 
   char* str_lit;
 };
-static_assert(std::is_pod<NStringLit>::value);
 
 struct NBoolLit {
   ParseNodeType type;
 
   bool bool_lit;
 };
-static_assert(std::is_pod<NBoolLit>::value);
 
 struct NSelectStmt {
   ParseNodeType type;
@@ -119,7 +103,6 @@ struct NSelectStmt {
   ParseNode* table_name;
   ParseNode* where_clause;
 };
-static_assert(std::is_pod<NSelectStmt>::value);
 
 struct NInsertStmt {
   ParseNodeType type;
@@ -128,7 +111,6 @@ struct NInsertStmt {
   List* column_list;
   List* values_list;
 };
-static_assert(std::is_pod<NInsertStmt>::value);
 
 struct NDeleteStmt {
   ParseNodeType type;
@@ -136,7 +118,6 @@ struct NDeleteStmt {
   ParseNode* table_name;
   ParseNode* where_clause;
 };
-static_assert(std::is_pod<NDeleteStmt>::value);
 
 struct NAssignExpr {
   ParseNodeType type;
@@ -144,7 +125,6 @@ struct NAssignExpr {
   ParseNode* column;
   ParseNode* value_expr;
 };
-static_assert(std::is_pod<NAssignExpr>::value);
 
 struct NUpdateStmt {
   ParseNodeType type;
@@ -153,7 +133,6 @@ struct NUpdateStmt {
   List* assign_expr_list;
   ParseNode* where_clause;
 };
-static_assert(std::is_pod<NUpdateStmt>::value);
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);
