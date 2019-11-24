@@ -49,7 +49,6 @@
   #include "node.hpp"
 
   using btdb::ParseNode;
-  using btdb::ParseTree;
   using btdb::NIdentifier;
   using btdb::NStringLit;
   using btdb::NBoolLit;
@@ -70,7 +69,7 @@
       struct ParserContext;
     }}
 
-#line 74 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 73 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -185,7 +184,7 @@
 #endif
 
 namespace yy {
-#line 189 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 188 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -1787,7 +1786,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1791 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1790 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

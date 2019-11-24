@@ -9,7 +9,8 @@ int main() {
     auto result = ctx.Parse();
     if (result == 0) {
       btdb::PrintContext print_ctx = btdb::MakePrintContext();
-      btdb::print_parse_node(ctx.tree->tree, &print_ctx);
+      btdb::print_parse_node(ctx.tree, &print_ctx);
+      btdb::free_parse_node(ctx.tree);
     }
   }
 }

@@ -1,7 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 #include <stdbool.h>
-#include <memory>
+#include <stdint.h>
 
 namespace btdb {
 
@@ -136,13 +136,6 @@ struct NUpdateStmt {
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);
-
-struct ParseTree {
-  ParseTree(ParseNode* tree) : tree(tree) {}
-  ~ParseTree() { free_parse_node(tree); }
-
-  ParseNode* tree;
-};
 
 }  // namespace btdb
 #endif  // CONTEXT_HH

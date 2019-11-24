@@ -12,7 +12,6 @@
   #include "node.hpp"
 
   using btdb::ParseNode;
-  using btdb::ParseTree;
   using btdb::NIdentifier;
   using btdb::NStringLit;
   using btdb::NBoolLit;
@@ -95,16 +94,16 @@
 
 stmt:
   select_stmt {
-    ctx.tree = std::make_unique<ParseTree>($1);
+    ctx.tree = $1;
   }
   | insert_stmt {
-    ctx.tree = std::make_unique<ParseTree>($1);
+    ctx.tree = $1;
   }
   | delete_stmt {
-    ctx.tree = std::make_unique<ParseTree>($1);
+    ctx.tree = $1;
   }
   | update_stmt {
-    ctx.tree = std::make_unique<ParseTree>($1);
+    ctx.tree = $1;
   }
 
 select_stmt: SELECT target_list from_clause where_clause ";" {
