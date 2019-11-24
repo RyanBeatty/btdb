@@ -3,9 +3,6 @@
 
 #include <inttypes.h>
 #include <string.h>
-#include <map>
-#include <sstream>
-#include <string>
 
 namespace btdb {
 
