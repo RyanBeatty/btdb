@@ -1,11 +1,39 @@
 #include "node.hpp"
 #include "utils.h"
 
+#include <inttypes.h>
+#include <string.h>
 #include <map>
 #include <sstream>
 #include <string>
 
 namespace btdb {
+
+PrintContext MakePrintContext() { return PrintContext{0}; }
+void PrintObject(PrintContext* ctx, const char* key) {
+  PrintIndent(ctx);
+  printf("%s: {\n", key);
+  Indent(ctx);
+}
+
+void EndObject(PrintContext* ctx) {
+  PrintIndent(ctx);
+  printf("}\n");
+  Dedent(ctx);
+}
+
+void PrintChild(PrintContext* ctx, const char* key, const char* val) {
+  PrintIndent(ctx);
+  printf("%s: %s\n", key, val);
+}
+
+void PrintIndent(PrintContext* ctx) {
+  for (uint64_t i = 0; i < ctx->indent; ++i) {
+    printf("\t");
+  }
+}
+void Indent(PrintContext* ctx) { ++ctx->indent; }
+void Dedent(PrintContext* ctx) { --ctx->indent; }
 
 List* make_list(ListType type) {
   List* list = (List*)calloc(1, sizeof(List));
@@ -64,7 +92,7 @@ void free_list(List* list) {
   }
 }
 
-void print_list(List* list, PrintContext& ctx) {
+void print_list(List* list, PrintContext* ctx) {
   assert(list != nullptr);
   switch (list->type) {
     case T_PARSENODE: {
@@ -78,9 +106,12 @@ void print_list(List* list, PrintContext& ctx) {
       uint64_t size = 0;
       for (ListCell* ptr = list->head; ptr != nullptr; ptr = ptr->next, ++size) {
         assert(ptr->data != nullptr);
-        ctx.PrintObject("item " + std::to_string(size));
+        char str[100];
+        memset(str, 0, 100);
+        sprintf(str, "item %" PRIu64, size);
+        PrintObject(ctx, str);
         print_list((List*)ptr->data, ctx);
-        ctx.EndObject();
+        EndObject(ctx);
       }
       return;
     }
@@ -226,7 +257,7 @@ const char* bin_expr_op_to_string(BinExprOp op) {
   }
 }
 
-void print_parse_node(ParseNode* node, PrintContext& ctx) {
+void print_parse_node(ParseNode* node, PrintContext* ctx) {
   if (node == nullptr) {
     return;
   }
@@ -234,56 +265,56 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
   switch (node->type) {
     case NIDENTIFIER: {
       NIdentifier* identifier = (NIdentifier*)(node);
-      ctx.PrintObject("NIdentifier");
-      ctx.PrintChild("identifier", identifier->identifier);
-      ctx.EndObject();
+      PrintObject(ctx, "NIdentifier");
+      PrintChild(ctx, "identifier", identifier->identifier);
+      EndObject(ctx);
       break;
     }
     case NBIN_EXPR: {
       NBinExpr* bin_expr = (NBinExpr*)(node);
-      ctx.PrintObject("NBinExpr");
-      ctx.PrintChild("op", bin_expr_op_to_string(bin_expr->op));
+      PrintObject(ctx, "NBinExpr");
+      PrintChild(ctx, "op", bin_expr_op_to_string(bin_expr->op));
       if (bin_expr->lhs != nullptr) {
-        ctx.PrintObject("lhs");
+        PrintObject(ctx, "lhs");
         print_parse_node(bin_expr->lhs, ctx);
-        ctx.EndObject();
+        EndObject(ctx);
       }
       if (bin_expr->rhs != nullptr) {
-        ctx.PrintObject("rhs");
+        PrintObject(ctx, "rhs");
         print_parse_node(bin_expr->rhs, ctx);
-        ctx.EndObject();
+        EndObject(ctx);
       }
-      ctx.EndObject();
+      EndObject(ctx);
       break;
     }
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)(node);
-      ctx.PrintObject("NStringLit");
-      ctx.PrintChild("str_lit", str_lit->str_lit);
-      ctx.EndObject();
+      PrintObject(ctx, "NStringLit");
+      PrintChild(ctx, "str_lit", str_lit->str_lit);
+      EndObject(ctx);
       break;
     }
     case NBOOL_LIT: {
       NBoolLit* bool_lit = (NBoolLit*)(node);
-      ctx.PrintObject("NBoolLit");
-      ctx.PrintChild("bool_lit", bool_lit->bool_lit ? "true" : "false");
-      ctx.EndObject();
+      PrintObject(ctx, "NBoolLit");
+      PrintChild(ctx, "bool_lit", bool_lit->bool_lit ? "true" : "false");
+      EndObject(ctx);
       break;
     }
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
-      ctx.PrintObject("NSelectStmt");
+      PrintObject(ctx, "NSelectStmt");
       assert(select->target_list != nullptr);
-      ctx.PrintObject("target_list");
+      PrintObject(ctx, "target_list");
       print_list(select->target_list, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("table_name");
+      EndObject(ctx);
+      PrintObject(ctx, "table_name");
       print_parse_node(select->table_name, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("where_clause");
+      EndObject(ctx);
+      PrintObject(ctx, "where_clause");
       print_parse_node(select->where_clause, ctx);
-      ctx.EndObject();
-      ctx.EndObject();
+      EndObject(ctx);
+      EndObject(ctx);
       break;
     }
     case NINSERT_STMT: {
@@ -291,65 +322,65 @@ void print_parse_node(ParseNode* node, PrintContext& ctx) {
       assert(insert->table_name != nullptr);
       assert(insert->column_list != nullptr);
       assert(insert->values_list != nullptr);
-      ctx.PrintObject("NInsertStmt");
-      ctx.PrintObject("table_name");
+      PrintObject(ctx, "NInsertStmt");
+      PrintObject(ctx, "table_name");
       print_parse_node(insert->table_name, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("column_list");
+      EndObject(ctx);
+      PrintObject(ctx, "column_list");
       print_list(insert->column_list, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("values_list");
+      EndObject(ctx);
+      PrintObject(ctx, "values_list");
       print_list(insert->values_list, ctx);
-      ctx.EndObject();
-      ctx.EndObject();
+      EndObject(ctx);
+      EndObject(ctx);
       break;
     }
     case NDELETE_STMT: {
       NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
       assert(delete_stmt->table_name != nullptr);
-      ctx.PrintObject("NDeleteStmt");
-      ctx.PrintObject("table_name");
+      PrintObject(ctx, "NDeleteStmt");
+      PrintObject(ctx, "table_name");
       print_parse_node(delete_stmt->table_name, ctx);
-      ctx.EndObject();
+      EndObject(ctx);
       if (delete_stmt->where_clause != nullptr) {
-        ctx.PrintObject("where_clause");
+        PrintObject(ctx, "where_clause");
         print_parse_node(delete_stmt->where_clause, ctx);
-        ctx.EndObject();
+        EndObject(ctx);
       }
-      ctx.EndObject();
+      EndObject(ctx);
       break;
     }
     case NASSIGN_EXPR: {
       NAssignExpr* assign_expr = (NAssignExpr*)node;
       assert(assign_expr->column != nullptr);
       assert(assign_expr->column != nullptr);
-      ctx.PrintObject("NAssignExpr");
-      ctx.PrintObject("column");
+      PrintObject(ctx, "NAssignExpr");
+      PrintObject(ctx, "column");
       print_parse_node(assign_expr->column, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("value_expr");
+      EndObject(ctx);
+      PrintObject(ctx, "value_expr");
       print_parse_node(assign_expr->value_expr, ctx);
-      ctx.EndObject();
-      ctx.EndObject();
+      EndObject(ctx);
+      EndObject(ctx);
       break;
     }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
       assert(update->table_name != nullptr);
       assert(update->assign_expr_list != nullptr);
-      ctx.PrintObject("NUpdateStmt");
-      ctx.PrintObject("table_name");
+      PrintObject(ctx, "NUpdateStmt");
+      PrintObject(ctx, "table_name");
       print_parse_node(update->table_name, ctx);
-      ctx.EndObject();
-      ctx.PrintObject("assign_expr_list");
+      EndObject(ctx);
+      PrintObject(ctx, "assign_expr_list");
       print_list(update->assign_expr_list, ctx);
-      ctx.EndObject();
+      EndObject(ctx);
       if (update->where_clause != nullptr) {
-        ctx.PrintObject("where_clause");
+        PrintObject(ctx, "where_clause");
         print_parse_node(update->where_clause, ctx);
-        ctx.EndObject();
+        EndObject(ctx);
       }
-      ctx.EndObject();
+      EndObject(ctx);
       break;
     }
     default: {

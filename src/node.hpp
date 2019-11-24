@@ -15,34 +15,16 @@
 namespace btdb {
 
 struct PrintContext {
-  PrintContext() : indent(0) {}
-  std::string Print() { return oss.str(); }
-
-  void PrintObject(std::string key) {
-    PrintIndent();
-    oss << key << ": {" << std::endl;
-    Indent();
-  }
-  void EndObject() {
-    PrintIndent();
-    oss << "}" << std::endl;
-    Dedent();
-  }
-  void PrintChild(std::string key, std::string val) {
-    PrintIndent();
-    oss << key << ": " << val << std::endl;
-  }
-  void PrintIndent() {
-    for (uint64_t i = 0; i < indent; ++i) {
-      oss << "\t";
-    }
-  }
-  void Indent() { ++indent; }
-  void Dedent() { --indent; }
-
   uint64_t indent;
-  std::ostringstream oss;
 };
+
+PrintContext MakePrintContext();
+void PrintObject(PrintContext*, const char*);
+void EndObject(PrintContext*);
+void PrintChild(PrintContext*, const char*, const char*);
+void PrintIndent(PrintContext*);
+void Indent(PrintContext*);
+void Dedent(PrintContext*);
 
 enum ListType { T_PARSENODE, T_LIST };
 
@@ -59,10 +41,10 @@ struct List {
 };
 static_assert(std::is_pod<List>::value);
 
-List* make_list(ListType type);
-void push_list(List* list, void* data);
-void free_list(List* list);
-void print_list(List* list, PrintContext& ctx);
+List* make_list(ListType);
+void push_list(List*, void*);
+void free_list(List*);
+void print_list(List*, PrintContext*);
 
 #define FOR_EACH(cell, list) for (cell = list->head; cell != nullptr; cell = cell->next)
 
@@ -98,7 +80,7 @@ enum BinExprOp {
   OR,
 };
 
-const char* bin_expr_op_to_string(BinExprOp op);
+const char* bin_expr_op_to_string(BinExprOp);
 
 struct NBinExpr {
   ParseNodeType type;
@@ -173,8 +155,8 @@ struct NUpdateStmt {
 };
 static_assert(std::is_pod<NUpdateStmt>::value);
 
-void free_parse_node(ParseNode* node);
-void print_parse_node(ParseNode* node, PrintContext& ctx);
+void free_parse_node(ParseNode*);
+void print_parse_node(ParseNode*, PrintContext*);
 
 struct ParseTree {
   ParseTree(ParseNode* tree) : tree(tree) {}
