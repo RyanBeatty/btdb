@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace btdb {
-
 #define VEC_FOREACH(it, vec) \
   for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
 
@@ -139,7 +137,5 @@ namespace btdb {
 // MAP_PROTOTYPE(StrStr, char*, char*, hash_djb2, strcmp);
 
 VEC_PROTOTYPE(CharPtr, char*);
-
-}  // namespace btdb
 
 #endif  // COLLECTIONS_H

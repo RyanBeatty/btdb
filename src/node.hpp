@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-namespace btdb {
-
 struct PrintContext {
   uint64_t indent;
 };
@@ -137,5 +135,4 @@ struct NUpdateStmt {
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);
 
-}  // namespace btdb
 #endif  // CONTEXT_HH

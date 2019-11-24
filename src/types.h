@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace btdb {
-
 enum BType {
   T_UNKNOWN,
   T_STRING,
@@ -23,5 +21,4 @@ struct Datum {
 
 Datum MakeDatum(BType, void*);
 
-}  // namespace btdb
 #endif  // TYPES_H

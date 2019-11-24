@@ -1,10 +1,9 @@
 #include "node.hpp"
 #include "utils.h"
 
+#include <assert.h>
 #include <inttypes.h>
 #include <string.h>
-
-namespace btdb {
 
 PrintContext MakePrintContext() { return PrintContext{0}; }
 void PrintObject(PrintContext* ctx, const char* key) {
@@ -387,5 +386,3 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
   }
   return;
 }
-
-}  // namespace btdb

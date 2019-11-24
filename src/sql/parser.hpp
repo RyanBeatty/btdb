@@ -48,28 +48,11 @@
 
   #include "node.hpp"
 
-  using btdb::ParseNode;
-  using btdb::NIdentifier;
-  using btdb::NStringLit;
-  using btdb::NBoolLit;
-  using btdb::NBinExpr;
-  using btdb::List;
-  using btdb::NSelectStmt;
-  using btdb::NInsertStmt;
-  using btdb::NDeleteStmt;
-  using btdb::NUpdateStmt;
-  using btdb::NAssignExpr;
-  using btdb::make_list;
-  using btdb::push_list;
-
-  // Can't include btdb::sql stuff or else we get circular import,
+  // Can't include sql stuff or else we get circular import,
   // so need to forward declare stuff.
-  namespace btdb {
-    namespace sql {
-      struct ParserContext;
-    }}
+  struct ParserContext;
 
-#line 73 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 56 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -184,7 +167,7 @@
 #endif
 
 namespace yy {
-#line 188 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 171 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 
@@ -744,7 +727,7 @@ switch (yytype)
     };
 
     /// Build a parser object.
-    parser (btdb::sql::ParserContext& ctx_yyarg);
+    parser (ParserContext& ctx_yyarg);
     virtual ~parser ();
 
     /// Parse.  An alias for parse ().
@@ -1525,7 +1508,7 @@ switch (yytype)
 
 
     // User arguments.
-    btdb::sql::ParserContext& ctx;
+    ParserContext& ctx;
   };
 
   inline
@@ -1786,7 +1769,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1790 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1773 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

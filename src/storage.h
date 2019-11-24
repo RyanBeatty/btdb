@@ -8,8 +8,6 @@
 #include "collections.h"
 #include "types.h"
 
-namespace btdb {
-
 struct TableDef {
   std::string name;
   std::unordered_map<std::string, BType> tuple_desc;
@@ -30,7 +28,6 @@ static std::vector<TableDef> Tables = {{"foo", {{"bar", T_STRING}, {"baz", T_BOO
 
 // void WriteField(MemTuple* mtuple, byte* data, size_t size);
 
-
 // TODO: Figure out what a tuple will actually look like.
 typedef std::unordered_map<std::string, Datum> Tuple;
 typedef std::unique_ptr<Tuple> MTuple;
@@ -44,8 +41,6 @@ void UpdateTuple(Tuple*, size_t);
 TuplePtrVecIt GetTuple(size_t);
 void DeleteHeapTuple(size_t);
 
-
 // static std::vector<Tuple> Tuples;
 
-}  // namespace btdb
 #endif  // STORAGE_H

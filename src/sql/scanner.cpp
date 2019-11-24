@@ -2017,8 +2017,6 @@ void yyfree (void * ptr )
 
 
 
-namespace btdb {
-namespace sql {
 void ParserContext::BeginScan(std::string sql) {
   buffer_state = yy_scan_string(sql.c_str());
 }
@@ -2027,6 +2025,4 @@ void ParserContext::EndScan() {
   yy_delete_buffer(buffer_state);
 }
 
-}
-}
 

@@ -9,8 +9,6 @@
 #include "types.h"
 #include "utils.h"
 
-namespace btdb {
-
 Query* MakeQuery(CmdType cmd) {
   Query* query = (Query*)calloc(1, sizeof(Query));
   query->cmd = cmd;
@@ -313,5 +311,3 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   query->where_clause = update->where_clause;
   return query;
 }
-
-}  // namespace btdb

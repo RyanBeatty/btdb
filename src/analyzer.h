@@ -7,8 +7,6 @@
 #include "storage.h"
 #include "types.h"
 
-namespace btdb {
-
 enum CmdType {
   CMD_SELECT,
   CMD_INSERT,
@@ -35,5 +33,4 @@ Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
 BType CheckType(ParseNode*, TableDef&);
 
-}  // namespace btdb
 #endif  // ANALYZER_H
