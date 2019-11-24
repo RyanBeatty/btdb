@@ -1,11 +1,16 @@
-#include "node.hpp"
+#include "node.h"
 #include "utils.h"
 
 #include <assert.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-PrintContext MakePrintContext() { return PrintContext{0}; }
+PrintContext MakePrintContext() {
+  PrintContext ctx = {0};
+  return ctx;
+}
 void PrintObject(PrintContext* ctx, const char* key) {
   PrintIndent(ctx);
   printf("%s: {\n", key);
@@ -38,18 +43,18 @@ List* make_list(ListType type) {
 }
 
 void push_list(List* list, void* data) {
-  assert(list != nullptr);
-  assert(data != nullptr);
+  assert(list != NULL);
+  assert(data != NULL);
   ListCell* cell = (ListCell*)calloc(1, sizeof(ListCell));
   cell->data = data;
-  if (list->head == nullptr) {
+  if (list->head == NULL) {
     list->head = cell;
     list->length = 1;
     return;
   }
 
   ListCell* ptr = list->head;
-  for (; ptr->next != nullptr; ptr = ptr->next) {
+  for (; ptr->next != NULL; ptr = ptr->next) {
   }
   ptr->next = cell;
   ++list->length;
@@ -57,11 +62,11 @@ void push_list(List* list, void* data) {
 }
 
 void free_list(List* list) {
-  assert(list != nullptr);
+  assert(list != NULL);
   switch (list->type) {
     case T_PARSENODE: {
-      for (ListCell* ptr = list->head; ptr != nullptr;) {
-        assert(ptr->data != nullptr);
+      for (ListCell* ptr = list->head; ptr != NULL;) {
+        assert(ptr->data != NULL);
         free_parse_node((ParseNode*)ptr->data);
         ListCell* tmp = ptr;
         ptr = ptr->next;
@@ -71,8 +76,8 @@ void free_list(List* list) {
       return;
     }
     case T_LIST: {
-      for (ListCell* ptr = list->head; ptr != nullptr;) {
-        assert(ptr->data != nullptr);
+      for (ListCell* ptr = list->head; ptr != NULL;) {
+        assert(ptr->data != NULL);
         free_list((List*)ptr->data);
         ListCell* tmp = ptr;
         ptr = ptr->next;
@@ -89,19 +94,19 @@ void free_list(List* list) {
 }
 
 void print_list(List* list, PrintContext* ctx) {
-  assert(list != nullptr);
+  assert(list != NULL);
   switch (list->type) {
     case T_PARSENODE: {
-      for (ListCell* ptr = list->head; ptr != nullptr; ptr = ptr->next) {
-        assert(ptr->data != nullptr);
+      for (ListCell* ptr = list->head; ptr != NULL; ptr = ptr->next) {
+        assert(ptr->data != NULL);
         print_parse_node((ParseNode*)ptr->data, ctx);
       }
       return;
     }
     case T_LIST: {
       uint64_t size = 0;
-      for (ListCell* ptr = list->head; ptr != nullptr; ptr = ptr->next, ++size) {
-        assert(ptr->data != nullptr);
+      for (ListCell* ptr = list->head; ptr != NULL; ptr = ptr->next, ++size) {
+        assert(ptr->data != NULL);
         char str[100];
         memset(str, 0, 100);
         sprintf(str, "item %" PRIu64, size);
@@ -119,24 +124,24 @@ void print_list(List* list, PrintContext* ctx) {
 }
 
 void free_parse_node(ParseNode* node) {
-  if (node == nullptr) {
+  if (node == NULL) {
     return;
   }
 
   switch (node->type) {
     case NIDENTIFIER: {
       NIdentifier* identifier = (NIdentifier*)(node);
-      assert(identifier->identifier != nullptr);
+      assert(identifier->identifier != NULL);
       free(identifier->identifier);
       free(identifier);
       break;
     }
     case NBIN_EXPR: {
       NBinExpr* bin_expr = (NBinExpr*)(node);
-      if (bin_expr->lhs != nullptr) {
+      if (bin_expr->lhs != NULL) {
         free_parse_node(bin_expr->lhs);
       }
-      if (bin_expr->rhs != nullptr) {
+      if (bin_expr->rhs != NULL) {
         free_parse_node(bin_expr->rhs);
       }
       free(bin_expr);
@@ -144,7 +149,7 @@ void free_parse_node(ParseNode* node) {
     }
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)(node);
-      assert(str_lit->str_lit != nullptr);
+      assert(str_lit->str_lit != NULL);
       free(str_lit->str_lit);
       free(str_lit);
       break;
@@ -156,7 +161,7 @@ void free_parse_node(ParseNode* node) {
     }
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
-      assert(select->target_list != nullptr);
+      assert(select->target_list != NULL);
       free_list(select->target_list);
       free_parse_node(select->table_name);
       free_parse_node(select->where_clause);
@@ -165,9 +170,9 @@ void free_parse_node(ParseNode* node) {
     }
     case NINSERT_STMT: {
       NInsertStmt* insert = (NInsertStmt*)node;
-      assert(insert->table_name != nullptr);
-      assert(insert->column_list != nullptr);
-      assert(insert->values_list != nullptr);
+      assert(insert->table_name != NULL);
+      assert(insert->column_list != NULL);
+      assert(insert->values_list != NULL);
       free_parse_node(insert->table_name);
       free_list(insert->column_list);
       free_list(insert->values_list);
@@ -176,8 +181,8 @@ void free_parse_node(ParseNode* node) {
     }
     case NDELETE_STMT: {
       NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
-      assert(delete_stmt->table_name != nullptr);
-      if (delete_stmt->where_clause != nullptr) {
+      assert(delete_stmt->table_name != NULL);
+      if (delete_stmt->where_clause != NULL) {
         free_parse_node(delete_stmt->where_clause);
       }
       free(delete_stmt);
@@ -185,8 +190,8 @@ void free_parse_node(ParseNode* node) {
     }
     case NASSIGN_EXPR: {
       NAssignExpr* assign_expr = (NAssignExpr*)node;
-      assert(assign_expr->column != nullptr);
-      assert(assign_expr->value_expr != nullptr);
+      assert(assign_expr->column != NULL);
+      assert(assign_expr->value_expr != NULL);
       free_parse_node(assign_expr->column);
       free_parse_node(assign_expr->value_expr);
       free(assign_expr);
@@ -194,11 +199,11 @@ void free_parse_node(ParseNode* node) {
     }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
-      assert(update->table_name != nullptr);
-      assert(update->assign_expr_list != nullptr);
+      assert(update->table_name != NULL);
+      assert(update->assign_expr_list != NULL);
       free_parse_node(update->table_name);
       free_list(update->assign_expr_list);
-      if (update->where_clause != nullptr) {
+      if (update->where_clause != NULL) {
         free_parse_node(update->where_clause);
       }
       free(update);
@@ -254,7 +259,7 @@ const char* bin_expr_op_to_string(BinExprOp op) {
 }
 
 void print_parse_node(ParseNode* node, PrintContext* ctx) {
-  if (node == nullptr) {
+  if (node == NULL) {
     return;
   }
 
@@ -270,12 +275,12 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       NBinExpr* bin_expr = (NBinExpr*)(node);
       PrintObject(ctx, "NBinExpr");
       PrintChild(ctx, "op", bin_expr_op_to_string(bin_expr->op));
-      if (bin_expr->lhs != nullptr) {
+      if (bin_expr->lhs != NULL) {
         PrintObject(ctx, "lhs");
         print_parse_node(bin_expr->lhs, ctx);
         EndObject(ctx);
       }
-      if (bin_expr->rhs != nullptr) {
+      if (bin_expr->rhs != NULL) {
         PrintObject(ctx, "rhs");
         print_parse_node(bin_expr->rhs, ctx);
         EndObject(ctx);
@@ -300,7 +305,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
       PrintObject(ctx, "NSelectStmt");
-      assert(select->target_list != nullptr);
+      assert(select->target_list != NULL);
       PrintObject(ctx, "target_list");
       print_list(select->target_list, ctx);
       EndObject(ctx);
@@ -315,9 +320,9 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NINSERT_STMT: {
       NInsertStmt* insert = (NInsertStmt*)node;
-      assert(insert->table_name != nullptr);
-      assert(insert->column_list != nullptr);
-      assert(insert->values_list != nullptr);
+      assert(insert->table_name != NULL);
+      assert(insert->column_list != NULL);
+      assert(insert->values_list != NULL);
       PrintObject(ctx, "NInsertStmt");
       PrintObject(ctx, "table_name");
       print_parse_node(insert->table_name, ctx);
@@ -333,12 +338,12 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NDELETE_STMT: {
       NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
-      assert(delete_stmt->table_name != nullptr);
+      assert(delete_stmt->table_name != NULL);
       PrintObject(ctx, "NDeleteStmt");
       PrintObject(ctx, "table_name");
       print_parse_node(delete_stmt->table_name, ctx);
       EndObject(ctx);
-      if (delete_stmt->where_clause != nullptr) {
+      if (delete_stmt->where_clause != NULL) {
         PrintObject(ctx, "where_clause");
         print_parse_node(delete_stmt->where_clause, ctx);
         EndObject(ctx);
@@ -348,8 +353,8 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NASSIGN_EXPR: {
       NAssignExpr* assign_expr = (NAssignExpr*)node;
-      assert(assign_expr->column != nullptr);
-      assert(assign_expr->column != nullptr);
+      assert(assign_expr->column != NULL);
+      assert(assign_expr->column != NULL);
       PrintObject(ctx, "NAssignExpr");
       PrintObject(ctx, "column");
       print_parse_node(assign_expr->column, ctx);
@@ -362,8 +367,8 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
-      assert(update->table_name != nullptr);
-      assert(update->assign_expr_list != nullptr);
+      assert(update->table_name != NULL);
+      assert(update->assign_expr_list != NULL);
       PrintObject(ctx, "NUpdateStmt");
       PrintObject(ctx, "table_name");
       print_parse_node(update->table_name, ctx);
@@ -371,7 +376,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       PrintObject(ctx, "assign_expr_list");
       print_list(update->assign_expr_list, ctx);
       EndObject(ctx);
-      if (update->where_clause != nullptr) {
+      if (update->where_clause != NULL) {
         PrintObject(ctx, "where_clause");
         print_parse_node(update->where_clause, ctx);
         EndObject(ctx);

@@ -1,11 +1,16 @@
 #ifndef NODE_H
 #define NODE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
-struct PrintContext {
+typedef struct {
   uint64_t indent;
-};
+} PrintContext;
 
 PrintContext MakePrintContext();
 void PrintObject(PrintContext*, const char*);
@@ -15,18 +20,18 @@ void PrintIndent(PrintContext*);
 void Indent(PrintContext*);
 void Dedent(PrintContext*);
 
-enum ListType { T_PARSENODE, T_LIST };
+typedef enum ListType { T_PARSENODE, T_LIST } ListType;
 
-struct ListCell {
+typedef struct ListCell {
   void* data;
-  ListCell* next;
-};
+  struct ListCell* next;
+} ListCell;
 
-struct List {
+typedef struct List {
   ListType type;
   uint64_t length;
   ListCell* head;
-};
+} List;
 
 List* make_list(ListType);
 void push_list(List*, void*);
@@ -35,7 +40,7 @@ void print_list(List*, PrintContext*);
 
 #define FOR_EACH(cell, list) for (cell = list->head; cell != nullptr; cell = cell->next)
 
-enum ParseNodeType {
+typedef enum ParseNodeType {
   NBIN_EXPR,
   NIDENTIFIER,
   NSTRING_LIT,
@@ -45,13 +50,13 @@ enum ParseNodeType {
   NUPDATE_STMT,
   NASSIGN_EXPR,
   NBOOL_LIT,
-};
+} ParseNodeType;
 
-struct ParseNode {
+typedef struct ParseNode {
   ParseNodeType type;
-};
+} ParseNode;
 
-enum BinExprOp {
+typedef enum BinExprOp {
   EQ,
   NEQ,
   GT,
@@ -64,75 +69,79 @@ enum BinExprOp {
   DIV,
   AND,
   OR,
-};
+} BinExprOp;
 
 const char* bin_expr_op_to_string(BinExprOp);
 
-struct NBinExpr {
+typedef struct NBinExpr {
   ParseNodeType type;
 
   BinExprOp op;
   ParseNode* lhs;
   ParseNode* rhs;
-};
+} NBinExpr;
 
-struct NIdentifier {
+typedef struct NIdentifier {
   ParseNodeType type;
 
   char* identifier;
-};
+} NIdentifier;
 
-struct NStringLit {
+typedef struct NStringLit {
   ParseNodeType type;
 
   char* str_lit;
-};
+} NStringLit;
 
-struct NBoolLit {
+typedef struct NBoolLit {
   ParseNodeType type;
 
   bool bool_lit;
-};
+} NBoolLit;
 
-struct NSelectStmt {
+typedef struct NSelectStmt {
   ParseNodeType type;
 
   List* target_list;
   ParseNode* table_name;
   ParseNode* where_clause;
-};
+} NSelectStmt;
 
-struct NInsertStmt {
+typedef struct NInsertStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
   List* column_list;
   List* values_list;
-};
+} NInsertStmt;
 
-struct NDeleteStmt {
+typedef struct NDeleteStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
   ParseNode* where_clause;
-};
+} NDeleteStmt;
 
-struct NAssignExpr {
+typedef struct NAssignExpr {
   ParseNodeType type;
 
   ParseNode* column;
   ParseNode* value_expr;
-};
+} NAssignExpr;
 
-struct NUpdateStmt {
+typedef struct NUpdateStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
   List* assign_expr_list;
   ParseNode* where_clause;
-};
+} NUpdateStmt;
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // CONTEXT_HH

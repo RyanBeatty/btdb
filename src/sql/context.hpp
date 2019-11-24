@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <variant>
-#include "node.hpp"
+#include "node.h"
 #include "sql/parser.hpp"
 
 // Give Flex the prototype of yylex we want ...

@@ -18,7 +18,7 @@
 
 #include "analyzer.h"
 #include "collections.h"
-#include "node.hpp"
+#include "node.h"
 #include "sql/context.hpp"
 #include "storage.h"
 #include "types.h"

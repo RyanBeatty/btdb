@@ -9,7 +9,7 @@
 
 // This code goes in parser.hpp
 %code requires {
-  #include "node.hpp"
+  #include "node.h"
 
   // Can't include sql stuff or else we get circular import,
   // so need to forward declare stuff.

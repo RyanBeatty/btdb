@@ -1,7 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include <string>
 
-void Panic(const std::string& msg);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void Panic(const char* msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // UTILS_HH

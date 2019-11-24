@@ -6,7 +6,7 @@ add_subdirectory(sql)
 
 add_executable(btdb
     main.cpp
-    utils.cpp
+    utils.c
     analyzer.cpp
     storage.cpp
     types.cpp

@@ -46,7 +46,7 @@
 // //                    "%code requires" blocks.
 #line 11 "parser.y"
 
-  #include "node.hpp"
+  #include "node.h"
 
   // Can't include sql stuff or else we get circular import,
   // so need to forward declare stuff.
