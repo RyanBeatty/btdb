@@ -1,11 +1,11 @@
-#ifndef NODE_HH
-#define NODE_HH
+#ifndef NODE_H
+#define NODE_H
+#include <stdbool.h>
 #include <cassert>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
-#include <stdbool.h>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -98,7 +98,7 @@ enum BinExprOp {
   OR,
 };
 
-std::string bin_expr_op_to_string(BinExprOp op);
+const char* bin_expr_op_to_string(BinExprOp op);
 
 struct NBinExpr {
   ParseNodeType type;

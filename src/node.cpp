@@ -4,8 +4,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <variant>
-#include <vector>
 
 namespace btdb {
 
@@ -186,7 +184,7 @@ void free_parse_node(ParseNode* node) {
   }
 }
 
-std::string bin_expr_op_to_string(BinExprOp op) {
+const char* bin_expr_op_to_string(BinExprOp op) {
   switch (op) {
     case EQ: {
       return "EQ";
