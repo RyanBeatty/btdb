@@ -46,7 +46,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(table_name->identifier != NULL);
   auto table_def_it = Tables.begin();
   for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_name->identifier) {
+    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
       break;
     }
   }
@@ -159,7 +159,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   assert(table_name->identifier != NULL);
   auto table_def_it = Tables.begin();
   for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_name->identifier) {
+    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
       break;
     }
   }
@@ -239,7 +239,7 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(table_name->identifier != NULL);
   auto table_def_it = Tables.begin();
   for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_name->identifier) {
+    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
       break;
     }
   }
@@ -268,7 +268,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   assert(table_name->identifier != NULL);
   auto table_def_it = Tables.begin();
   for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (table_def_it->name == table_name->identifier) {
+    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
       break;
     }
   }

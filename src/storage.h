@@ -1,7 +1,6 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -9,7 +8,7 @@
 #include "types.h"
 
 struct TableDef {
-  std::string name;
+  const char* name;
   std::unordered_map<std::string, BType> tuple_desc;
 };
 
