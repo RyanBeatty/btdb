@@ -1,6 +1,10 @@
 #ifndef COLLECTIONS_H
 #define COLLECTIONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -12,11 +16,11 @@
 #define VEC_LENGTH(vec_ptr) vec_ptr->length
 
 #define VEC_PROTOTYPE(name, type)                                   \
-  struct name##Vec {                                                \
+  typedef struct name##Vec {                                        \
     size_t length;                                                  \
     size_t capacity;                                                \
     type* buffer;                                                   \
-  };                                                                \
+  } name##Vec;                                                      \
                                                                     \
   typedef type* name##VecIt;                                        \
                                                                     \
@@ -72,17 +76,17 @@
   }
 
 #define MAP_PROTOTYPE(name, key_t, val_t, hash_func, cmp_func)         \
-  struct name##MapEntry {                                              \
+  typedef struct name##MapEntry {                                      \
     key_t key;                                                         \
     val_t val;                                                         \
     bool is_filled;                                                    \
-  };                                                                   \
+  } name##MapEntry;                                                    \
                                                                        \
-  struct name##Map {                                                   \
+  typedef struct name##Map {                                           \
     size_t size;                                                       \
     size_t capacity;                                                   \
-    name##MapEntry* buffer;                                            \
-  };                                                                   \
+    struct name##MapEntry* buffer;                                     \
+  } name##Map;                                                         \
                                                                        \
   inline name##Map* Make##name##Map() {                                \
     name##Map* map = (name##Map*)calloc(1, sizeof(name##Map));         \
@@ -137,5 +141,9 @@
 // MAP_PROTOTYPE(StrStr, char*, char*, hash_djb2, strcmp);
 
 VEC_PROTOTYPE(CharPtr, char*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // COLLECTIONS_H
