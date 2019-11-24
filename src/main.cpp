@@ -464,8 +464,7 @@ int main() {
     if (parser.Parse() != 0) {
       continue;
     }
-    auto tree = std::move(parser.tree);
-    btdb::Query* query = btdb::AnalyzeParseTree(tree.get()->tree);
+    btdb::Query* query = btdb::AnalyzeParseTree(parser.tree);
     if (query == NULL) {
       printf("Query not valid\n");
       continue;
