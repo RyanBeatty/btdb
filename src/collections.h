@@ -14,6 +14,7 @@ extern "C" {
   for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
 
 #define VEC_LENGTH(vec_ptr) vec_ptr->length
+#define VEC_BUFFER(vec_ptr) vec_ptr->buffer
 
 #define VEC_PROTOTYPE(name, type)                                   \
   typedef struct name##Vec {                                        \
