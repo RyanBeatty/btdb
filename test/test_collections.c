@@ -19,9 +19,20 @@ void test_PushBack(void) {
   VEC_FOREACH(it, vec) { TEST_ASSERT_EQUAL(*it, "a"); }
 }
 
+void test_Erase(void) {}
+
+void test_Get(void) {
+  CharPtrVec* vec = MakeCharPtrVec();
+  TEST_ASSERT_EQUAL(NULL, Get(vec, 0));
+  PushBack(vec, "foo");
+  TEST_ASSERT_EQUAL("foo", *Get(vec, 0));
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_AverageThreeBytes_should_AverageMidRangeValues);
   RUN_TEST(test_PushBack);
+  RUN_TEST(test_Erase);
+  RUN_TEST(test_Get);
   return UNITY_END();
 }
