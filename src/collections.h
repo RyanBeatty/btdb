@@ -25,7 +25,7 @@ extern "C" {
                                                                     \
   typedef type* name##VecIt;                                        \
                                                                     \
-  inline name##Vec* Make##name##Vec() {                             \
+  static inline name##Vec* Make##name##Vec() {                      \
     name##Vec* vec = (name##Vec*)calloc(1, sizeof(name##Vec));      \
     assert(vec != NULL);                                            \
     vec->buffer = (type*)calloc(10, sizeof(type));                  \
@@ -33,7 +33,7 @@ extern "C" {
     return vec;                                                     \
   }                                                                 \
                                                                     \
-  inline void PushBack(name##Vec* vec, type data) {                 \
+  static inline void PushBack(name##Vec* vec, type data) {          \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (vec->length >= vec->capacity) {                             \
@@ -48,19 +48,18 @@ extern "C" {
     return;                                                         \
   }                                                                 \
                                                                     \
-  inline void Erase(name##Vec* vec, size_t index) {                 \
+  static inline void Erase(name##Vec* vec, size_t index) {          \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (index >= vec->length) {                                     \
       return;                                                       \
     }                                                               \
-    assert(index < vec->length);                                    \
     vec->buffer[index] = vec->buffer[vec->length - 1];              \
     memset(&vec->buffer[vec->length - 1], (int)0, sizeof(type));    \
     --vec->length;                                                  \
   }                                                                 \
                                                                     \
-  inline type* Get(name##Vec* vec, size_t i) {                      \
+  static inline type* Get(name##Vec* vec, size_t i) {               \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
     if (i >= vec->length) {                                         \
@@ -69,7 +68,7 @@ extern "C" {
     return &vec->buffer[i];                                         \
   }                                                                 \
                                                                     \
-  inline void free_vec(name##Vec* vec) {                            \
+  static inline void free_vec(name##Vec* vec) {                     \
     if (vec == NULL) {                                              \
       return;                                                       \
     }                                                               \
@@ -92,14 +91,14 @@ extern "C" {
     struct name##MapEntry* buffer;                                     \
   } name##Map;                                                         \
                                                                        \
-  inline name##Map* Make##name##Map() {                                \
+  static inline name##Map* Make##name##Map() {                         \
     name##Map* map = (name##Map*)calloc(1, sizeof(name##Map));         \
     map->buffer = (name##MapEntry*)calloc(10, sizeof(name##MapEntry)); \
     map->size = 0;                                                     \
     map->capacity = 10;                                                \
   }                                                                    \
                                                                        \
-  inline name##MapEntry* MapGet(name##Map* map, key_t key) {           \
+  static inline name##MapEntry* MapGet(name##Map* map, key_t key) {    \
     if (!map->size) {                                                  \
       return NULL;                                                     \
     }                                                                  \
@@ -115,7 +114,7 @@ extern "C" {
     return NULL;                                                       \
   }                                                                    \
                                                                        \
-  inline name##MapEntry* MapSet(name##Map* map, key_t key) {           \
+  static inline name##MapEntry* MapSet(name##Map* map, key_t key) {    \
     assert(map->size < map->capacity);                                 \
     size_t hash = hash_func(key);                                      \
     size_t i = hash % map->capacity;                                   \

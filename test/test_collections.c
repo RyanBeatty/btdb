@@ -19,7 +19,22 @@ void test_PushBack(void) {
   VEC_FOREACH(it, vec) { TEST_ASSERT_EQUAL(*it, "a"); }
 }
 
-void test_Erase(void) {}
+void test_Erase(void) {
+  CharPtrVec* vec = MakeCharPtrVec();
+  TEST_ASSERT_EQUAL(0, VEC_LENGTH(vec));
+  Erase(vec, 1);
+  TEST_ASSERT_EQUAL(0, VEC_LENGTH(vec));
+  PushBack(vec, "a");
+  PushBack(vec, "b");
+  PushBack(vec, "c");
+  Erase(vec, 0);
+  TEST_ASSERT_EQUAL("c", *Get(vec, 0));
+  TEST_ASSERT_EQUAL("b", *Get(vec, 1));
+  TEST_ASSERT_EQUAL(NULL, Get(vec, 2));
+  Erase(vec, 1);
+  TEST_ASSERT_EQUAL("c", *Get(vec, 0));
+  TEST_ASSERT_EQUAL(NULL, Get(vec, 1));
+}
 
 void test_Get(void) {
   CharPtrVec* vec = MakeCharPtrVec();
