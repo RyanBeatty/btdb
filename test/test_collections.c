@@ -5,7 +5,7 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-void test_PushBack(void) {
+void test_Vec_PushBack(void) {
   CharPtrVec* vec = MakeCharPtrVec();
   for (uint64_t i = 0; i < 12; ++i) {
     PushBack(vec, "a");
@@ -15,7 +15,7 @@ void test_PushBack(void) {
   VEC_FOREACH(it, vec) { TEST_ASSERT_EQUAL(*it, "a"); }
 }
 
-void test_Erase(void) {
+void test_Vec_Erase(void) {
   CharPtrVec* vec = MakeCharPtrVec();
   TEST_ASSERT_EQUAL(0, VEC_LENGTH(vec));
   Erase(vec, 1);
@@ -32,7 +32,7 @@ void test_Erase(void) {
   TEST_ASSERT_EQUAL(NULL, Get(vec, 1));
 }
 
-void test_Get(void) {
+void test_Vec_Get(void) {
   CharPtrVec* vec = MakeCharPtrVec();
   TEST_ASSERT_EQUAL(NULL, Get(vec, 0));
   PushBack(vec, "foo");
@@ -41,8 +41,8 @@ void test_Get(void) {
 
 int main(void) {
   UNITY_BEGIN();
-  RUN_TEST(test_PushBack);
-  RUN_TEST(test_Erase);
-  RUN_TEST(test_Get);
+  RUN_TEST(test_Vec_PushBack);
+  RUN_TEST(test_Vec_Erase);
+  RUN_TEST(test_Vec_Get);
   return UNITY_END();
 }
