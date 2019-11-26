@@ -5,10 +5,6 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-void test_AverageThreeBytes_should_AverageMidRangeValues(void) {
-  TEST_ASSERT_EQUAL_CHAR('c', 'c');
-}
-
 void test_PushBack(void) {
   CharPtrVec* vec = MakeCharPtrVec();
   for (uint64_t i = 0; i < 12; ++i) {
