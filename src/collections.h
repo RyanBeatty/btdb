@@ -51,6 +51,9 @@ extern "C" {
   inline void Erase(name##Vec* vec, size_t index) {                 \
     assert(vec != NULL);                                            \
     assert(vec->buffer != NULL);                                    \
+    if (index >= vec->length) {                                     \
+      return;                                                       \
+    }                                                               \
     assert(index < vec->length);                                    \
     vec->buffer[index] = vec->buffer[vec->length - 1];              \
     memset(&vec->buffer[vec->length - 1], (int)0, sizeof(type));    \
