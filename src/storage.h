@@ -1,6 +1,5 @@
 #ifndef STORAGE_H
 #define STORAGE_H
-#include <memory>
 #include <unordered_map>
 
 #include "collections.h"
@@ -33,7 +32,6 @@ TableDef* FindTableDef(const char*);
 
 // TODO: Figure out what a tuple will actually look like.
 typedef std::unordered_map<std::string, Datum> Tuple;
-typedef std::unique_ptr<Tuple> MTuple;
 
 VEC_PROTOTYPE(TuplePtr, Tuple*);
 

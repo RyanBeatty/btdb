@@ -26,7 +26,7 @@
 
 struct Iterator {
   virtual void Open() = 0;
-  virtual MTuple GetNext() = 0;
+  virtual Tuple* GetNext() = 0;
   virtual void Close() = 0;
 };
 
@@ -218,7 +218,7 @@ struct SequentialScan : Iterator {
       : next_index(0), target_list(target_list), where_clause(where_clause) {}
 
   void Open() {}
-  MTuple GetNext() {
+  Tuple* GetNext() {
     for (;;) {
       TuplePtrVecIt it = GetTuple(next_index);
       if (it == NULL) {
@@ -248,7 +248,7 @@ struct SequentialScan : Iterator {
         assert(it != cur_tpl.end());
         result_tpl[it->first] = it->second;
       }
-      return std::make_unique<Tuple>(result_tpl);
+      return new Tuple(result_tpl);
     }
   }
   void Close() {}
@@ -261,7 +261,7 @@ struct InsertScan : Iterator {
 
   void Open() {}
 
-  MTuple GetNext() {
+  Tuple* GetNext() {
     for (;;) {
       if (tuples.size() == 0) {
         return NULL;
@@ -284,7 +284,7 @@ struct DeleteScan : Iterator {
 
   void Open() {}
 
-  MTuple GetNext() {
+  Tuple* GetNext() {
     for (;;) {
       TuplePtrVecIt it = GetTuple(next_index);
       if (it == NULL) {
@@ -305,7 +305,7 @@ struct DeleteScan : Iterator {
         }
       }
 
-      auto result = std::make_unique<Tuple>(cur_tpl);
+      auto result = new Tuple(cur_tpl);
       DeleteHeapTuple(next_index);
       return result;
     }
@@ -328,7 +328,7 @@ struct UpdateScan : Iterator {
       : assign_exprs(assign_exprs), where_clause(where_clause) {}
 
   void Open() {}
-  MTuple GetNext() {
+  Tuple* GetNext() {
     for (;;) {
       TuplePtrVecIt it = GetTuple(next_index);
       if (it == NULL) {
@@ -366,7 +366,7 @@ struct UpdateScan : Iterator {
         assert(updated_value.type == it->second.type);
         it->second = updated_value;
       }
-      return std::make_unique<Tuple>(cur_tpl);
+      return new Tuple(cur_tpl);
     }
 
     return NULL;
@@ -418,7 +418,7 @@ PlanState PlanQuery(Query* query) {
 
 struct Result {
   CharPtrVec* columns;
-  std::vector<MTuple> tuples;
+  std::vector<Tuple*> tuples;
 };
 
 Result execute_plan(PlanState& plan_state) {
