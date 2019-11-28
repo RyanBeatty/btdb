@@ -44,13 +44,9 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);
-  auto table_def_it = Tables.begin();
-  for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
-      break;
-    }
-  }
-  if (table_def_it == Tables.end()) {
+
+  TableDef* table_def = FindTableDef(table_name->identifier);
+  if (table_def == NULL) {
     return NULL;
   }
 
@@ -65,14 +61,14 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
+    if (table_def->tuple_desc.find(col->identifier) == table_def->tuple_desc.end()) {
       return NULL;
     }
     PushBack(targets, col->identifier);
   }
 
   if (select->where_clause != NULL) {
-    if (CheckType(select->where_clause, *table_def_it) != T_BOOL) {
+    if (CheckType(select->where_clause, *table_def) != T_BOOL) {
       return NULL;
     }
   }
@@ -157,13 +153,9 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);
-  auto table_def_it = Tables.begin();
-  for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
-      break;
-    }
-  }
-  if (table_def_it == Tables.end()) {
+
+  TableDef* table_def = FindTableDef(table_name->identifier);
+  if (table_def == NULL) {
     return NULL;
   }
 
@@ -178,7 +170,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (table_def_it->tuple_desc.find(col->identifier) == table_def_it->tuple_desc.end()) {
+    if (table_def->tuple_desc.find(col->identifier) == table_def->tuple_desc.end()) {
       return NULL;
     }
     PushBack(targets, col->identifier);
@@ -201,7 +193,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != NULL);
       // TODO(ryan): Allow for more general expressions here.
-      BType type = CheckType((ParseNode*)lc2->data, *table_def_it);
+      BType type = CheckType((ParseNode*)lc2->data, *table_def);
       if (type == T_UNKNOWN) {
         return NULL;
       }
@@ -237,18 +229,14 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(delete_stmt->table_name != NULL);
   assert(delete_stmt->table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);
-  auto table_def_it = Tables.begin();
-  for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
-      break;
-    }
-  }
-  if (table_def_it == Tables.end()) {
+
+  TableDef* table_def = FindTableDef(table_name->identifier);
+  if (table_def == NULL) {
     return NULL;
   }
 
   if (delete_stmt->where_clause != NULL &&
-      CheckType(delete_stmt->where_clause, *table_def_it) != T_BOOL) {
+      CheckType(delete_stmt->where_clause, *table_def) != T_BOOL) {
     return NULL;
   }
 
@@ -266,13 +254,9 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);
-  auto table_def_it = Tables.begin();
-  for (; table_def_it != Tables.end(); ++table_def_it) {
-    if (strcmp(table_def_it->name, table_name->identifier) == 0) {
-      break;
-    }
-  }
-  if (table_def_it == Tables.end()) {
+
+  TableDef* table_def = FindTableDef(table_name->identifier);
+  if (table_def == NULL) {
     return NULL;
   }
 
@@ -290,18 +274,17 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     NIdentifier* col = (NIdentifier*)assign_expr->column;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    const auto& col_type_it = table_def_it->tuple_desc.find(col->identifier);
-    if (col_type_it == table_def_it->tuple_desc.end()) {
+    const auto& col_type_it = table_def->tuple_desc.find(col->identifier);
+    if (col_type_it == table_def->tuple_desc.end()) {
       return NULL;
     }
 
-    if (col_type_it->second != CheckType(assign_expr->value_expr, *table_def_it)) {
+    if (col_type_it->second != CheckType(assign_expr->value_expr, *table_def)) {
       return NULL;
     }
   }
 
-  if (update->where_clause != NULL &&
-      CheckType(update->where_clause, *table_def_it) != T_BOOL) {
+  if (update->where_clause != NULL && CheckType(update->where_clause, *table_def) != T_BOOL) {
     return NULL;
   }
 

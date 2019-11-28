@@ -2,7 +2,6 @@
 #define STORAGE_H
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 #include "collections.h"
 #include "types.h"
@@ -12,7 +11,12 @@ struct TableDef {
   std::unordered_map<std::string, BType> tuple_desc;
 };
 
-static std::vector<TableDef> Tables = {{"foo", {{"bar", T_STRING}, {"baz", T_BOOL}}}};
+TableDef* MakeTableDef(const char*, std::unordered_map<std::string, BType>);
+
+VEC_PROTOTYPE(TableDefPtr, TableDef*);
+extern TableDefPtrVec* Tables;
+
+TableDef* FindTableDef(const char*);
 
 // typedef unsigned char byte;
 // typedef byte* HeapTuple;
@@ -39,7 +43,5 @@ void InsertTuple(Tuple*);
 void UpdateTuple(Tuple*, size_t);
 TuplePtrVecIt GetTuple(size_t);
 void DeleteHeapTuple(size_t);
-
-// static std::vector<Tuple> Tuples;
 
 #endif  // STORAGE_H

@@ -436,6 +436,8 @@ Result execute_plan(PlanState& plan_state) {
 int main() {
   printf("Starting btdb\n");
 
+  PushBack(Tables, MakeTableDef("foo", {{"bar", T_STRING}, {"baz", T_BOOL}}));
+
   Tuple* t1 = new Tuple({
       {"bar", MakeDatum(T_STRING, new std::string("hello"))},
       {"baz", MakeDatum(T_BOOL, new bool(true))},

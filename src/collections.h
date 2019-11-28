@@ -13,6 +13,9 @@ extern "C" {
 #define VEC_FOREACH(it, vec) \
   for (it = &vec->buffer[0]; it != (vec->buffer + vec->length); ++it)
 
+#define VEC_END(vec) vec->length
+#define VEC_VALUE(vec, i) vec->buffer[i]
+
 #define VEC_LENGTH(vec_ptr) vec_ptr->length
 #define VEC_BUFFER(vec_ptr) vec_ptr->buffer
 
