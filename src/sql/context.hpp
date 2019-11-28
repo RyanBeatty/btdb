@@ -1,8 +1,6 @@
 #ifndef CONTEXT_HH
 #define CONTEXT_HH
-#include <map>
 #include <string>
-#include <variant>
 #include "node.h"
 #include "sql/parser.hpp"
 
