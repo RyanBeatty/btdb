@@ -2,6 +2,7 @@
 #include "collections.h"
 
 TableDefPtrVec* Tables = MakeTableDefPtrVec();
+TuplePtrVec* Tuples = MakeTuplePtrVec();
 
 TableDef* MakeTableDef(const char* name, std::unordered_map<std::string, BType> tuple_desc) {
   size_t len = strlen(name);

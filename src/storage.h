@@ -37,7 +37,7 @@ typedef std::unique_ptr<Tuple> MTuple;
 
 VEC_PROTOTYPE(TuplePtr, Tuple*);
 
-static TuplePtrVec* Tuples = MakeTuplePtrVec();
+extern TuplePtrVec* Tuples;
 
 void InsertTuple(Tuple*);
 void UpdateTuple(Tuple*, size_t);
