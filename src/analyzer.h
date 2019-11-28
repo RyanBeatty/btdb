@@ -1,6 +1,5 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
-#include <vector>
 
 #include "collections.h"
 #include "sql/context.hpp"
@@ -22,7 +21,7 @@ struct Query {
   CharPtrVec* target_list;
   ParseNode* where_clause;
   List* assign_expr_list;
-  std::vector<Tuple> values;
+  TuplePtrVec* values;
 };
 
 Query* MakeQuery(CmdType);

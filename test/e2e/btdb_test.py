@@ -82,8 +82,8 @@ def test_insert():
         ===============
         hello\ttrue\t
         world\tfalse\t
-        b\ttrue\t
         a\tfalse\t
+        b\ttrue\t
         btdb> Shutting down btdb
         """
         ),

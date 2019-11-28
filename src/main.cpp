@@ -255,22 +255,20 @@ struct SequentialScan : Iterator {
 };
 
 struct InsertScan : Iterator {
-  std::vector<Tuple> tuples;
+  TuplePtrVec* tuples;
 
-  InsertScan(std::vector<Tuple> tuples) : tuples(tuples) {}
+  InsertScan(TuplePtrVec* tuples) : tuples(tuples) {}
 
   void Open() {}
 
   Tuple* GetNext() {
-    for (;;) {
-      if (tuples.size() == 0) {
-        return NULL;
-      }
-      auto& tuple = tuples.back();
-      Tuple* new_tuple = new Tuple(tuple);
-      InsertTuple(new_tuple);
-      tuples.pop_back();
+    Tuple* cur_tuple = NULL;
+    for (size_t i = 0; i < VEC_END(tuples); ++i) {
+      cur_tuple = VEC_VALUE(tuples, i);
+      assert(cur_tuple != NULL);
+      InsertTuple(new Tuple(*cur_tuple));
     }
+    return NULL;
   }
 
   void Close() {}

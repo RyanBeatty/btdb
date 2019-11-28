@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <string>
-#include <vector>
 
 #include "analyzer.h"
 #include "collections.h"
@@ -176,7 +175,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     PushBack(targets, col->identifier);
   }
 
-  std::vector<Tuple> values;
+  TuplePtrVec* values = MakeTuplePtrVec();
   List* values_list = insert->values_list;
   assert(values_list != NULL);
   assert(values_list->type == T_LIST);
@@ -212,7 +211,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       }
       ++col_index;
     }
-    values.push_back(tuple);
+    PushBack(values, new Tuple(tuple));
   }
 
   Query* query = MakeQuery(CMD_INSERT);
