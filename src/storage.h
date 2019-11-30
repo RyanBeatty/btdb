@@ -17,8 +17,7 @@ struct TableDef {
 
 TableDef* MakeTableDef(const char*, ColDesc*);
 
-VEC_PROTOTYPE(TableDefPtr, TableDef*);
-extern TableDefPtrVec* Tables;
+extern TableDef* Tables;  // sb
 
 TableDef* FindTableDef(const char*);
 

@@ -1,7 +1,9 @@
-#include "storage.h"
-#include "collections.h"
+#include "stretchy_buffer.h"
 
-TableDefPtrVec* Tables = MakeTableDefPtrVec();
+#include "collections.h"
+#include "storage.h"
+
+TableDef* Tables = NULL;
 TuplePtrVec* Tuples = MakeTuplePtrVec();
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
@@ -17,16 +19,15 @@ TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
 TableDef* FindTableDef(const char* table_name) {
   TableDef* table_def = NULL;
   size_t i = 0;
-  for (; i < VEC_END(Tables); ++i) {
-    table_def = VEC_VALUE(Tables, i);
-    assert(table_def != NULL);
-    if (strcmp(table_def->name, table_name) == 0) {
+  for (; i < sb_count(Tables); ++i) {
+    if (strcmp(Tables[i].name, table_name) == 0) {
+      table_def = &Tables[i];
       break;
     }
   }
 
   // TODO(ryan): Just return from break and return null with no check here.
-  return i == VEC_END(Tables) ? NULL : table_def;
+  return i == sb_count(Tables) ? NULL : table_def;
 }
 
 // void WriteField(MemTuple* mtuple, byte* data, size_t size) {

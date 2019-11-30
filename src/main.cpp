@@ -441,8 +441,8 @@ int main() {
   ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
   sb_push(tuple_desc, col1);
   sb_push(tuple_desc, col2);
-
-  PushBack(Tables, MakeTableDef("foo", tuple_desc));
+  TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
+  sb_push(Tables, table_def);
 
   Tuple* t1 = MakeTuplePairVec();
   SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
