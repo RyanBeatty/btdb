@@ -5,6 +5,12 @@
 void setUp(void) {}
 void tearDown(void) {}
 
+void test_MakeVec(void) {
+  CharPtrVec* vec = MakeCharPtrVec();
+  TEST_ASSERT_EQUAL(0, VEC_LENGTH(vec));
+  TEST_ASSERT_EQUAL(10, vec->capacity);
+}
+
 void test_Vec_PushBack(void) {
   CharPtrVec* vec = MakeCharPtrVec();
   for (uint64_t i = 0; i < 12; ++i) {
@@ -44,5 +50,6 @@ int main(void) {
   RUN_TEST(test_Vec_PushBack);
   RUN_TEST(test_Vec_Erase);
   RUN_TEST(test_Vec_Get);
+  RUN_TEST(test_MakeVec);
   return UNITY_END();
 }

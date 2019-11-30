@@ -40,7 +40,7 @@ struct Iterator {
 
 typedef Iterator Plan;
 
-Datum EvalExpr(ParseNode* node, const Tuple& cur_tuple) {
+Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
   switch (node->type) {
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
@@ -56,9 +56,9 @@ Datum EvalExpr(ParseNode* node, const Tuple& cur_tuple) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      auto it = cur_tuple.find(identifier->identifier);
-      assert(it != cur_tuple.end());
-      return it->second;
+      Datum* data = GetCol((Tuple*)cur_tuple, identifier->identifier);
+      assert(data != NULL);
+      return *data;
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
@@ -227,7 +227,7 @@ struct SequentialScan : Iterator {
       ++next_index;
 
       assert(*it != NULL);
-      const Tuple& cur_tpl = **it;
+      Tuple* cur_tpl = *it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -241,14 +241,14 @@ struct SequentialScan : Iterator {
       }
 
       // Column projections.
-      Tuple result_tpl;
+      Tuple* result_tpl = MakeTuplePairVec();
       CharPtrVecIt target = NULL;
       VEC_FOREACH(target, target_list) {
-        auto it = cur_tpl.find(*target);
-        assert(it != cur_tpl.end());
-        result_tpl[it->first] = it->second;
+        Datum* data = GetCol(cur_tpl, *target);
+        assert(data != NULL);
+        SetCol(result_tpl, *target, *data);
       }
-      return new Tuple(result_tpl);
+      return result_tpl;
     }
   }
   void Close() {}
@@ -266,7 +266,7 @@ struct InsertScan : Iterator {
     for (size_t i = 0; i < VEC_END(tuples); ++i) {
       cur_tuple = VEC_VALUE(tuples, i);
       assert(cur_tuple != NULL);
-      InsertTuple(new Tuple(*cur_tuple));
+      InsertTuple(CopyTuple(cur_tuple));
     }
     return NULL;
   }
@@ -289,7 +289,7 @@ struct DeleteScan : Iterator {
         return NULL;
       }
       assert(*it != NULL);
-      const Tuple& cur_tpl = **it;
+      Tuple* cur_tpl = *it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -303,9 +303,9 @@ struct DeleteScan : Iterator {
         }
       }
 
-      auto result = new Tuple(cur_tpl);
+      Tuple* new_tuple = CopyTuple(cur_tpl);
       DeleteHeapTuple(next_index);
-      return result;
+      return new_tuple;
     }
 
     return NULL;
@@ -333,7 +333,7 @@ struct UpdateScan : Iterator {
         return NULL;
       }
       assert(*it != NULL);
-      Tuple& cur_tpl = **it;
+      Tuple* cur_tpl = *it;
       ++next_index;
 
       // Evaluate predicate if any.
@@ -358,13 +358,13 @@ struct UpdateScan : Iterator {
         assert(col->type == NIDENTIFIER);
         assert(col->identifier != NULL);
 
-        auto it = cur_tpl.find(col->identifier);
-        assert(it != cur_tpl.end());
+        Datum* data = GetCol(cur_tpl, col->identifier);
+        assert(data != NULL);
         Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
-        assert(updated_value.type == it->second.type);
-        it->second = updated_value;
+        assert(updated_value.type == data->type);
+        *data = updated_value;
       }
-      return new Tuple(cur_tpl);
+      return CopyTuple(cur_tpl);
     }
 
     return NULL;
@@ -436,14 +436,14 @@ int main() {
 
   PushBack(Tables, MakeTableDef("foo", {{"bar", T_STRING}, {"baz", T_BOOL}}));
 
-  Tuple* t1 = new Tuple({
-      {"bar", MakeDatum(T_STRING, new std::string("hello"))},
-      {"baz", MakeDatum(T_BOOL, new bool(true))},
-  });
-  Tuple* t2 = new Tuple({
-      {"bar", MakeDatum(T_STRING, new std::string("world"))},
-      {"baz", MakeDatum(T_BOOL, new bool(false))},
-  });
+  Tuple* t1 = MakeTuplePairVec();
+  SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
+  SetCol(t1, "baz", MakeDatum(T_BOOL, new bool(true)));
+
+  Tuple* t2 = MakeTuplePairVec();
+  SetCol(t2, "bar", MakeDatum(T_STRING, new std::string("world")));
+  SetCol(t2, "baz", MakeDatum(T_BOOL, new bool(false)));
+
   InsertTuple(t1);
   InsertTuple(t2);
   while (true) {
@@ -476,16 +476,14 @@ int main() {
         assert(mtuple != NULL);
         CharPtrVecIt it = NULL;
         VEC_FOREACH(it, results.columns) {
-          std::string column(*it);
-          auto it = mtuple->find(column);
-          if (it != mtuple->end()) {
-            Datum data = it->second;
+          Datum* data = GetCol(mtuple, *it);
+          if (data != NULL) {
             // TODO(ryan): This is some hacky bs to be able to print this as a string.
             // I'm going to need to do an overhaul of alot of this code in the future.
-            if (data.type == T_STRING) {
-              std::cout << *((std::string*)data.data);
-            } else if (data.type == T_BOOL) {
-              std::cout << (*((bool*)data.data) ? "true" : "false");
+            if (data->type == T_STRING) {
+              std::cout << *((std::string*)data->data);
+            } else if (data->type == T_BOOL) {
+              std::cout << (*((bool*)data->data) ? "true" : "false");
             } else {
               Panic("Only support printing strings or bools");
             }

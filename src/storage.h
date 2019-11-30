@@ -30,8 +30,21 @@ TableDef* FindTableDef(const char*);
 
 // void WriteField(MemTuple* mtuple, byte* data, size_t size);
 
+typedef struct TuplePair {
+  char* column_name;
+  Datum data;
+} TuplePair;
+
+VEC_PROTOTYPE(TuplePair, TuplePair);
+
+typedef TuplePairVec Tuple;
+
+Datum* GetCol(Tuple*, const char*);
+void SetCol(Tuple*, const char*, Datum);
+Tuple* CopyTuple(Tuple*);
+
 // TODO: Figure out what a tuple will actually look like.
-typedef std::unordered_map<std::string, Datum> Tuple;
+// typedef std::unordered_map<std::string, Datum> Tuple;
 
 VEC_PROTOTYPE(TuplePtr, Tuple*);
 

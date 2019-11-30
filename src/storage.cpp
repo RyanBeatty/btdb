@@ -25,6 +25,7 @@ TableDef* FindTableDef(const char* table_name) {
     }
   }
 
+  // TODO(ryan): Just return from break and return null with no check here.
   return i == VEC_END(Tables) ? NULL : table_def;
 }
 
@@ -36,6 +37,43 @@ TableDef* FindTableDef(const char* table_name) {
 //   memcpy(mtuple->htuple, data, size);
 //   return;
 // }
+
+Datum* GetCol(Tuple* tuple, const char* col_name) {
+  TuplePair* pair = NULL;
+  size_t i = 0;
+  for (; i < VEC_END(tuple); ++i) {
+    pair = &VEC_VALUE(tuple, i);
+    assert(pair != NULL);
+    if (strcmp(pair->column_name, col_name) == 0) {
+      return &pair->data;
+    }
+  }
+
+  return NULL;
+}
+
+void SetCol(Tuple* tuple, const char* col_name, Datum data) {
+  Datum* old_data = GetCol(tuple, col_name);
+  if (old_data == NULL) {
+    TuplePair pair;
+    pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));
+    strncpy(pair.column_name, col_name, strlen(col_name));
+    pair.data = data;
+    PushBack(tuple, pair);
+    return;
+  }
+  *old_data = data;
+}
+
+Tuple* CopyTuple(Tuple* tuple) {
+  Tuple* new_tuple = MakeTuplePairVec();
+  TuplePair pair;
+  for (size_t i = 0; i < VEC_END(tuple); ++i) {
+    pair = VEC_VALUE(tuple, i);
+    SetCol(new_tuple, pair.column_name, pair.data);
+  }
+  return new_tuple;
+}
 
 void InsertTuple(Tuple* tuple) {
   PushBack(Tuples, tuple);

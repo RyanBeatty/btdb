@@ -186,7 +186,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     assert(value_items->type == T_PARSENODE);
     assert(value_items->length == target_list->length);
 
-    Tuple tuple;
+    Tuple* tuple = MakeTuplePairVec();
     uint64_t col_index = 0;
     ListCell* lc2 = NULL;
     FOR_EACH(lc2, value_items) {
@@ -201,17 +201,17 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         NStringLit* str_lit = (NStringLit*)lc2->data;
         assert(str_lit->type == NSTRING_LIT);
         assert(str_lit->str_lit != NULL);
-        std::string key(*Get(targets, col_index));
-        tuple[key] = MakeDatum(T_STRING, new std::string(str_lit->str_lit));
+        const char* key = VEC_VALUE(targets, col_index);
+        SetCol(tuple, key, MakeDatum(T_STRING, new std::string(str_lit->str_lit)));
       } else {
         NBoolLit* bool_lit = (NBoolLit*)lc2->data;
         assert(bool_lit->type == NBOOL_LIT);
-        std::string key(*Get(targets, col_index));
-        tuple[key] = MakeDatum(T_BOOL, new bool(bool_lit->bool_lit));
+        const char* key = VEC_VALUE(targets, col_index);
+        SetCol(tuple, key, MakeDatum(T_BOOL, new bool(bool_lit->bool_lit)));
       }
       ++col_index;
     }
-    PushBack(values, new Tuple(tuple));
+    PushBack(values, CopyTuple(tuple));
   }
 
   Query* query = MakeQuery(CMD_INSERT);
