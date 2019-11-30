@@ -1,3 +1,6 @@
 [submodule "libs/Unity"]
 	path = libs/Unity
 	url = git@github.com:ThrowTheSwitch/Unity.git
+[submodule "libs/stb"]
+	path = libs/stb
+	url = git@github.com:nothings/stb.git

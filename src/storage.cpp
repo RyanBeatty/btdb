@@ -4,7 +4,7 @@
 TableDefPtrVec* Tables = MakeTableDefPtrVec();
 TuplePtrVec* Tuples = MakeTuplePtrVec();
 
-TableDef* MakeTableDef(const char* name, std::unordered_map<std::string, BType> tuple_desc) {
+TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
   size_t len = strlen(name);
   char* cpy = (char*)calloc(sizeof(char), len);
   strncpy(cpy, name, len);

@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <string>
 
+#include "stretchy_buffer.h"
+
 #include "analyzer.h"
 #include "collections.h"
 #include "sql/context.hpp"
@@ -60,7 +62,14 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (table_def->tuple_desc.find(col->identifier) == table_def->tuple_desc.end()) {
+    bool found = false;
+    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+      if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       return NULL;
     }
     PushBack(targets, col->identifier);
@@ -92,11 +101,18 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      const auto& col_type_it = table_def.tuple_desc.find(identifier->identifier);
-      if (col_type_it == table_def.tuple_desc.end()) {
+
+      ColDesc* col_type = NULL;
+      for (size_t i = 0; i < sb_count(table_def.tuple_desc); ++i) {
+        if (strcmp(table_def.tuple_desc[i].column_name, identifier->identifier) == 0) {
+          col_type = &table_def.tuple_desc[i];
+          break;
+        }
+      }
+      if (col_type == NULL) {
         Panic("Invalid column name in bin expr");
       }
-      return col_type_it->second;
+      return col_type->type;
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
@@ -169,7 +185,14 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     NIdentifier* col = (NIdentifier*)lc->data;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    if (table_def->tuple_desc.find(col->identifier) == table_def->tuple_desc.end()) {
+    bool found = false;
+    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+      if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       return NULL;
     }
     PushBack(targets, col->identifier);
@@ -273,12 +296,18 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     NIdentifier* col = (NIdentifier*)assign_expr->column;
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    const auto& col_type_it = table_def->tuple_desc.find(col->identifier);
-    if (col_type_it == table_def->tuple_desc.end()) {
+    ColDesc* col_type = NULL;
+    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+      if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
+        col_type = &table_def->tuple_desc[i];
+        break;
+      }
+    }
+    if (col_type == NULL) {
       return NULL;
     }
 
-    if (col_type_it->second != CheckType(assign_expr->value_expr, *table_def)) {
+    if (col_type->type != CheckType(assign_expr->value_expr, *table_def)) {
       return NULL;
     }
   }

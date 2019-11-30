@@ -11,6 +11,7 @@ add_library(btdb_lib STATIC
     types.c
 )
 target_include_directories(btdb_lib PUBLIC .)
+target_link_libraries(btdb_lib stb)
 
 add_executable(btdb
     main.cpp

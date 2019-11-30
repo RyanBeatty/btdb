@@ -16,6 +16,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "stretchy_buffer.h"
+
 #include "analyzer.h"
 #include "collections.h"
 #include "node.h"
@@ -434,7 +436,13 @@ Result execute_plan(PlanState& plan_state) {
 int main() {
   printf("Starting btdb\n");
 
-  PushBack(Tables, MakeTableDef("foo", {{"bar", T_STRING}, {"baz", T_BOOL}}));
+  ColDesc* tuple_desc = NULL;
+  ColDesc col1 = {.column_name = "bar", .type = T_STRING};
+  ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
+  sb_push(tuple_desc, col1);
+  sb_push(tuple_desc, col2);
+
+  PushBack(Tables, MakeTableDef("foo", tuple_desc));
 
   Tuple* t1 = MakeTuplePairVec();
   SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));

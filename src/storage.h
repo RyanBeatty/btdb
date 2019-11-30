@@ -5,12 +5,17 @@
 #include "collections.h"
 #include "types.h"
 
+typedef struct ColDesc {
+  const char* column_name;
+  BType type;
+} ColDesc;
+
 struct TableDef {
   const char* name;
-  std::unordered_map<std::string, BType> tuple_desc;
+  ColDesc* tuple_desc;  // stretchy buffer
 };
 
-TableDef* MakeTableDef(const char*, std::unordered_map<std::string, BType>);
+TableDef* MakeTableDef(const char*, ColDesc*);
 
 VEC_PROTOTYPE(TableDefPtr, TableDef*);
 extern TableDefPtrVec* Tables;
