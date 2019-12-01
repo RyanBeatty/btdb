@@ -433,11 +433,15 @@ int main() {
 
   Tuple* t1 = NULL;
   t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
-  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, new bool(true)));
+  bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
+  *bool_lit = true;
+  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
   Tuple* t2 = NULL;
   t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
-  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, new bool(false)));
+  bool_lit = (bool*)calloc(sizeof(bool), 1);
+  *bool_lit = false;
+  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
 
   InsertTuple(t1);
   InsertTuple(t2);
