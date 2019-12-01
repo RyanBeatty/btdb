@@ -12,7 +12,7 @@ typedef struct ColDesc {
 
 struct TableDef {
   const char* name;
-  ColDesc* tuple_desc;  // stretchy buffer
+  ColDesc* tuple_desc;  // sbarr
 };
 
 TableDef* MakeTableDef(const char*, ColDesc*);

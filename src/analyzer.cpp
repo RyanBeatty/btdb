@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <string>
 
+#include "stb_ds.h"
 #include "stretchy_buffer.h"
 
 #include "analyzer.h"
@@ -63,7 +64,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
       if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
         found = true;
         break;
@@ -103,7 +104,7 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
       assert(identifier->identifier != NULL);
 
       ColDesc* col_type = NULL;
-      for (size_t i = 0; i < sb_count(table_def.tuple_desc); ++i) {
+      for (size_t i = 0; i < arrlen(table_def.tuple_desc); ++i) {
         if (strcmp(table_def.tuple_desc[i].column_name, identifier->identifier) == 0) {
           col_type = &table_def.tuple_desc[i];
           break;
@@ -186,7 +187,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
       if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
         found = true;
         break;
@@ -297,7 +298,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     ColDesc* col_type = NULL;
-    for (size_t i = 0; i < sb_count(table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
       if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
         col_type = &table_def->tuple_desc[i];
         break;

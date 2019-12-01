@@ -16,6 +16,9 @@
 #include <string>
 #include <unordered_map>
 
+// Only define once.
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 #include "stretchy_buffer.h"
 
 #include "analyzer.h"
@@ -439,8 +442,8 @@ int main() {
   ColDesc* tuple_desc = NULL;
   ColDesc col1 = {.column_name = "bar", .type = T_STRING};
   ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
-  sb_push(tuple_desc, col1);
-  sb_push(tuple_desc, col2);
+  arrpush(tuple_desc, col1);
+  arrpush(tuple_desc, col2);
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   sb_push(Tables, table_def);
 
