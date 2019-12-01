@@ -7,7 +7,7 @@ add_subdirectory(sql)
 add_library(btdb_lib STATIC
     utils.c
     analyzer.cpp
-    storage.cpp
+    storage.c
     types.c
 )
 target_include_directories(btdb_lib PUBLIC .)

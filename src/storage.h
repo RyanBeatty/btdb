@@ -1,6 +1,9 @@
 #ifndef STORAGE_H
 #define STORAGE_H
-#include <unordered_map>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "types.h"
 
@@ -9,10 +12,10 @@ typedef struct ColDesc {
   BType type;
 } ColDesc;
 
-struct TableDef {
+typedef struct TableDef {
   const char* name;
   ColDesc* tuple_desc;  // sbarr
-};
+} TableDef;
 
 TableDef* MakeTableDef(const char*, ColDesc*);
 
@@ -55,5 +58,9 @@ void InsertTuple(Tuple*);
 void UpdateTuple(Tuple*, size_t);
 Tuple* GetTuple(size_t);
 void DeleteHeapTuple(size_t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // STORAGE_H
