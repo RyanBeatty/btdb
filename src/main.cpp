@@ -14,7 +14,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
@@ -450,7 +449,7 @@ int main() {
   InsertTuple(t1);
   InsertTuple(t2);
   while (true) {
-    std::cout << "btdb> ";
+    printf("btdb> ");
     std::string line;
     if (!std::getline(std::cin, line)) {
       break;
@@ -486,14 +485,14 @@ int main() {
             if (data->type == T_STRING) {
               printf("%s", (char*)data->data);
             } else if (data->type == T_BOOL) {
-              std::cout << (*((bool*)data->data) ? "true" : "false");
+              printf("%s", (*((bool*)data->data) ? "true" : "false"));
             } else {
               Panic("Only support printing strings or bools");
             }
           }
-          std::cout << "\t";
+          printf("\t");
         }
-        std::cout << std::endl;
+        printf("\n");
       }
     } else {
       printf("===============\n");
@@ -503,6 +502,6 @@ int main() {
     Panic("I/O Error");
   }
 
-  std::cout << "Shutting down btdb" << std::endl;
+  printf("Shutting down btdb\n");
   return 0;
 }
