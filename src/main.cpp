@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <memory>
 #include <sstream>
 #include <string>
 
@@ -363,7 +362,7 @@ struct UpdateScan : Iterator {
 
 struct PlanState {
   CharPtrVec* target_list;
-  std::unique_ptr<Plan> plan;
+  Plan* plan;
 };
 
 PlanState PlanQuery(Query* query) {
@@ -371,30 +370,28 @@ PlanState PlanQuery(Query* query) {
   PlanState plan_state;
   switch (query->cmd) {
     case CMD_SELECT: {
-      auto plan = std::make_unique<SequentialScan>(
-          SequentialScan(query->target_list, query->where_clause));
+      Plan* plan = new SequentialScan(query->target_list, query->where_clause);
       plan_state.target_list = query->target_list;
-      plan_state.plan = std::move(plan);
+      plan_state.plan = plan;
       break;
     }
     case CMD_INSERT: {
-      auto plan = std::make_unique<InsertScan>(InsertScan(query->values));
+      Plan* plan = new InsertScan(query->values);
       // TODO(ryan): This is also wonky.
       plan_state.target_list = query->target_list;
-      plan_state.plan = std::move(plan);
+      plan_state.plan = plan;
       break;
     }
     case CMD_DELETE: {
-      auto plan = std::make_unique<DeleteScan>(DeleteScan(query->where_clause));
+      Plan* plan = new DeleteScan(query->where_clause);
       plan_state.target_list = NULL;
-      plan_state.plan = std::move(plan);
+      plan_state.plan = plan;
       break;
     }
     case CMD_UPDATE: {
-      auto plan = std::make_unique<UpdateScan>(
-          UpdateScan(query->assign_expr_list, query->where_clause));
+      Plan* plan = new UpdateScan(query->assign_expr_list, query->where_clause);
       plan_state.target_list = NULL;
-      plan_state.plan = std::move(plan);
+      plan_state.plan = plan;
       break;
     }
     default:
@@ -411,8 +408,8 @@ struct Result {
 Result execute_plan(PlanState& plan_state) {
   Result results;
   results.columns = plan_state.target_list;
-  auto* plan = plan_state.plan.get();
-  auto mtuple = plan->GetNext();
+  Plan* plan = plan_state.plan;
+  Tuple* mtuple = plan->GetNext();
   while (mtuple != NULL) {
     results.tuples.push_back(std::move(mtuple));
     mtuple = plan->GetNext();
