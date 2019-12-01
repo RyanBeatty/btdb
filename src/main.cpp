@@ -49,7 +49,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
       assert(str_lit->str_lit != NULL);
-      return MakeDatum(T_STRING, new std::string(str_lit->str_lit));
+      return MakeDatum(T_STRING, strdup(str_lit->str_lit));
     }
     case NBOOL_LIT: {
       NBoolLit* bool_lit = (NBoolLit*)node;
@@ -99,8 +99,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
           } else {
             Panic("Invalid type for eq");
@@ -117,8 +117,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
           } else {
             Panic("Invalid type for neq");
@@ -135,8 +135,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
           } else {
             Panic("Invalid type for gt");
@@ -153,8 +153,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
           } else {
             Panic("Invalid type for ge");
@@ -171,8 +171,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
           } else {
             Panic("Invalid type for lt");
@@ -189,8 +189,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
             bool* rhs_data = (bool*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else if (lhs_value.type == T_STRING) {
-            std::string* lhs_data = (std::string*)lhs_value.data;
-            std::string* rhs_data = (std::string*)rhs_value.data;
+            char* lhs_data = (char*)lhs_value.data;
+            char* rhs_data = (char*)rhs_value.data;
             return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
           } else {
             Panic("Invalid type for le");
@@ -440,11 +440,11 @@ int main() {
   arrpush(Tables, table_def);
 
   Tuple* t1 = NULL;
-  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
+  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, new bool(true)));
 
   Tuple* t2 = NULL;
-  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, new std::string("world")));
+  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, new bool(false)));
 
   InsertTuple(t1);
@@ -484,7 +484,7 @@ int main() {
             // TODO(ryan): This is some hacky bs to be able to print this as a string.
             // I'm going to need to do an overhaul of alot of this code in the future.
             if (data->type == T_STRING) {
-              std::cout << *((std::string*)data->data);
+              printf("%s", (char*)data->data);
             } else if (data->type == T_BOOL) {
               std::cout << (*((bool*)data->data) ? "true" : "false");
             } else {

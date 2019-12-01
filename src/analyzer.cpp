@@ -224,7 +224,8 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         assert(str_lit->type == NSTRING_LIT);
         assert(str_lit->str_lit != NULL);
         const char* key = VEC_VALUE(targets, col_index);
-        tuple = SetCol(tuple, key, MakeDatum(T_STRING, new std::string(str_lit->str_lit)));
+        char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
+        tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
       } else {
         NBoolLit* bool_lit = (NBoolLit*)lc2->data;
         assert(bool_lit->type == NBOOL_LIT);
