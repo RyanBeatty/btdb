@@ -73,7 +73,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   }
 
   if (select->where_clause != NULL) {
-    if (CheckType(select->where_clause, *table_def) != T_BOOL) {
+    if (CheckType(select->where_clause, table_def) != T_BOOL) {
       return NULL;
     }
   }
@@ -85,8 +85,9 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   return query;
 }
 
-BType CheckType(ParseNode* node, TableDef& table_def) {
+BType CheckType(ParseNode* node, TableDef* table_def) {
   assert(node != NULL);
+  assert(table_def != NULL);
   switch (node->type) {
     case NSTRING_LIT: {
       return T_STRING;
@@ -100,9 +101,9 @@ BType CheckType(ParseNode* node, TableDef& table_def) {
       assert(identifier->identifier != NULL);
 
       ColDesc* col_type = NULL;
-      for (size_t i = 0; i < arrlen(table_def.tuple_desc); ++i) {
-        if (strcmp(table_def.tuple_desc[i].column_name, identifier->identifier) == 0) {
-          col_type = &table_def.tuple_desc[i];
+      for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+        if (strcmp(table_def->tuple_desc[i].column_name, identifier->identifier) == 0) {
+          col_type = &table_def->tuple_desc[i];
           break;
         }
       }
@@ -212,7 +213,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     FOR_EACH(lc2, value_items) {
       assert(lc2->data != NULL);
       // TODO(ryan): Allow for more general expressions here.
-      BType type = CheckType((ParseNode*)lc2->data, *table_def);
+      BType type = CheckType((ParseNode*)lc2->data, table_def);
       if (type == T_UNKNOWN) {
         return NULL;
       }
@@ -258,7 +259,7 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   }
 
   if (delete_stmt->where_clause != NULL &&
-      CheckType(delete_stmt->where_clause, *table_def) != T_BOOL) {
+      CheckType(delete_stmt->where_clause, table_def) != T_BOOL) {
     return NULL;
   }
 
@@ -307,12 +308,12 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
       return NULL;
     }
 
-    if (col_type->type != CheckType(assign_expr->value_expr, *table_def)) {
+    if (col_type->type != CheckType(assign_expr->value_expr, table_def)) {
       return NULL;
     }
   }
 
-  if (update->where_clause != NULL && CheckType(update->where_clause, *table_def) != T_BOOL) {
+  if (update->where_clause != NULL && CheckType(update->where_clause, table_def) != T_BOOL) {
     return NULL;
   }
 

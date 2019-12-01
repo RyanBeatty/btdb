@@ -2,19 +2,19 @@
 #define ANALYZER_H
 
 #include "collections.h"
-#include "sql/context.hpp"
+#include "node.h"
 #include "storage.h"
 #include "types.h"
 
-enum CmdType {
+typedef enum CmdType {
   CMD_SELECT,
   CMD_INSERT,
   CMD_UPDATE,
   CMD_DELETE,
   CMD_UTILITY,
-};
+} CmdType;
 
-struct Query {
+typedef struct Query {
   CmdType cmd;
 
   char* table_name;
@@ -22,7 +22,7 @@ struct Query {
   ParseNode* where_clause;
   List* assign_expr_list;
   Tuple** values;
-};
+} Query;
 
 Query* MakeQuery(CmdType);
 Query* AnalyzeParseTree(ParseNode*);
@@ -30,6 +30,6 @@ Query* AnalyzeSelectStmt(NSelectStmt*);
 Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
-BType CheckType(ParseNode*, TableDef&);
+BType CheckType(ParseNode*, TableDef*);
 
 #endif  // ANALYZER_H
