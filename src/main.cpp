@@ -242,12 +242,12 @@ struct SequentialScan : Iterator {
       }
 
       // Column projections.
-      Tuple* result_tpl = MakeTuplePairVec();
+      Tuple* result_tpl = NULL;
       CharPtrVecIt target = NULL;
       VEC_FOREACH(target, target_list) {
         Datum* data = GetCol(cur_tpl, *target);
         assert(data != NULL);
-        SetCol(result_tpl, *target, *data);
+        result_tpl = SetCol(result_tpl, *target, *data);
       }
       return result_tpl;
     }
@@ -439,13 +439,13 @@ int main() {
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   arrpush(Tables, table_def);
 
-  Tuple* t1 = MakeTuplePairVec();
-  SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
-  SetCol(t1, "baz", MakeDatum(T_BOOL, new bool(true)));
+  Tuple* t1 = NULL;
+  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
+  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, new bool(true)));
 
-  Tuple* t2 = MakeTuplePairVec();
-  SetCol(t2, "bar", MakeDatum(T_STRING, new std::string("world")));
-  SetCol(t2, "baz", MakeDatum(T_BOOL, new bool(false)));
+  Tuple* t2 = NULL;
+  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, new std::string("world")));
+  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, new bool(false)));
 
   InsertTuple(t1);
   InsertTuple(t2);

@@ -2,7 +2,6 @@
 #define STORAGE_H
 #include <unordered_map>
 
-#include "collections.h"
 #include "types.h"
 
 typedef struct ColDesc {
@@ -39,12 +38,10 @@ typedef struct TuplePair {
   Datum data;
 } TuplePair;
 
-VEC_PROTOTYPE(TuplePair, TuplePair);
-
-typedef TuplePairVec Tuple;
+typedef TuplePair Tuple;  // sbarr
 
 Datum* GetCol(Tuple*, const char*);
-void SetCol(Tuple*, const char*, Datum);
+Tuple* SetCol(Tuple*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);
 
 // TODO: Figure out what a tuple will actually look like.
