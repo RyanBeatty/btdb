@@ -198,7 +198,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     PushBack(targets, col->identifier);
   }
 
-  TuplePtrVec* values = MakeTuplePtrVec();
+  Tuple** values = NULL;
   List* values_list = insert->values_list;
   assert(values_list != NULL);
   assert(values_list->type == T_LIST);
@@ -234,7 +234,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       }
       ++col_index;
     }
-    PushBack(values, CopyTuple(tuple));
+    arrpush(values, CopyTuple(tuple));
   }
 
   Query* query = MakeQuery(CMD_INSERT);

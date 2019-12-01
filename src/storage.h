@@ -50,13 +50,13 @@ Tuple* CopyTuple(Tuple*);
 // TODO: Figure out what a tuple will actually look like.
 // typedef std::unordered_map<std::string, Datum> Tuple;
 
-VEC_PROTOTYPE(TuplePtr, Tuple*);
+// VEC_PROTOTYPE(TuplePtr, Tuple*);
 
-extern TuplePtrVec* Tuples;
+extern Tuple** Tuples;  // sbarr
 
 void InsertTuple(Tuple*);
 void UpdateTuple(Tuple*, size_t);
-TuplePtrVecIt GetTuple(size_t);
+Tuple* GetTuple(size_t);
 void DeleteHeapTuple(size_t);
 
 #endif  // STORAGE_H

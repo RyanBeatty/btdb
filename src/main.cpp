@@ -224,14 +224,11 @@ struct SequentialScan : Iterator {
   void Open() {}
   Tuple* GetNext() {
     for (;;) {
-      TuplePtrVecIt it = GetTuple(next_index);
-      if (it == NULL) {
+      Tuple* cur_tpl = GetTuple(next_index);
+      if (cur_tpl == NULL) {
         return NULL;
       }
       ++next_index;
-
-      assert(*it != NULL);
-      Tuple* cur_tpl = *it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -259,16 +256,16 @@ struct SequentialScan : Iterator {
 };
 
 struct InsertScan : Iterator {
-  TuplePtrVec* tuples;
+  Tuple** tuples;
 
-  InsertScan(TuplePtrVec* tuples) : tuples(tuples) {}
+  InsertScan(Tuple** tuples) : tuples(tuples) {}
 
   void Open() {}
 
   Tuple* GetNext() {
     Tuple* cur_tuple = NULL;
-    for (size_t i = 0; i < VEC_END(tuples); ++i) {
-      cur_tuple = VEC_VALUE(tuples, i);
+    for (size_t i = 0; i < arrlen(tuples); ++i) {
+      cur_tuple = tuples[i];
       assert(cur_tuple != NULL);
       InsertTuple(CopyTuple(cur_tuple));
     }
@@ -288,12 +285,10 @@ struct DeleteScan : Iterator {
 
   Tuple* GetNext() {
     for (;;) {
-      TuplePtrVecIt it = GetTuple(next_index);
-      if (it == NULL) {
+      Tuple* cur_tpl = GetTuple(next_index);
+      if (cur_tpl == NULL) {
         return NULL;
       }
-      assert(*it != NULL);
-      Tuple* cur_tpl = *it;
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
@@ -332,12 +327,10 @@ struct UpdateScan : Iterator {
   void Open() {}
   Tuple* GetNext() {
     for (;;) {
-      TuplePtrVecIt it = GetTuple(next_index);
-      if (it == NULL) {
+      Tuple* cur_tpl = GetTuple(next_index);
+      if (cur_tpl == NULL) {
         return NULL;
       }
-      assert(*it != NULL);
-      Tuple* cur_tpl = *it;
       ++next_index;
 
       // Evaluate predicate if any.

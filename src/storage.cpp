@@ -1,10 +1,9 @@
 #include "stb_ds.h"
 
-#include "collections.h"
 #include "storage.h"
 
 TableDef* Tables = NULL;
-TuplePtrVec* Tuples = MakeTuplePtrVec();
+Tuple** Tuples = NULL;
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
   size_t len = strlen(name);
@@ -77,21 +76,28 @@ Tuple* CopyTuple(Tuple* tuple) {
 }
 
 void InsertTuple(Tuple* tuple) {
-  PushBack(Tuples, tuple);
+  arrpush(Tuples, tuple);
   return;
 }
 
-TuplePtrVecIt GetTuple(size_t index) { return Get(Tuples, index); }
+Tuple* GetTuple(size_t index) {
+  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
+  // arrdel() doesn't automatically clear the moved over spaces.
+  if (index >= arrlen(Tuples)) {
+    return NULL;
+  }
+  return Tuples[index];
+}
 
 void UpdateTuple(Tuple* tuple, size_t index) {
-  if (index >= VEC_LENGTH(Tuples)) {
+  if (index >= arrlen(Tuples)) {
     return;
   }
 
-  TuplePtrVecIt it = GetTuple(index);
-  assert(it != NULL);
-  *it = tuple;
+  Tuple* old_tuple = GetTuple(index);
+  assert(old_tuple != NULL);
+  *old_tuple = *tuple;
   return;
 }
 
-void DeleteHeapTuple(size_t index) { Erase(Tuples, index); }
+void DeleteHeapTuple(size_t index) { arrdel(Tuples, index); }

@@ -21,7 +21,7 @@ struct Query {
   CharPtrVec* target_list;
   ParseNode* where_clause;
   List* assign_expr_list;
-  TuplePtrVec* values;
+  Tuple** values;
 };
 
 Query* MakeQuery(CmdType);
