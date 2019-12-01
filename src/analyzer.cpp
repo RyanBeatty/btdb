@@ -1,5 +1,3 @@
-#include <string>
-
 #include "stb_ds.h"
 
 #include "analyzer.h"
@@ -230,7 +228,9 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         NBoolLit* bool_lit = (NBoolLit*)lc2->data;
         assert(bool_lit->type == NBOOL_LIT);
         const char* key = VEC_VALUE(targets, col_index);
-        tuple = SetCol(tuple, key, MakeDatum(T_BOOL, new bool(bool_lit->bool_lit)));
+        bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
+        *bool_lit_copy = bool_lit->bool_lit;
+        tuple = SetCol(tuple, key, MakeDatum(T_BOOL, bool_lit_copy));
       }
       ++col_index;
     }
