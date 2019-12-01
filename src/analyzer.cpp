@@ -2,7 +2,6 @@
 #include <string>
 
 #include "stb_ds.h"
-#include "stretchy_buffer.h"
 
 #include "analyzer.h"
 #include "collections.h"

@@ -1,4 +1,4 @@
-#include "stretchy_buffer.h"
+#include "stb_ds.h"
 
 #include "collections.h"
 #include "storage.h"
@@ -19,7 +19,7 @@ TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
 TableDef* FindTableDef(const char* table_name) {
   TableDef* table_def = NULL;
   size_t i = 0;
-  for (; i < sb_count(Tables); ++i) {
+  for (; i < arrlen(Tables); ++i) {
     if (strcmp(Tables[i].name, table_name) == 0) {
       table_def = &Tables[i];
       break;
@@ -27,7 +27,7 @@ TableDef* FindTableDef(const char* table_name) {
   }
 
   // TODO(ryan): Just return from break and return null with no check here.
-  return i == sb_count(Tables) ? NULL : table_def;
+  return i == arrlen(Tables) ? NULL : table_def;
 }
 
 // void WriteField(MemTuple* mtuple, byte* data, size_t size) {

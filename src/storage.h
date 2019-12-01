@@ -17,7 +17,7 @@ struct TableDef {
 
 TableDef* MakeTableDef(const char*, ColDesc*);
 
-extern TableDef* Tables;  // sb
+extern TableDef* Tables;  // sbarr
 
 TableDef* FindTableDef(const char*);
 

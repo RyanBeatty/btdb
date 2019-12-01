@@ -19,7 +19,6 @@
 // Only define once.
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
-#include "stretchy_buffer.h"
 
 #include "analyzer.h"
 #include "collections.h"
@@ -445,7 +444,7 @@ int main() {
   arrpush(tuple_desc, col1);
   arrpush(tuple_desc, col2);
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
-  sb_push(Tables, table_def);
+  arrpush(Tables, table_def);
 
   Tuple* t1 = MakeTuplePairVec();
   SetCol(t1, "bar", MakeDatum(T_STRING, new std::string("hello")));
