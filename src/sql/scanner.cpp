@@ -1029,12 +1029,12 @@ case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
 #line 52 "scanner.l"
-return yy::parser::make_STRING_LITERAL(yytext);
+return yy::parser::make_STRING_LITERAL(strdup(yytext));
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 53 "scanner.l"
-return yy::parser::make_STRING_GROUP(yytext);
+return yy::parser::make_STRING_GROUP(strdup(yytext));
 	YY_BREAK
 case 41:
 YY_RULE_SETUP

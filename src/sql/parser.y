@@ -71,8 +71,7 @@
     MULT "*"
     DIV "/"
 ;
-%token <std::string> STRING_GROUP
-%token <char*> STRING_LITERAL
+%token <char*> STRING_GROUP STRING_LITERAL
 %token <bool> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
@@ -110,9 +109,7 @@ target_list:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $1.c_str(), $1.length());
+      identifier->identifier = $1;
 
       List* target_list = make_list(T_PARSENODE);
       target_list->type = T_PARSENODE;
@@ -123,9 +120,7 @@ target_list:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($3.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $3.c_str(), $3.length());
+      identifier->identifier = $3;
 
       List* target_list = $1;
       push_list(target_list, identifier);
@@ -138,9 +133,7 @@ from_clause:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($2.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $2.c_str(), $2.length());
+      identifier->identifier = $2;
       $$ = (ParseNode*)identifier;
     }
 
@@ -159,9 +152,7 @@ expr:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $1.c_str(), $1.length());
+      identifier->identifier = $1;
       $$ = (ParseNode*)identifier;
     }
   | STRING_LITERAL {
@@ -300,9 +291,7 @@ insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = NIDENTIFIER;
-  identifier->identifier = (char*)calloc($3.length(), sizeof(char));
-  assert(identifier->identifier != NULL);
-  strncpy(identifier->identifier, $3.c_str(), $3.length());
+  identifier->identifier = $3;
 
   insert->table_name = (ParseNode*) identifier;
   insert->column_list = $4;
@@ -318,9 +307,7 @@ column_list:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $1.c_str(), $1.length());
+      identifier->identifier = $1;
 
       List* column_list = make_list(T_PARSENODE);
       push_list(column_list, identifier);
@@ -330,9 +317,7 @@ column_list:
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = (char*)calloc($3.length(), sizeof(char));
-      assert(identifier->identifier != NULL);
-      strncpy(identifier->identifier, $3.c_str(), $3.length());
+      identifier->identifier = $3;
 
       List* column_list = $1;
       push_list(column_list, identifier);
@@ -368,9 +353,7 @@ delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = NIDENTIFIER;
-  identifier->identifier = (char*)calloc($3.length(), sizeof(char));
-  assert(identifier->identifier != NULL);
-  strncpy(identifier->identifier, $3.c_str(), $3.length());
+  identifier->identifier = $3;
 
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
   delete_stmt->type = NDELETE_STMT;
@@ -383,9 +366,7 @@ update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = NIDENTIFIER;
-  identifier->identifier = (char*)calloc($2.length(), sizeof(char));
-  assert(identifier->identifier != NULL);
-  strncpy(identifier->identifier, $2.c_str(), $2.length());
+  identifier->identifier = $2;
 
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
   update->type = NUPDATE_STMT;
@@ -412,9 +393,7 @@ assign_expr: STRING_GROUP "=" expr {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
   identifier->type = NIDENTIFIER;
-  identifier->identifier = (char*)calloc($1.length(), sizeof(char));
-  assert(identifier->identifier != NULL);
-  strncpy(identifier->identifier, $1.c_str(), $1.length());
+  identifier->identifier = $1;
 
   NAssignExpr* assign_expr = (NAssignExpr*) calloc(1, sizeof(NAssignExpr));
   assign_expr->type = NASSIGN_EXPR;

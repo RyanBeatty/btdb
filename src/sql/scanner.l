@@ -49,8 +49,8 @@
 ")" return yy::parser::make_RPARENS();
 "true" return yy::parser::make_BOOLEAN_LITERAL(true);
 "false" return yy::parser::make_BOOLEAN_LITERAL(false);
-\'(\\.|[^'\\])*\' return yy::parser::make_STRING_LITERAL(yytext);
-[a-zA-Z]+ return yy::parser::make_STRING_GROUP(yytext);
+\'(\\.|[^'\\])*\' return yy::parser::make_STRING_LITERAL(strdup(yytext));
+[a-zA-Z]+ return yy::parser::make_STRING_GROUP(strdup(yytext));
 " " {}
 <<EOF>> return yy::parser::make_EOF ();
 %%
