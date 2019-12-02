@@ -35,6 +35,13 @@
 //%define parse.trace
 //%define parse.error verbose
 
+// %union {
+//   char* str_lit;
+//   bool bool_lit;
+//   ParseNode* node;
+//   List* list_node;
+// }
+
 %define api.token.prefix {TOK_}
 %token
     EOF 0
@@ -120,7 +127,7 @@ target_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $3.c_str(), $3.length());
 
-      auto* target_list = $1;
+      List* target_list = $1;
       push_list(target_list, identifier);
       $$ = target_list;
     }
@@ -327,7 +334,7 @@ column_list:
       assert(identifier->identifier != NULL);
       strncpy(identifier->identifier, $3.c_str(), $3.length());
 
-      auto* column_list = $1;
+      List* column_list = $1;
       push_list(column_list, identifier);
       $$ = column_list;
   }
@@ -340,7 +347,7 @@ insert_values_list:
       $$ = values_list;
   }
   | insert_values_list "," "(" insert_value_items ")" {
-    auto* values_list = $1;
+    List* values_list = $1;
     push_list(values_list, $4);
     $$ = values_list;
   }
@@ -352,7 +359,7 @@ insert_value_items:
       $$ = value_items;
   }
   | insert_value_items "," expr {
-      auto* value_items = $1;
+      List* value_items = $1;
       push_list(value_items, $3);
       $$ = value_items;
   }
@@ -395,7 +402,7 @@ update_assign_expr_list:
       $$ = value_items;
   }
   | update_assign_expr_list "," assign_expr {
-      auto* value_items = $1;
+      List* value_items = $1;
       push_list(value_items, $3);
       $$ = value_items;
   }
