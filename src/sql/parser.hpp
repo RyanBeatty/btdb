@@ -393,9 +393,11 @@ namespace yy {
       // BOOLEAN_LITERAL
       char dummy3[sizeof (bool)];
 
-      // STRING_GROUP
       // STRING_LITERAL
-      char dummy4[sizeof (std::string)];
+      char dummy4[sizeof (char*)];
+
+      // STRING_GROUP
+      char dummy5[sizeof (std::string)];
     };
 
     /// The size of the largest semantic type.
@@ -550,6 +552,17 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, char*&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const char*& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
@@ -608,8 +621,11 @@ switch (yytype)
         value.template destroy< bool > ();
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.template destroy< char* > ();
+        break;
+
+      case 28: // STRING_GROUP
         value.template destroy< std::string > ();
         break;
 
@@ -712,16 +728,29 @@ switch (yytype)
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, char* v)
+        : super_type(token_type (tok), std::move (v))
+      {
+        YYASSERT (tok == token::TOK_STRING_LITERAL);
+      }
+#else
+      symbol_type (int tok, const char*& v)
+        : super_type(token_type (tok), v)
+      {
+        YYASSERT (tok == token::TOK_STRING_LITERAL);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v)
         : super_type(token_type (tok), std::move (v))
       {
-        YYASSERT (tok == token::TOK_STRING_GROUP || tok == token::TOK_STRING_LITERAL);
+        YYASSERT (tok == token::TOK_STRING_GROUP);
       }
 #else
       symbol_type (int tok, const std::string& v)
         : super_type(token_type (tok), v)
       {
-        YYASSERT (tok == token::TOK_STRING_GROUP || tok == token::TOK_STRING_LITERAL);
+        YYASSERT (tok == token::TOK_STRING_GROUP);
       }
 #endif
     };
@@ -1168,14 +1197,14 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_STRING_LITERAL (std::string v)
+      make_STRING_LITERAL (char* v)
       {
         return symbol_type (token::TOK_STRING_LITERAL, std::move (v));
       }
 #else
       static
       symbol_type
-      make_STRING_LITERAL (const std::string& v)
+      make_STRING_LITERAL (const char*& v)
       {
         return symbol_type (token::TOK_STRING_LITERAL, v);
       }
@@ -1596,8 +1625,11 @@ switch (yytype)
         value.move< bool > (std::move (that.value));
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.move< char* > (std::move (that.value));
+        break;
+
+      case 28: // STRING_GROUP
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1640,8 +1672,11 @@ switch (yytype)
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.copy< char* > (YY_MOVE (that.value));
+        break;
+
+      case 28: // STRING_GROUP
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -1692,8 +1727,11 @@ switch (yytype)
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.move< char* > (YY_MOVE (s.value));
+        break;
+
+      case 28: // STRING_GROUP
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -1769,7 +1807,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1773 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
+#line 1811 "/home/rbeatty/Projects/BTDB/src/sql/parser.hpp"
 
 
 

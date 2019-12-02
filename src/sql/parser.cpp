@@ -219,8 +219,11 @@ namespace yy {
         value.YY_MOVE_OR_COPY< bool > (YY_MOVE (that.value));
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.YY_MOVE_OR_COPY< char* > (YY_MOVE (that.value));
+        break;
+
+      case 28: // STRING_GROUP
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
@@ -264,8 +267,11 @@ namespace yy {
         value.move< bool > (YY_MOVE (that.value));
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.move< char* > (YY_MOVE (that.value));
+        break;
+
+      case 28: // STRING_GROUP
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
@@ -309,8 +315,11 @@ namespace yy {
         value.move< bool > (that.value);
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        value.move< char* > (that.value);
+        break;
+
+      case 28: // STRING_GROUP
         value.move< std::string > (that.value);
         break;
 
@@ -583,8 +592,11 @@ namespace yy {
         yylhs.value.emplace< bool > ();
         break;
 
-      case 28: // STRING_GROUP
       case 29: // STRING_LITERAL
+        yylhs.value.emplace< char* > ();
+        break;
+
+      case 28: // STRING_GROUP
         yylhs.value.emplace< std::string > ();
         break;
 
@@ -607,7 +619,7 @@ namespace yy {
     {
     ctx.tree = yystack_[0].value.as < ParseNode* > ();
   }
-#line 611 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 623 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 3:
@@ -615,7 +627,7 @@ namespace yy {
     {
     ctx.tree = yystack_[0].value.as < ParseNode* > ();
   }
-#line 619 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 631 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 4:
@@ -623,7 +635,7 @@ namespace yy {
     {
     ctx.tree = yystack_[0].value.as < ParseNode* > ();
   }
-#line 627 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 639 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 5:
@@ -631,7 +643,7 @@ namespace yy {
     {
     ctx.tree = yystack_[0].value.as < ParseNode* > ();
   }
-#line 635 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 647 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 6:
@@ -644,7 +656,7 @@ namespace yy {
   select->where_clause = yystack_[1].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) select;
 }
-#line 648 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 660 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 7:
@@ -662,7 +674,7 @@ namespace yy {
       push_list(target_list, identifier);
       yylhs.value.as < List* > () = target_list;
     }
-#line 666 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 678 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 8:
@@ -679,13 +691,13 @@ namespace yy {
       push_list(target_list, identifier);
       yylhs.value.as < List* > () = target_list;
     }
-#line 683 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 695 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 9:
 #line 136 "parser.y"
     { yylhs.value.as < ParseNode* > () = nullptr; }
-#line 689 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 701 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 10:
@@ -699,13 +711,13 @@ namespace yy {
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
       yylhs.value.as < ParseNode* > () = (ParseNode*)identifier;
     }
-#line 703 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 715 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 11:
 #line 148 "parser.y"
     { yylhs.value.as < ParseNode* > () = nullptr; }
-#line 709 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 721 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 12:
@@ -713,7 +725,7 @@ namespace yy {
     {
       yylhs.value.as < ParseNode* > () = yystack_[0].value.as < ParseNode* > ();
     }
-#line 717 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 729 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 13:
@@ -727,24 +739,24 @@ namespace yy {
       strncpy(identifier->identifier, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
       yylhs.value.as < ParseNode* > () = (ParseNode*)identifier;
     }
-#line 731 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 743 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 14:
 #line 167 "parser.y"
     {
       // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
-      assert(yystack_[0].value.as < std::string > ().length() >= 2);
-      yystack_[0].value.as < std::string > () = yystack_[0].value.as < std::string > ().substr(1, yystack_[0].value.as < std::string > ().length() - 2);
+      size_t len = strlen(yystack_[0].value.as < char* > ());
+      assert(len >= 2);
       NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
       assert(str_lit != NULL);
       str_lit->type = NSTRING_LIT;
-      str_lit->str_lit = (char*)calloc(yystack_[0].value.as < std::string > ().length(), sizeof(char));
+      str_lit->str_lit = (char*)calloc(len - 2 + 1, sizeof(char));
       assert(str_lit->str_lit != NULL);
-      strncpy(str_lit->str_lit, yystack_[0].value.as < std::string > ().c_str(), yystack_[0].value.as < std::string > ().length());
+      strncpy(str_lit->str_lit, yystack_[0].value.as < char* > () + 1, len - 2);
       yylhs.value.as < ParseNode* > () = (ParseNode*)str_lit;
     }
-#line 748 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 760 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 15:
@@ -756,7 +768,7 @@ namespace yy {
     bool_lit->bool_lit = yystack_[0].value.as < bool > ();
     yylhs.value.as < ParseNode* > () = (ParseNode*)bool_lit;
   }
-#line 760 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 772 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 16:
@@ -770,7 +782,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 774 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 786 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 17:
@@ -784,7 +796,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 788 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 800 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 18:
@@ -798,7 +810,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 802 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 814 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 19:
@@ -812,7 +824,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 816 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 828 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 20:
@@ -826,7 +838,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 830 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 842 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 21:
@@ -840,7 +852,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 844 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 856 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 22:
@@ -854,7 +866,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 858 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 870 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 23:
@@ -868,7 +880,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 872 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 884 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 24:
@@ -882,7 +894,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 886 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 898 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 25:
@@ -896,7 +908,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 900 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 912 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 26:
@@ -910,7 +922,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 914 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 926 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 27:
@@ -924,7 +936,7 @@ namespace yy {
       bin_expr->rhs = yystack_[0].value.as < ParseNode* > ();
       yylhs.value.as < ParseNode* > () = (ParseNode*)bin_expr;
     }
-#line 928 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 940 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 28:
@@ -947,13 +959,13 @@ namespace yy {
 
   yylhs.value.as < ParseNode* > () = (ParseNode*) insert;
 }
-#line 951 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 963 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 29:
 #line 314 "parser.y"
     { yylhs.value.as < List* > () = yystack_[1].value.as < List* > (); }
-#line 957 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 969 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 30:
@@ -970,7 +982,7 @@ namespace yy {
       push_list(column_list, identifier);
       yylhs.value.as < List* > () = column_list;
    }
-#line 974 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 986 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 31:
@@ -987,13 +999,13 @@ namespace yy {
       push_list(column_list, identifier);
       yylhs.value.as < List* > () = column_list;
   }
-#line 991 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1003 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 32:
 #line 342 "parser.y"
     { yylhs.value.as < List* > () = yystack_[0].value.as < List* > (); }
-#line 997 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1009 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 33:
@@ -1003,7 +1015,7 @@ namespace yy {
       push_list(values_list, yystack_[1].value.as < List* > ());
       yylhs.value.as < List* > () = values_list;
   }
-#line 1007 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1019 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 34:
@@ -1013,7 +1025,7 @@ namespace yy {
     push_list(values_list, yystack_[1].value.as < List* > ());
     yylhs.value.as < List* > () = values_list;
   }
-#line 1017 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1029 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 35:
@@ -1023,7 +1035,7 @@ namespace yy {
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
-#line 1027 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1039 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 36:
@@ -1033,7 +1045,7 @@ namespace yy {
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
-#line 1037 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1049 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 37:
@@ -1052,7 +1064,7 @@ namespace yy {
   delete_stmt->where_clause = yystack_[1].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) delete_stmt;
 }
-#line 1056 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1068 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 38:
@@ -1072,7 +1084,7 @@ namespace yy {
   update->where_clause = yystack_[1].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) update;
 }
-#line 1076 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1088 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 39:
@@ -1082,7 +1094,7 @@ namespace yy {
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
-#line 1086 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1098 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 40:
@@ -1092,7 +1104,7 @@ namespace yy {
       push_list(value_items, yystack_[0].value.as < ParseNode* > ());
       yylhs.value.as < List* > () = value_items;
   }
-#line 1096 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1108 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
   case 41:
@@ -1111,11 +1123,11 @@ namespace yy {
   assign_expr->value_expr = yystack_[0].value.as < ParseNode* > ();
   yylhs.value.as < ParseNode* > () = (ParseNode*) assign_expr;
 }
-#line 1115 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1127 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
     break;
 
 
-#line 1119 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1131 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
             default:
               break;
@@ -1460,7 +1472,7 @@ namespace yy {
 
 
 } // yy
-#line 1464 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
+#line 1476 "/home/rbeatty/Projects/BTDB/src/sql/parser.cpp"
 
 #line 427 "parser.y"
 

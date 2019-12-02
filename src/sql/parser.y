@@ -72,7 +72,7 @@
     DIV "/"
 ;
 %token <std::string> STRING_GROUP
-%token <std::string> STRING_LITERAL
+%token <char*> STRING_LITERAL
 %token <bool> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
@@ -166,14 +166,14 @@ expr:
     }
   | STRING_LITERAL {
       // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
-      assert($1.length() >= 2);
-      $1 = $1.substr(1, $1.length() - 2);
+      size_t len = strlen($1);
+      assert(len >= 2);
       NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
       assert(str_lit != NULL);
       str_lit->type = NSTRING_LIT;
-      str_lit->str_lit = (char*)calloc($1.length(), sizeof(char));
+      str_lit->str_lit = (char*)calloc(len - 2 + 1, sizeof(char));
       assert(str_lit->str_lit != NULL);
-      strncpy(str_lit->str_lit, $1.c_str(), $1.length());
+      strncpy(str_lit->str_lit, $1 + 1, len - 2);
       $$ = (ParseNode*)str_lit;
     }
   | BOOLEAN_LITERAL {
