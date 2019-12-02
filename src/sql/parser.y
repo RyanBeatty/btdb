@@ -21,10 +21,8 @@
 }
 
 %code{
-  #include <cassert>
+  #include <assert.h>
   #include <stdlib.h>
-  #include <iostream>
-  #include <memory>
   #include <stdbool.h>
   #include <string.h>
   #include "sql/context.hpp"
