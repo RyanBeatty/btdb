@@ -5,7 +5,6 @@
 
 %define api.token.constructor
 %define api.value.type variant
-%define parse.assert
 
 // This code goes in parser.hpp
 %code requires {

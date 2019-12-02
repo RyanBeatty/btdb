@@ -838,182 +838,182 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 14 "scanner.l"
-return yy::parser::make_COMMA();
+return yy::parser::token::TOK_COMMA;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 15 "scanner.l"
-return yy::parser::make_SEMICOLON();
+return yy::parser::token::TOK_SEMICOLON;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 16 "scanner.l"
-return yy::parser::make_SELECT();
+return yy::parser::token::TOK_SELECT;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 17 "scanner.l"
-return yy::parser::make_SELECT();
+return yy::parser::token::TOK_SELECT;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 18 "scanner.l"
-return yy::parser::make_INSERT();
+return yy::parser::token::TOK_INSERT;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 19 "scanner.l"
-return yy::parser::make_INSERT();
+return yy::parser::token::TOK_INSERT;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 20 "scanner.l"
-return yy::parser::make_INTO();
+return yy::parser::token::TOK_INTO;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 21 "scanner.l"
-return yy::parser::make_INTO();
+return yy::parser::token::TOK_INTO;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 22 "scanner.l"
-return yy::parser::make_VALUES();
+return yy::parser::token::TOK_VALUES;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 23 "scanner.l"
-return yy::parser::make_VALUES();
+return yy::parser::token::TOK_VALUES;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 24 "scanner.l"
-return yy::parser::make_FROM();
+return yy::parser::token::TOK_FROM;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 25 "scanner.l"
-return yy::parser::make_FROM();
+return yy::parser::token::TOK_FROM;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 26 "scanner.l"
-return yy::parser::make_DELETE();
+return yy::parser::token::TOK_DELETE;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 27 "scanner.l"
-return yy::parser::make_DELETE();
+return yy::parser::token::TOK_DELETE;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 28 "scanner.l"
-return yy::parser::make_WHERE();
+return yy::parser::token::TOK_WHERE;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 29 "scanner.l"
-return yy::parser::make_WHERE();
+return yy::parser::token::TOK_WHERE;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 30 "scanner.l"
-return yy::parser::make_UPDATE();
+return yy::parser::token::TOK_UPDATE;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 31 "scanner.l"
-return yy::parser::make_UPDATE();
+return yy::parser::token::TOK_UPDATE;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 32 "scanner.l"
-return yy::parser::make_SET();
+return yy::parser::token::TOK_SET;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 33 "scanner.l"
-return yy::parser::make_SET();
+return yy::parser::token::TOK_SET;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 34 "scanner.l"
-return yy::parser::make_AND();
+return yy::parser::token::TOK_AND;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 35 "scanner.l"
-return yy::parser::make_AND();
+return yy::parser::token::TOK_AND;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 36 "scanner.l"
-return yy::parser::make_OR();
+return yy::parser::token::TOK_OR;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 37 "scanner.l"
-return yy::parser::make_OR();
+return yy::parser::token::TOK_OR;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 38 "scanner.l"
-return yy::parser::make_EQ();
+return yy::parser::token::TOK_EQ;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 39 "scanner.l"
-return yy::parser::make_NEQ();
+return yy::parser::token::TOK_NEQ;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 40 "scanner.l"
-return yy::parser::make_GT();
+return yy::parser::token::TOK_GT;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 41 "scanner.l"
-return yy::parser::make_GE();
+return yy::parser::token::TOK_GE;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 42 "scanner.l"
-return yy::parser::make_LT();
+return yy::parser::token::TOK_LT;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 43 "scanner.l"
-return yy::parser::make_LE();
+return yy::parser::token::TOK_LE;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 44 "scanner.l"
-return yy::parser::make_PLUS();
+return yy::parser::token::TOK_PLUS;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 45 "scanner.l"
-return yy::parser::make_MINUS();
+return yy::parser::token::TOK_MINUS;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 46 "scanner.l"
-return yy::parser::make_MULT();
+return yy::parser::token::TOK_MULT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 47 "scanner.l"
-return yy::parser::make_DIV();
+return yy::parser::token::TOK_DIV;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 48 "scanner.l"
-return yy::parser::make_LPARENS();
+return yy::parser::token::TOK_LPARENS;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 49 "scanner.l"
-return yy::parser::make_RPARENS();
+return yy::parser::token::TOK_RPARENS;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
