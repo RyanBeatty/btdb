@@ -6,6 +6,10 @@
 #include "storage.h"
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum CmdType {
   CMD_SELECT,
   CMD_INSERT,
@@ -31,5 +35,9 @@ Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
 BType CheckType(ParseNode*, TableDef*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // ANALYZER_H

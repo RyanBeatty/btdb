@@ -115,8 +115,8 @@ BType CheckType(ParseNode* node, TableDef* table_def) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
-      auto lhs_type = CheckType(expr->lhs, table_def);
-      auto rhs_type = CheckType(expr->rhs, table_def);
+      BType lhs_type = CheckType(expr->lhs, table_def);
+      BType rhs_type = CheckType(expr->rhs, table_def);
       if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
         return T_UNKNOWN;
       }
@@ -284,7 +284,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
 
   assert(update->assign_expr_list != NULL);
   assert(update->assign_expr_list->type == T_PARSENODE);
-  auto* assign_expr_list = update->assign_expr_list;
+  List* assign_expr_list = update->assign_expr_list;
   ListCell* lc = NULL;
   FOR_EACH(lc, assign_expr_list) {
     assert(lc->data != NULL);

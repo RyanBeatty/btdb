@@ -449,7 +449,6 @@ int main() {
     if (!std::getline(std::cin, line)) {
       break;
     }
-    // TODO: remove.
     line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
     if (line == "\\q") {
       break;

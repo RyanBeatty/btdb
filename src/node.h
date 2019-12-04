@@ -38,7 +38,7 @@ void push_list(List*, void*);
 void free_list(List*);
 void print_list(List*, PrintContext*);
 
-#define FOR_EACH(cell, list) for (cell = list->head; cell != nullptr; cell = cell->next)
+#define FOR_EACH(cell, list) for (cell = list->head; cell != NULL; cell = cell->next)
 
 typedef enum ParseNodeType {
   NBIN_EXPR,
