@@ -445,15 +445,15 @@ int main() {
   InsertTuple(t2);
   while (true) {
     printf("btdb> ");
-    std::string line;
-    if (!std::getline(std::cin, line)) {
+    char* line = NULL;
+    size_t line_size = 0;
+    if (getline(&line, &line_size, stdin) == -1) {
       break;
     }
-    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
-    if (line == "\\q") {
+    if (strcmp(line, "\\q\n") == 0) {
       break;
     }
-    Parser* parser = InitParser(strdup(line.c_str()));
+    Parser* parser = InitParser(strdup(line));
     if (Parse(parser) != 0) {
       continue;
     }

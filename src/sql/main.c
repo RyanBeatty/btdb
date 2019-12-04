@@ -6,7 +6,7 @@
 int main() {
   while (true) {
     char* line = NULL;
-    size_t size;
+    size_t size = 0;
     if (getline(&line, &size, stdin) == -1) {
       printf("No line\n");
       break;
