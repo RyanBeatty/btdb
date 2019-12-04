@@ -11,7 +11,9 @@ typedef struct Parser {
   ParseNode* tree;
 } Parser;
 
+// Defined in scanner.
 Parser* InitParser(char*);
+// Defined in scanner.
 void FreeParser(Parser*);
 int Parse(Parser*);
 
