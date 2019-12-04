@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +25,9 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
     case NBOOL_LIT: {
       NBoolLit* bool_lit = (NBoolLit*)node;
       assert(bool_lit != NULL);
-      return MakeDatum(T_BOOL, new bool(bool_lit->bool_lit));
+      bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+      *bool_lit_copy = bool_lit->bool_lit;
+      return MakeDatum(T_BOOL, bool_lit_copy);
     }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
@@ -48,7 +51,9 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
-          return MakeDatum(T_BOOL, new bool(*lhs_data && *rhs_data));
+          bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+          *bool_lit_copy = *lhs_data && *rhs_data;
+          return MakeDatum(T_BOOL, bool_lit_copy);
         }
         case OR: {
           assert(lhs_value.type == T_BOOL);
@@ -57,7 +62,9 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(rhs_value.data != NULL);
           bool* lhs_data = (bool*)lhs_value.data;
           bool* rhs_data = (bool*)rhs_value.data;
-          return MakeDatum(T_BOOL, new bool(*lhs_data || *rhs_data));
+          bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+          *bool_lit_copy = *lhs_data || *rhs_data;
+          return MakeDatum(T_BOOL, bool_lit_copy);
         }
         case EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
@@ -67,11 +74,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data == *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data == *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data == *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for eq");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -85,11 +96,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data != *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data != *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data != *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for neq");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -103,11 +118,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data > *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data > *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data > *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for gt");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -121,11 +140,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data >= *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data >= *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data >= *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for ge");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -139,11 +162,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data < *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data < *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data < *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for lt");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -157,11 +184,15 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           if (lhs_value.type == T_BOOL) {
             bool* lhs_data = (bool*)lhs_value.data;
             bool* rhs_data = (bool*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data <= *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
-            return MakeDatum(T_BOOL, new bool(*lhs_data <= *rhs_data));
+            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+            *bool_lit_copy = *lhs_data <= *rhs_data;
+            return MakeDatum(T_BOOL, bool_lit_copy);
           } else {
             Panic("Invalid type for le");
             return MakeDatum(T_UNKNOWN, NULL);
@@ -187,7 +218,7 @@ typedef struct ScanState {
   Tuple** tuples;  // stb_arr
   List* assign_exprs;
 
-  Tuple* (*scan_func)(ScanState*);
+  Tuple* (*scan_func)(struct ScanState*);
 } ScanState;
 
 ScanState* MakeScanState(CharPtrVec* target_list, ParseNode* where_clause, Tuple** tuples,
@@ -361,11 +392,11 @@ typedef struct Result {
   Tuple** tuples;  // stb_arr
 } Result;
 
-Result execute_plan(PlanState& plan_state) {
+Result execute_plan(PlanState* plan_state) {
   Result results;
-  results.columns = plan_state.target_list;
+  results.columns = plan_state->target_list;
   results.tuples = NULL;
-  ScanState* scan_state = plan_state.scan_state;
+  ScanState* scan_state = plan_state->scan_state;
   Tuple* mtuple = scan_state->scan_func(scan_state);
   while (mtuple != NULL) {
     arrpush(results.tuples, mtuple);
@@ -419,7 +450,7 @@ int main() {
       continue;
     }
     PlanState plan_state = PlanQuery(query);
-    Result results = execute_plan(plan_state);
+    Result results = execute_plan(&plan_state);
     if (results.columns != NULL) {
       CharPtrVecIt it = NULL;
       VEC_FOREACH(it, results.columns) { printf("    %s", *it); }
