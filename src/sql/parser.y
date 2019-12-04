@@ -1,22 +1,16 @@
 /* simplest version of calculator */
-%skeleton "lalr1.cc"
-%require "3.4"
-%defines
-
-%define api.token.constructor
-%define api.value.type variant
-
 // This code goes in parser.hpp
 %code requires {
   #include "node.h"
 
   // Can't include sql stuff or else we get circular import,
   // so need to forward declare stuff.
-  struct ParserContext;
+  struct Parser;
+//   struct ParserContext;
 }
 
-%param {
-  ParserContext& ctx
+%parse-param {
+  struct Parser* parser
 }
 
 %code{
@@ -24,7 +18,14 @@
   #include <stdlib.h>
   #include <stdbool.h>
   #include <string.h>
-  #include "sql/context.hpp"
+  #include <stdio.h>
+  
+  #include "sql/driver.h"
+
+  extern int yylex(void);
+  // Because we use %parse-param, the signature of yyerror changes.
+  void yyerror(Parser*, const char*);
+  extern FILE* yyin;
 }
 
 //%locations
@@ -32,12 +33,12 @@
 //%define parse.trace
 //%define parse.error verbose
 
-// %union {
-//   char* str_lit;
-//   bool bool_lit;
-//   ParseNode* node;
-//   List* list_node;
-// }
+%union {
+  char* str_lit;
+  bool bool_lit;
+  ParseNode* node;
+  List* list_node;
+}
 
 %define api.token.prefix {TOK_}
 %token
@@ -68,28 +69,32 @@
     MULT "*"
     DIV "/"
 ;
-%token <char*> STRING_GROUP STRING_LITERAL
-%token <bool> BOOLEAN_LITERAL
+%token <str_lit> STRING_GROUP STRING_LITERAL
+%token <bool_lit> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <ParseNode*> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr
-%type <List*> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list
+%type <node> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr
+%type <list_node> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list
 
 %%
 %start stmt;
 
 stmt:
   select_stmt {
-    ctx.tree = $1;
+    // printf("select\n");
+    parser->tree = $1;
   }
   | insert_stmt {
-    ctx.tree = $1;
+    // printf("insert\n");
+    parser->tree = $1;
   }
   | delete_stmt {
-    ctx.tree = $1;
+    // printf("delete\n");
+    parser->tree = $1;
   }
   | update_stmt {
-    ctx.tree = $1;
+    // printf("update\n");
+    parser->tree = $1;
   }
 
 select_stmt: SELECT target_list from_clause where_clause ";" {
@@ -125,7 +130,7 @@ target_list:
     }
 
 from_clause:
-  /* empty */ { $$ = nullptr; }
+  /* empty */ { $$ = NULL; }
   | FROM STRING_GROUP {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -135,7 +140,7 @@ from_clause:
     }
 
 where_clause:
-  /* empty */ { $$ = nullptr; }
+  /* empty */ { $$ = NULL; }
   | WHERE expr {
       $$ = $2;
     }
@@ -282,7 +287,7 @@ expr:
 
 insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";" {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
-  assert(insert != nullptr);
+  assert(insert != NULL);
   insert->type = NINSERT_STMT;
 
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
@@ -402,6 +407,6 @@ assign_expr: STRING_GROUP "=" expr {
 
 %%
 
-void yy::parser::error(const std::string& m) {
-  std::cerr << m << std::endl;
+void yyerror(Parser* parser, const char* msg) {
+  fprintf(stderr, "%s\n", msg);
 }
