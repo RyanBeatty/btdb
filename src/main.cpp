@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <algorithm>
-#include <iterator>
-#include <sstream>
-#include <string>
 #include <vector>
 
 // Only define once.
