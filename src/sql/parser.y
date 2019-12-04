@@ -25,7 +25,6 @@
   extern int yylex(void);
   // Because we use %parse-param, the signature of yyerror changes.
   void yyerror(Parser*, const char*);
-  extern FILE* yyin;
 }
 
 //%locations
