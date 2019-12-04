@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
@@ -356,10 +355,10 @@ struct UpdateScan : Iterator {
   void Close() {}
 };
 
-struct PlanState {
+typedef struct PlanState {
   CharPtrVec* target_list;
   Plan* plan;
-};
+} PlanState;
 
 PlanState PlanQuery(Query* query) {
   assert(query != NULL);
@@ -396,18 +395,19 @@ PlanState PlanQuery(Query* query) {
   return plan_state;
 }
 
-struct Result {
+typedef struct Result {
   CharPtrVec* columns;
-  std::vector<Tuple*> tuples;
-};
+  Tuple** tuples;  // stb_arr
+} Result;
 
 Result execute_plan(PlanState& plan_state) {
   Result results;
   results.columns = plan_state.target_list;
+  results.tuples = NULL;
   Plan* plan = plan_state.plan;
   Tuple* mtuple = plan->GetNext();
   while (mtuple != NULL) {
-    results.tuples.push_back(std::move(mtuple));
+    arrpush(results.tuples, mtuple);
     mtuple = plan->GetNext();
   }
   return results;
@@ -464,7 +464,8 @@ int main() {
       VEC_FOREACH(it, results.columns) { printf("    %s", *it); }
       printf("\n");
       printf("===============\n");
-      for (Tuple* mtuple : results.tuples) {
+      for (size_t i = 0; i < arrlen(results.tuples); ++i) {
+        Tuple* mtuple = results.tuples[i];
         assert(mtuple != NULL);
         CharPtrVecIt it = NULL;
         VEC_FOREACH(it, results.columns) {
