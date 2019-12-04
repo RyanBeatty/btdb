@@ -6,6 +6,7 @@
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
@@ -14,7 +15,7 @@
 #include "analyzer.h"
 #include "collections.h"
 #include "node.h"
-#include "sql/context.hpp"
+#include "sql/driver.h"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"
@@ -448,15 +449,16 @@ int main() {
     if (!std::getline(std::cin, line)) {
       break;
     }
+    // TODO: remove.
     line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
     if (line == "\\q") {
       break;
     }
-    ParserContext parser(line);
-    if (parser.Parse() != 0) {
+    Parser* parser = InitParser(strdup(line.c_str()));
+    if (Parse(parser) != 0) {
       continue;
     }
-    Query* query = AnalyzeParseTree(parser.tree);
+    Query* query = AnalyzeParseTree(parser->tree);
     if (query == NULL) {
       printf("Query not valid\n");
       continue;

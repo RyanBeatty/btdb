@@ -2,7 +2,6 @@
 
 #include "analyzer.h"
 #include "collections.h"
-#include "sql/context.hpp"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"

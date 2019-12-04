@@ -42,6 +42,7 @@ add_library(btdb_sql_parser
     "../node.c"
     "../utils.c"
 )
+target_include_directories(btdb_sql_parser PUBLIC src/sql)
 
 add_executable(parse_sql
     main.c

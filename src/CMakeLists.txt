@@ -11,12 +11,12 @@ add_library(btdb_lib STATIC
     types.c
 )
 target_include_directories(btdb_lib PUBLIC .)
-target_link_libraries(btdb_lib stb)
+target_link_libraries(btdb_lib stb btdb_sql_parser)
 
 add_executable(btdb
     main.cpp
 )
-target_link_libraries(btdb btdb_sql_parser btdb_lib)
+target_link_libraries(btdb btdb_lib)
 target_compile_options(btdb
     PRIVATE
     #-Werror
