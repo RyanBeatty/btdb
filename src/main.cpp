@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
@@ -493,9 +492,7 @@ int main() {
       printf("===============\n");
     }
   }
-  if (std::cin.bad()) {
-    Panic("I/O Error");
-  }
+  // TODO(ryan): Print out IO error condition if any.
 
   printf("Shutting down btdb\n");
   return 0;
