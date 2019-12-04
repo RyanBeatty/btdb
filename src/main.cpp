@@ -55,8 +55,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
-      auto lhs_value = EvalExpr(expr->lhs, cur_tuple);
-      auto rhs_value = EvalExpr(expr->rhs, cur_tuple);
+      Datum lhs_value = EvalExpr(expr->lhs, cur_tuple);
+      Datum rhs_value = EvalExpr(expr->rhs, cur_tuple);
       switch (expr->op) {
         case AND: {
           assert(lhs_value.type == T_BOOL);
@@ -219,7 +219,7 @@ struct SequentialScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = EvalExpr(where_clause, cur_tpl);
+        Datum result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -279,7 +279,7 @@ struct DeleteScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = EvalExpr(where_clause, cur_tpl);
+        Datum result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -322,7 +322,7 @@ struct UpdateScan : Iterator {
 
       // Evaluate predicate if any.
       if (where_clause != NULL) {
-        auto result_val = EvalExpr(where_clause, cur_tpl);
+        Datum result_val = EvalExpr(where_clause, cur_tpl);
         assert(result_val.type == T_BOOL);
         assert(result_val.data != NULL);
         bool* result = (bool*)result_val.data;
@@ -457,14 +457,14 @@ int main() {
       printf("Query not valid\n");
       continue;
     }
-    auto plan_state = PlanQuery(query);
-    auto results = execute_plan(plan_state);
+    PlanState plan_state = PlanQuery(query);
+    Result results = execute_plan(plan_state);
     if (results.columns != NULL) {
       CharPtrVecIt it = NULL;
       VEC_FOREACH(it, results.columns) { printf("    %s", *it); }
       printf("\n");
       printf("===============\n");
-      for (auto&& mtuple : results.tuples) {
+      for (Tuple* mtuple : results.tuples) {
         assert(mtuple != NULL);
         CharPtrVecIt it = NULL;
         VEC_FOREACH(it, results.columns) {
