@@ -165,6 +165,7 @@ void free_parse_node(ParseNode* node) {
       free_list(select->target_list);
       free_parse_node(select->table_name);
       free_parse_node(select->where_clause);
+      free_parse_node(select->sort_clause);
       free(select);
       break;
     }
@@ -209,8 +210,15 @@ void free_parse_node(ParseNode* node) {
       free(update);
       break;
     }
+    case NSORTBY: {
+      NSortBy* sort_by = (NSortBy*) node;
+      assert(sort_by->sort_expr != NULL);
+      free_parse_node(sort_by->sort_expr);
+      free(sort_by);
+      break;
+    }
     default: {
-      Panic("Unkown Parse Node Type");
+      Panic("Unkown Parse Node Type when freeing");
       break;
     }
   }
@@ -255,6 +263,17 @@ const char* bin_expr_op_to_string(BinExprOp op) {
       return "OR";
     }
     default: { Panic("Unknown BinExpOp"); }
+  }
+}
+
+const char* sort_dir_to_string(SortDir dir) {
+  switch(dir) {
+    case SORT_ASC:
+      return "ASC";
+    case SORT_DESC:
+      return "DESC";
+    default:
+      Panic("Unknown SortDir");
   }
 }
 
@@ -314,6 +333,9 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       EndObject(ctx);
       PrintObject(ctx, "where_clause");
       print_parse_node(select->where_clause, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "sort_clause");
+      print_parse_node(select->sort_clause, ctx);
       EndObject(ctx);
       EndObject(ctx);
       break;
@@ -384,8 +406,19 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       EndObject(ctx);
       break;
     }
+    case NSORTBY: {
+      NSortBy* sort_by = (NSortBy*)node;
+      assert(sort_by->sort_expr != NULL);
+      PrintObject(ctx, "NSortBy");
+      PrintChild(ctx, "dir", sort_dir_to_string(sort_by->dir));
+      PrintObject(ctx, "sort_expr");
+      print_parse_node(sort_by->sort_expr, ctx);
+      EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
     default: {
-      Panic("Unkown Parse Node Type");
+      Panic("Unkown Parse Node Type when printing");
       break;
     }
   }

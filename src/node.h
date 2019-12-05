@@ -50,7 +50,12 @@ typedef enum ParseNodeType {
   NUPDATE_STMT,
   NASSIGN_EXPR,
   NBOOL_LIT,
+  NSORTBY
 } ParseNodeType;
+
+typedef enum SortDir {
+  SORT_ASC, SORT_DESC
+} SortDir;
 
 typedef struct ParseNode {
   ParseNodeType type;
@@ -105,6 +110,7 @@ typedef struct NSelectStmt {
   List* target_list;
   ParseNode* table_name;
   ParseNode* where_clause;
+  ParseNode* sort_clause;
 } NSelectStmt;
 
 typedef struct NInsertStmt {
@@ -136,6 +142,13 @@ typedef struct NUpdateStmt {
   List* assign_expr_list;
   ParseNode* where_clause;
 } NUpdateStmt;
+
+typedef struct NSortBy {
+  ParseNodeType type;
+
+  SortDir dir;
+  ParseNode* sort_expr;
+} NSortBy;
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);

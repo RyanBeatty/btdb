@@ -37,6 +37,7 @@
   bool bool_lit;
   ParseNode* node;
   List* list_node;
+  SortDir sort_dir;
 }
 
 %define api.token.prefix {TOK_}
@@ -48,6 +49,10 @@
     UPDATE
     INTO
     VALUES
+    ORDER
+    BY
+    ASC
+    DESC
     SET
     LPARENS "("
     RPARENS ")"
@@ -72,8 +77,9 @@
 %token <bool_lit> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr
+%type <node> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr sort_clause
 %type <list_node> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list
+%type <sort_dir> sort_direction
 
 %%
 %start stmt;
@@ -96,12 +102,13 @@ stmt:
     parser->tree = $1;
   }
 
-select_stmt: SELECT target_list from_clause where_clause ";" {
+select_stmt: SELECT target_list from_clause where_clause sort_clause ";" {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
   select->type = NSELECT_STMT;
   select->target_list = $2;
   select->table_name = $3;
   select->where_clause = $4;
+  select->sort_clause = $5;
   $$ = (ParseNode*) select;
 }
 
@@ -143,6 +150,21 @@ where_clause:
   | WHERE expr {
       $$ = $2;
     }
+
+sort_clause:
+        { $$ = NULL; }
+  | ORDER BY expr sort_direction {
+    NSortBy* sort_by = calloc(1, sizeof(NSortBy));
+    sort_by->type = NSORTBY;
+    sort_by->dir = $4;
+    sort_by->sort_expr = $3;
+    $$ = (ParseNode*)sort_by; 
+  }
+
+sort_direction:
+  /* empty */ { $$ = SORT_ASC; }
+  | ASC { $$ = SORT_ASC; }
+  | DESC { $$ = SORT_DESC; }
 
 %left AND OR;
 %left "<" ">" "=" "!=" "<=" ">=";

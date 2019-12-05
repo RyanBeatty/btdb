@@ -33,6 +33,10 @@
 "where" return TOK_WHERE;
 "UPDATE" return TOK_UPDATE;
 "update" return TOK_UPDATE;
+("order"|"ORDER") return TOK_ORDER;
+("by"|"BY") return TOK_BY;
+("asc"|"ASC") return TOK_ASC;
+("desc"|"DESC") return TOK_DESC;
 "SET" return TOK_SET;
 "set" return TOK_SET;
 "AND" return TOK_AND;
