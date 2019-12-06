@@ -21,6 +21,16 @@ typedef struct Datum {
 
 Datum MakeDatum(BType, void*);
 
+Datum BoolEQ(Datum, Datum);
+Datum BoolNE(Datum, Datum);
+Datum BoolGT(Datum, Datum);
+Datum BoolLT(Datum, Datum);
+Datum BoolGTE(Datum, Datum);
+Datum BoolLTE(Datum, Datum);
+Datum BoolAnd(Datum, Datum);
+Datum BoolOr(Datum, Datum);
+Datum BoolNot(Datum);
+
 #ifdef __cplusplus
 }
 #endif
