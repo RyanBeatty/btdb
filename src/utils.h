@@ -11,6 +11,9 @@ void Panic(const char* msg);
 
 bool* BoolDup(bool*);
 
+
+#define BoolToStr(b) b ? "true" : "false"
+
 #ifdef __cplusplus
 }
 #endif

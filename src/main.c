@@ -45,26 +45,10 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       Datum rhs_value = EvalExpr(expr->rhs, cur_tuple);
       switch (expr->op) {
         case AND: {
-          assert(lhs_value.type == T_BOOL);
-          assert(rhs_value.type == T_BOOL);
-          assert(lhs_value.data != NULL);
-          assert(rhs_value.data != NULL);
-          bool* lhs_data = (bool*)lhs_value.data;
-          bool* rhs_data = (bool*)rhs_value.data;
-          bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-          *bool_lit_copy = *lhs_data && *rhs_data;
-          return MakeDatum(T_BOOL, bool_lit_copy);
+          return BoolAnd(lhs_value, rhs_value);
         }
         case OR: {
-          assert(lhs_value.type == T_BOOL);
-          assert(rhs_value.type == T_BOOL);
-          assert(lhs_value.data != NULL);
-          assert(rhs_value.data != NULL);
-          bool* lhs_data = (bool*)lhs_value.data;
-          bool* rhs_data = (bool*)rhs_value.data;
-          bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-          *bool_lit_copy = *lhs_data || *rhs_data;
-          return MakeDatum(T_BOOL, bool_lit_copy);
+          return BoolOr(lhs_value, rhs_value);
         }
         case EQ: {
           assert(lhs_value.type == T_BOOL || lhs_value.type == T_STRING);
@@ -72,11 +56,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data == *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolEQ(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
@@ -94,11 +74,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data != *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolNE(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
@@ -116,11 +92,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data > *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolGT(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
@@ -138,11 +110,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data >= *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolGTE(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
@@ -160,11 +128,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data < *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolLT(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
@@ -182,11 +146,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
           assert(lhs_value.data != NULL);
           assert(rhs_value.data != NULL);
           if (lhs_value.type == T_BOOL) {
-            bool* lhs_data = (bool*)lhs_value.data;
-            bool* rhs_data = (bool*)rhs_value.data;
-            bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-            *bool_lit_copy = *lhs_data <= *rhs_data;
-            return MakeDatum(T_BOOL, bool_lit_copy);
+            return BoolLTE(lhs_value, rhs_value);
           } else if (lhs_value.type == T_STRING) {
             char* lhs_data = (char*)lhs_value.data;
             char* rhs_data = (char*)rhs_value.data;
