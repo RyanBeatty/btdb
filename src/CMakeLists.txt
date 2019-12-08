@@ -9,6 +9,7 @@ add_library(btdb_lib STATIC
     analyzer.c
     storage.c
     types.c
+    plan.c
 )
 target_include_directories(btdb_lib PUBLIC .)
 target_link_libraries(btdb_lib stb btdb_sql_parser)
