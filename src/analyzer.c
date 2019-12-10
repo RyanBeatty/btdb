@@ -77,10 +77,30 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     }
   }
 
+  if (select->sort_clause != NULL) {
+    NSortBy* sort_by = (NSortBy*)select->sort_clause;
+    assert(sort_by->type == NSORTBY);
+    assert(sort_by->sort_expr != NULL);
+    NIdentifier* identifier = (NIdentifier*)sort_by->sort_expr;
+    assert(identifier->type == NIDENTIFIER);
+    assert(identifier->identifier != NULL);
+    bool found = false;
+    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+      if (strcmp(table_def->tuple_desc[i].column_name, identifier->identifier) == 0) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return NULL;
+    }
+  }
+
   Query* query = MakeQuery(CMD_SELECT);
   query->table_name = table_name->identifier;
   query->target_list = targets;
   query->where_clause = select->where_clause;
+  query->sort = select->sort_clause;
   return query;
 }
 

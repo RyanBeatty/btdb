@@ -26,6 +26,7 @@ typedef struct Query {
   ParseNode* where_clause;
   List* assign_expr_list;
   Tuple** values;
+  NSortBy* sort;
 } Query;
 
 Query* MakeQuery(CmdType);
