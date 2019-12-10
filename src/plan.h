@@ -36,6 +36,11 @@ typedef struct ModifyScan {
   List* assign_exprs;
 } ModifyScan;
 
+typedef struct Sort {
+  PlanNode plan;
+  int (*cmp_func)(Datum, Datum);
+} Sort;
+
 PlanNode* PlanQuery(Query*);
 
 #endif PLAN_H

@@ -30,6 +30,18 @@ Datum BoolLTE(Datum, Datum);
 Datum BoolAnd(Datum, Datum);
 Datum BoolOr(Datum, Datum);
 Datum BoolNot(Datum);
+int BoolCmp(Datum, Datum);
+
+Datum StrEQ(Datum, Datum);
+Datum StrNE(Datum, Datum);
+Datum StrGT(Datum, Datum);
+Datum StrLT(Datum, Datum);
+Datum StrGTE(Datum, Datum);
+Datum StrLTE(Datum, Datum);
+Datum StrAnd(Datum, Datum);
+Datum StrOr(Datum, Datum);
+Datum StrNot(Datum);
+int StrCmp(Datum, Datum);
 
 #ifdef __cplusplus
 }
