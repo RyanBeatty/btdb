@@ -36,8 +36,11 @@ typedef struct ModifyScan {
   List* assign_exprs;
 } ModifyScan;
 
+typedef enum SortMethod { INSERTION_SORT } SortMethod;
+
 typedef struct Sort {
   PlanNode plan;
+  SortMethod method;
   int (*cmp_func)(Datum, Datum);
 } Sort;
 
