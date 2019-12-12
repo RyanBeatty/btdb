@@ -7,6 +7,7 @@
 #include "storage.h"
 
 typedef enum PLanNodeType {
+  N_PLAN_RESULT,
   N_PLAN_SEQ_SCAN,
   N_PLAN_MODIFY_SCAN,
   N_PLAN_SORT,

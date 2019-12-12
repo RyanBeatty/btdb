@@ -334,8 +334,20 @@ Tuple* SortScan(PlanNode* node) {
   return cur_tuple;
 }
 
+Tuple* GetResult(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_RESULT);
+  assert(node->left != NULL);
+  return node->left->get_next_func(node->left);
+}
+
 PlanNode* PlanQuery(Query* query) {
   assert(query != NULL);
+  PlanNode* plan = calloc(1, sizeof(PlanNode));
+  plan->type = N_PLAN_RESULT;
+  plan->target_list = query->target_list;
+  plan->table_def = query->table_def;
+  plan->get_next_func = GetResult;
   switch (query->cmd) {
     case CMD_SELECT: {
       SeqScan* scan = calloc(1, sizeof(SeqScan));
@@ -344,7 +356,9 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
-      return (PlanNode*)scan;
+
+      plan->left = (PlanNode*)scan;
+      return plan;
     }
     case CMD_INSERT: {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
@@ -355,7 +369,9 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
       scan->insert_tuples = query->values;
-      return (PlanNode*)scan;
+
+      plan->left = (PlanNode*)scan;
+      return plan;
     }
     case CMD_UPDATE: {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
@@ -366,7 +382,9 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
       scan->assign_exprs = query->assign_expr_list;
-      return (PlanNode*)scan;
+
+      plan->left = (PlanNode*)scan;
+      return plan;
     }
     case CMD_DELETE: {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
@@ -376,7 +394,9 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.table_def = query->table_def;
       scan->cmd = CMD_DELETE;
       scan->where_clause = query->where_clause;
-      return (PlanNode*)scan;
+
+      plan->left = (PlanNode*)scan;
+      return plan;
     }
     default: {
       Panic("Unknown query command type durring planning");
