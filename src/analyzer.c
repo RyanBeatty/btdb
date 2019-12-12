@@ -98,6 +98,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
 
   Query* query = MakeQuery(CMD_SELECT);
   query->table_name = table_name->identifier;
+  query->table_def = table_def;
   query->target_list = targets;
   query->where_clause = select->where_clause;
   query->sort = select->sort_clause;
@@ -259,6 +260,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
 
   Query* query = MakeQuery(CMD_INSERT);
   query->table_name = table_name->identifier;
+  query->table_def = table_def;
   query->target_list = targets;
   query->values = values;
   return query;
@@ -284,6 +286,7 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
 
   Query* query = (Query*)MakeQuery(CMD_DELETE);
   query->table_name = table_name->identifier;
+  query->table_def = table_def;
   query->where_clause = delete_stmt->where_clause;
   return query;
 }
@@ -338,6 +341,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
 
   Query* query = (Query*)MakeQuery(CMD_UPDATE);
   query->table_name = table_name->identifier;
+  query->table_def = table_def;
   query->assign_expr_list = assign_expr_list;
   query->where_clause = update->where_clause;
   return query;

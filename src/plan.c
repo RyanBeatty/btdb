@@ -290,6 +290,50 @@ Tuple* DeleteScan(PlanNode* node) {
   return NULL;
 }
 
+Tuple* SortScan(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_SORT);
+  Sort* sort = (Sort*)node;
+
+  if (!sort->is_sorted) {
+    Tuple* cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
+    while (cur_tuple != NULL) {
+      arrpush(sort->plan.results, cur_tuple);
+      cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
+    }
+
+    assert(sort->method == INSERTION_SORT);
+    for (size_t i = 0; i < arrlen(sort->plan.results); ++i) {
+      Tuple* insert_tuple = sort->plan.results[i];
+      for (size_t j = 0; j < i; ++j) {
+        Tuple* cur_tuple = sort->plan.results[j];
+
+        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier);
+        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier);
+        assert(left != NULL);
+        assert(right != NULL);
+        Datum result = sort->cmp_func(*left, *right);
+        if (*(bool*)result.data) {
+          Tuple* swap = cur_tuple;
+          sort->plan.results[j] = insert_tuple;
+          sort->plan.results[i] = swap;
+          insert_tuple = swap;
+        }
+      }
+    }
+
+    sort->is_sorted = true;
+  }
+
+  if (sort->next_index >= arrlen(sort->plan.results)) {
+    return NULL;
+  }
+
+  Tuple* cur_tuple = sort->plan.results[sort->next_index];
+  ++sort->next_index;
+  return cur_tuple;
+}
+
 PlanNode* Plan(Query* query) {
   assert(query != NULL);
   switch (query->cmd) {
@@ -298,6 +342,7 @@ PlanNode* Plan(Query* query) {
       scan->plan.type = N_PLAN_SEQ_SCAN;
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
       return (PlanNode*)scan;
     }
@@ -307,6 +352,7 @@ PlanNode* Plan(Query* query) {
       scan->plan.get_next_func = InsertScan;
       scan->cmd = CMD_INSERT;
       scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
       scan->insert_tuples = query->values;
       return (PlanNode*)scan;
@@ -317,6 +363,7 @@ PlanNode* Plan(Query* query) {
       scan->plan.get_next_func = UpdateScan;
       scan->cmd = CMD_UPDATE;
       scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->table_def;
       scan->where_clause = query->where_clause;
       scan->assign_exprs = query->assign_expr_list;
       return (PlanNode*)scan;
@@ -326,6 +373,7 @@ PlanNode* Plan(Query* query) {
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = DeleteScan;
       scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->table_def;
       scan->cmd = CMD_DELETE;
       scan->where_clause = query->where_clause;
       return (PlanNode*)scan;

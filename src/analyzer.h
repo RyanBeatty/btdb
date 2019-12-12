@@ -22,6 +22,7 @@ typedef struct Query {
   CmdType cmd;
 
   char* table_name;
+  TableDef* table_def;
   CharPtrVec* target_list;
   ParseNode* where_clause;
   List* assign_expr_list;

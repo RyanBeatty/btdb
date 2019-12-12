@@ -16,6 +16,7 @@ typedef struct PlanNode {
   PlanNodeType type;
   CharPtrVec* target_list;
   Tuple** results;  // 2d stb_arr.
+  TableDef* table_def;
   struct PlanNode* left;
   struct PlanNode* right;
   Tuple* (*get_next_func)(struct PlanNode*);
@@ -41,7 +42,11 @@ typedef enum SortMethod { INSERTION_SORT } SortMethod;
 typedef struct Sort {
   PlanNode plan;
   SortMethod method;
-  int (*cmp_func)(Datum, Datum);
+  // TODO(ryan): Allow for more general sorting expressions.
+  NIdentifier* sort_col;
+  Datum (*cmp_func)(Datum, Datum);
+  size_t next_index;
+  bool is_sorted;
 } Sort;
 
 PlanNode* PlanQuery(Query*);
