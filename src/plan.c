@@ -358,6 +358,20 @@ PlanNode* PlanQuery(Query* query) {
       scan->where_clause = query->where_clause;
 
       plan->left = (PlanNode*)scan;
+      if (query->sort != NULL) {
+        Sort* sort = calloc(1, sizeof(Sort));
+        sort->plan.type = N_PLAN_SORT;
+        sort->plan.get_next_func = SortScan;
+        sort->plan.target_list = query->target_list;
+        sort->method = INSERTION_SORT;
+        // TODO(ryan): Make more robust;
+        sort->sort_col = (NIdentifier*)query->sort->sort_expr;
+        sort->cmp_func = StrLT;
+        sort->is_sorted = false;
+
+        sort->plan.left = (PlanNode*)scan;
+        plan->left = (PlanNode*)sort;
+      }
       return plan;
     }
     case CMD_INSERT: {
