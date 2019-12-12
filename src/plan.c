@@ -334,7 +334,7 @@ Tuple* SortScan(PlanNode* node) {
   return cur_tuple;
 }
 
-PlanNode* Plan(Query* query) {
+PlanNode* PlanQuery(Query* query) {
   assert(query != NULL);
   switch (query->cmd) {
     case CMD_SELECT: {

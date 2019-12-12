@@ -77,7 +77,7 @@ int main() {
       printf("Query not valid\n");
       continue;
     }
-    PlanNode* plan = Plan(query);
+    PlanNode* plan = PlanQuery(query);
     Result results = ExecPlan(plan);
     if (results.columns != NULL) {
       CharPtrVecIt it = NULL;
