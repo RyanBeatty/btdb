@@ -208,3 +208,53 @@ def test_udpate():
     )
 
     proc.kill()
+
+def test_sort():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    proc.stdin.write(b"select bar, baz from foo order by bar;\n")
+    proc.stdin.write(b"select bar, baz from foo order by bar desc;\n")
+    proc.stdin.write(b"select bar, baz from foo order by baz;\n")
+    proc.stdin.write(b"select bar, baz from foo order by baz desc;\n")
+    proc.stdin.write(b"select bar, baz from foo order by foo;\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb>     bar    baz
+        ===============
+        hello\ttrue\t
+        world\tfalse\t
+        btdb>     bar    baz
+        ===============
+        world\tfalse\t
+        hello\ttrue\t
+        btdb>     bar    baz
+        ===============
+        world\tfalse\t
+        hello\ttrue\t
+        btdb>     bar    baz
+        ===============
+        hello\ttrue\t
+        world\tfalse\t
+        btdb> Query not valid
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
