@@ -364,9 +364,28 @@ PlanNode* PlanQuery(Query* query) {
         sort->plan.get_next_func = SortScan;
         sort->plan.target_list = query->target_list;
         sort->method = INSERTION_SORT;
-        // TODO(ryan): Make more robust;
+
+        // TODO(ryan): Allow for more robust sort expressions.
         sort->sort_col = (NIdentifier*)query->sort->sort_expr;
-        sort->cmp_func = StrLT;
+        BType sort_col_type = GetColType(query->table_def, sort->sort_col->identifier);
+        assert(sort_col_type != T_UNKNOWN);
+        if (sort_col_type == T_STRING) {
+          if (query->sort->dir == SORT_ASC) {
+            sort->cmp_func = StrLT;
+          } else if (query->sort->dir == SORT_DESC) {
+            sort->cmp_func = StrGT;
+          } else {
+            Panic("invalid sort direction");
+          }
+        } else if (sort_col_type == T_BOOL) {
+          if (query->sort->dir == SORT_ASC) {
+            sort->cmp_func = BoolLT;
+          } else if (query->sort->dir == SORT_DESC) {
+            sort->cmp_func = BoolGT;
+          } else {
+            Panic("invalid sort direction");
+          }
+        }
         sort->is_sorted = false;
 
         sort->plan.left = (PlanNode*)scan;

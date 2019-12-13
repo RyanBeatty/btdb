@@ -22,6 +22,7 @@ TableDef* MakeTableDef(const char*, ColDesc*);
 extern TableDef* Tables;  // sbarr
 
 TableDef* FindTableDef(const char*);
+BType GetColType(TableDef*, const char*);
 
 // typedef unsigned char byte;
 // typedef byte* HeapTuple;

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "types.h"
 #include "utils.h"
@@ -33,7 +34,7 @@ Datum BoolGT(Datum d1, Datum d2) {
   assert(d2.type == T_BOOL);
   assert(d1.data != NULL);
   assert(d2.data != NULL);
-  bool result = *((bool*)d1.data) < *((bool*)d2.data);
+  bool result = *((bool*)d1.data) > *((bool*)d2.data);
   return MakeDatum(T_BOOL, BoolDup(&result));
 }
 

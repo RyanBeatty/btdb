@@ -31,6 +31,15 @@ TableDef* FindTableDef(const char* table_name) {
   return i == arrlen(Tables) ? NULL : table_def;
 }
 
+BType GetColType(TableDef* table_def, const char* col_name) {
+  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    if (strcmp(col_name, table_def->tuple_desc[i].column_name) == 0) {
+      return table_def->tuple_desc[i].type;
+    }
+  }
+  return T_UNKNOWN;
+}
+
 // void WriteField(MemTuple* mtuple, byte* data, size_t size) {
 //   assert(mtuple != NULL);
 //   assert(mtuple->htuple != NULL);
