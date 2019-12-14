@@ -355,6 +355,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->table_def;
+      scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
 
       plan->left = (PlanNode*)scan;
@@ -400,6 +401,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->cmd = CMD_INSERT;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->table_def;
+      scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->insert_tuples = query->values;
 
@@ -413,6 +415,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->cmd = CMD_UPDATE;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->table_def;
+      scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->assign_exprs = query->assign_expr_list;
 
@@ -426,6 +429,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->table_def;
       scan->cmd = CMD_DELETE;
+      scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
 
       plan->left = (PlanNode*)scan;

@@ -25,6 +25,7 @@ typedef struct PlanNode {
 
 typedef struct SeqScan {
   PlanNode plan;
+  const char* table_name;
   size_t next_index;
   ParseNode* where_clause;
 } SeqScan;
@@ -32,6 +33,7 @@ typedef struct SeqScan {
 typedef struct ModifyScan {
   PlanNode plan;
   CmdType cmd;
+  const char* table_name;
   size_t next_index;
   ParseNode* where_clause;
   Tuple** insert_tuples;  // 2d stb_arr.
