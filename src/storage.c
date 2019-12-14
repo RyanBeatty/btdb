@@ -5,7 +5,7 @@
 #include "storage.h"
 
 TableDef* TableDefs = NULL;
-Tuple** Tuples = NULL;
+Table* Tables = NULL;
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
   size_t len = strlen(name);
@@ -85,29 +85,39 @@ Tuple* CopyTuple(Tuple* tuple) {
   return new_tuple;
 }
 
-void InsertTuple(Tuple* tuple) {
-  arrpush(Tuples, tuple);
+void InsertTuple(size_t index, Tuple* tuple) {
+  arrpush(Tables[index], tuple);
   return;
 }
 
-Tuple* GetTuple(size_t index) {
+Tuple* GetTuple(size_t table_index, size_t index) {
   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
   // arrdel() doesn't automatically clear the moved over spaces.
-  if (index >= arrlen(Tuples)) {
+  if (index >= arrlen(Tables[table_index])) {
     return NULL;
   }
-  return Tuples[index];
+  return Tables[table_index][index];
 }
 
-void UpdateTuple(Tuple* tuple, size_t index) {
-  if (index >= arrlen(Tuples)) {
+void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
+  if (index >= arrlen(Tables[table_index])) {
     return;
   }
 
-  Tuple* old_tuple = GetTuple(index);
+  Tuple* old_tuple = GetTuple(table_index, index);
   assert(old_tuple != NULL);
   *old_tuple = *tuple;
   return;
 }
 
-void DeleteHeapTuple(size_t index) { arrdel(Tuples, index); }
+void DeleteHeapTuple(size_t table_index, size_t index) {
+  assert(Tables[table_index] != NULL);
+  arrdel(Tables[table_index], index);
+}
+
+void CreateTable(TableDef* table_def) {
+  assert(table_def != NULL);
+  table_def->index = arrlen(Tables);
+  arrpush(TableDefs, *table_def);
+  arrpush(Tables, NULL);
+}

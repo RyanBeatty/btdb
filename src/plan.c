@@ -170,7 +170,7 @@ Tuple* SequentialScan(PlanNode* node) {
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->next_index);
+    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl == NULL) {
       return NULL;
     }
@@ -208,7 +208,7 @@ Tuple* InsertScan(PlanNode* node) {
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
     cur_tuple = scan->insert_tuples[i];
     assert(cur_tuple != NULL);
-    InsertTuple(CopyTuple(cur_tuple));
+    InsertTuple(scan->plan.table_def->index, CopyTuple(cur_tuple));
   }
   return NULL;
 }
@@ -219,7 +219,7 @@ Tuple* UpdateScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->next_index);
+    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl == NULL) {
       return NULL;
     }
@@ -265,7 +265,7 @@ Tuple* DeleteScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->next_index);
+    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl == NULL) {
       return NULL;
     }
@@ -283,7 +283,7 @@ Tuple* DeleteScan(PlanNode* node) {
     }
 
     Tuple* new_tuple = CopyTuple(cur_tpl);
-    DeleteHeapTuple(scan->next_index);
+    DeleteHeapTuple(scan->plan.table_def->index, scan->next_index);
     return new_tuple;
   }
 

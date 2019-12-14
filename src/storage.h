@@ -49,21 +49,16 @@ Datum* GetCol(Tuple*, const char*);
 Tuple* SetCol(Tuple*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);
 
-// TODO: Figure out what a tuple will actually look like.
-// typedef std::unordered_map<std::string, Datum> Tuple;
-
-// VEC_PROTOTYPE(TuplePtr, Tuple*);
-
-extern Tuple** Tuples;  // sbarr
-
-void InsertTuple(Tuple*);
-void UpdateTuple(Tuple*, size_t);
-Tuple* GetTuple(size_t);
-void DeleteHeapTuple(size_t);
-
 typedef Tuple** Table;
 
-// extern Table* TableDefs;  // sbarr
+extern Table* Tables;  // sbarr
+
+void InsertTuple(size_t, Tuple*);
+void UpdateTuple(size_t, Tuple*, size_t);
+Tuple* GetTuple(size_t, size_t);
+void DeleteHeapTuple(size_t, size_t);
+
+void CreateTable(TableDef*);
 
 #ifdef __cplusplus
 }

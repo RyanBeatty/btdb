@@ -41,7 +41,8 @@ int main() {
   ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
   arrpush(tuple_desc, col1);
   arrpush(tuple_desc, col2);
-  TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc, .index = 0};
+  TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
+  CreateTable(&table_def);
   arrpush(TableDefs, table_def);
 
   Tuple* t1 = NULL;
@@ -56,8 +57,8 @@ int main() {
   *bool_lit = false;
   t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  InsertTuple(t1);
-  InsertTuple(t2);
+  InsertTuple(0, t1);
+  InsertTuple(0, t2);
   while (true) {
     printf("btdb> ");
     char* line = NULL;
