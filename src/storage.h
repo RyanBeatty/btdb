@@ -25,19 +25,6 @@ extern TableDef* TableDefs;  // sbarr
 TableDef* FindTableDef(const char*);
 BType GetColType(TableDef*, const char*);
 
-// typedef unsigned char byte;
-// typedef byte* HeapTuple;
-
-// VEC_PROTOTYPE(HeapTuple, HeapTuple);
-// static HeapTupleVec* Buffer = MakeHeapTupleVec();
-
-// struct MemTuple {
-//   size_t size;
-//   HeapTuple htuple;
-// };
-
-// void WriteField(MemTuple* mtuple, byte* data, size_t size);
-
 typedef struct TuplePair {
   char* column_name;
   Datum data;
