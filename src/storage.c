@@ -7,13 +7,14 @@
 TableDef* TableDefs = NULL;
 Tuple** Tuples = NULL;
 
-TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
+TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
   size_t len = strlen(name);
   char* cpy = (char*)calloc(sizeof(char), len);
   strncpy(cpy, name, len);
   TableDef* def = (TableDef*)calloc(sizeof(TableDef), 1);
   def->name = cpy;
   def->tuple_desc = tuple_desc;
+  def->index = index;
   return def;
 }
 

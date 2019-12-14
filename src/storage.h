@@ -15,9 +15,10 @@ typedef struct ColDesc {
 typedef struct TableDef {
   const char* name;
   ColDesc* tuple_desc;  // sbarr
+  size_t index;
 } TableDef;
 
-TableDef* MakeTableDef(const char*, ColDesc*);
+TableDef* MakeTableDef(const char*, ColDesc*, size_t);
 
 extern TableDef* TableDefs;  // sbarr
 
