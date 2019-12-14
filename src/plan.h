@@ -54,4 +54,4 @@ typedef struct Sort {
 
 PlanNode* PlanQuery(Query*);
 
-#endif PLAN_H
+#endif  // PLAN_H

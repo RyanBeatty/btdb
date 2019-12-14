@@ -43,7 +43,6 @@ int main() {
   arrpush(tuple_desc, col2);
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
-  arrpush(TableDefs, table_def);
 
   Tuple* t1 = NULL;
   t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
@@ -59,6 +58,17 @@ int main() {
 
   InsertTuple(0, t1);
   InsertTuple(0, t2);
+
+  ColDesc* table2_tuple_desc = NULL;
+  ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
+  arrpush(table2_tuple_desc, table2_col1);
+  TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
+  CreateTable(&table_def2);
+
+  Tuple* table2_t1 = NULL;
+  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
+  InsertTuple(1, table2_t1);
+
   while (true) {
     printf("btdb> ");
     char* line = NULL;
