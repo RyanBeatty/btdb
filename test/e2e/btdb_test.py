@@ -21,6 +21,7 @@ def test_select():
     proc.stdin.write(b"select bar, baz from foo where baz = true;\n")
     proc.stdin.write(b"select bar, baz from foo where bar = 'world';\n")
     proc.stdin.write(b"select bar, baz from foo where bar = 'foo';\n")
+    proc.stdin.write(b"select a from b;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -45,6 +46,9 @@ def test_select():
         world\tfalse\t
         btdb>     bar    baz
         ===============
+        btdb>     a
+        ===============
+        asdf\t
         btdb> Shutting down btdb
         """
         ),
@@ -64,6 +68,8 @@ def test_insert():
 
     proc.stdin.write(b"insert into foo (bar, baz) values ('a', false), ('b', true);\n")
     proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"insert into b (a) values ('c');\n")
+    proc.stdin.write(b"select a from b;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -84,6 +90,12 @@ def test_insert():
         world\tfalse\t
         a\tfalse\t
         b\ttrue\t
+        btdb>     a
+        ===============
+        btdb>     a
+        ===============
+        asdf\t
+        c\t
         btdb> Shutting down btdb
         """
         ),
@@ -105,6 +117,8 @@ def test_delete():
     proc.stdin.write(b"select bar, baz from foo;\n")
     proc.stdin.write(b"delete from foo where bar = 'world';\n")
     proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"delete from b;\n")
+    proc.stdin.write(b"select a from b;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -123,6 +137,9 @@ def test_delete():
         world\tfalse\t
         btdb> ===============
         btdb>     bar    baz
+        ===============
+        btdb> ===============
+        btdb>     a
         ===============
         btdb> Shutting down btdb
         """
@@ -179,6 +196,8 @@ def test_udpate():
     proc.stdin.write(b"select bar, baz from foo;\n")
     proc.stdin.write(b"update foo set bar = 'b' where baz = true;\n")
     proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"update b set a = 'updated';\n")
+    proc.stdin.write(b"select a from b;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -201,6 +220,10 @@ def test_udpate():
         ===============
         b\ttrue\t
         a\tfalse\t
+        btdb> ===============
+        btdb>     a
+        ===============
+        updated\t
         btdb> Shutting down btdb
         """
         ),
