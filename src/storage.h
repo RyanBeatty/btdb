@@ -19,7 +19,7 @@ typedef struct TableDef {
 
 TableDef* MakeTableDef(const char*, ColDesc*);
 
-extern TableDef* Tables;  // sbarr
+extern TableDef* TableDefs;  // sbarr
 
 TableDef* FindTableDef(const char*);
 BType GetColType(TableDef*, const char*);
@@ -59,6 +59,10 @@ void InsertTuple(Tuple*);
 void UpdateTuple(Tuple*, size_t);
 Tuple* GetTuple(size_t);
 void DeleteHeapTuple(size_t);
+
+typedef Tuple** Table;
+
+// extern Table* TableDefs;  // sbarr
 
 #ifdef __cplusplus
 }

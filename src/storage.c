@@ -4,7 +4,7 @@
 
 #include "storage.h"
 
-TableDef* Tables = NULL;
+TableDef* TableDefs = NULL;
 Tuple** Tuples = NULL;
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
@@ -20,15 +20,15 @@ TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc) {
 TableDef* FindTableDef(const char* table_name) {
   TableDef* table_def = NULL;
   size_t i = 0;
-  for (; i < arrlen(Tables); ++i) {
-    if (strcmp(Tables[i].name, table_name) == 0) {
-      table_def = &Tables[i];
+  for (; i < arrlen(TableDefs); ++i) {
+    if (strcmp(TableDefs[i].name, table_name) == 0) {
+      table_def = &TableDefs[i];
       break;
     }
   }
 
   // TODO(ryan): Just return from break and return null with no check here.
-  return i == arrlen(Tables) ? NULL : table_def;
+  return i == arrlen(TableDefs) ? NULL : table_def;
 }
 
 BType GetColType(TableDef* table_def, const char* col_name) {

@@ -42,7 +42,7 @@ int main() {
   arrpush(tuple_desc, col1);
   arrpush(tuple_desc, col2);
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
-  arrpush(Tables, table_def);
+  arrpush(TableDefs, table_def);
 
   Tuple* t1 = NULL;
   t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
