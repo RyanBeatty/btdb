@@ -38,63 +38,6 @@ void PrintIndent(PrintContext* ctx) {
 void Indent(PrintContext* ctx) { ++ctx->indent; }
 void Dedent(PrintContext* ctx) { --ctx->indent; }
 
-List* make_list(ListType type) {
-  List* list = (List*)calloc(1, sizeof(List));
-  list->type = type;
-  return list;
-}
-
-void push_list(List* list, void* data) {
-  assert(list != NULL);
-  assert(data != NULL);
-  ListCell* cell = (ListCell*)calloc(1, sizeof(ListCell));
-  cell->data = data;
-  if (list->head == NULL) {
-    list->head = cell;
-    list->length = 1;
-    return;
-  }
-
-  ListCell* ptr = list->head;
-  for (; ptr->next != NULL; ptr = ptr->next) {
-  }
-  ptr->next = cell;
-  ++list->length;
-  return;
-}
-
-void free_list(List* list) {
-  assert(list != NULL);
-  switch (list->type) {
-    case T_PARSENODE: {
-      for (ListCell* ptr = list->head; ptr != NULL;) {
-        assert(ptr->data != NULL);
-        free_parse_node((ParseNode*)ptr->data);
-        ListCell* tmp = ptr;
-        ptr = ptr->next;
-        free(tmp);
-      }
-      free(list);
-      return;
-    }
-    case T_LIST: {
-      for (ListCell* ptr = list->head; ptr != NULL;) {
-        assert(ptr->data != NULL);
-        free_list((List*)ptr->data);
-        ListCell* tmp = ptr;
-        ptr = ptr->next;
-        free(tmp);
-      }
-      free(list);
-      return;
-    }
-    default: {
-      Panic("Invalid list type when freeing");
-      return;
-    }
-  }
-}
-
 void free_parse_node_list(ParseNode** list) {
   if (list == NULL) {
     return ;
@@ -103,36 +46,6 @@ void free_parse_node_list(ParseNode** list) {
     free_parse_node(list[i]);
   }
   return;
-}
-
-void print_list(List* list, PrintContext* ctx) {
-  assert(list != NULL);
-  switch (list->type) {
-    case T_PARSENODE: {
-      for (ListCell* ptr = list->head; ptr != NULL; ptr = ptr->next) {
-        assert(ptr->data != NULL);
-        print_parse_node((ParseNode*)ptr->data, ctx);
-      }
-      return;
-    }
-    case T_LIST: {
-      uint64_t size = 0;
-      for (ListCell* ptr = list->head; ptr != NULL; ptr = ptr->next, ++size) {
-        assert(ptr->data != NULL);
-        char str[100];
-        memset(str, 0, 100);
-        sprintf(str, "item %" PRIu64, size);
-        PrintObject(ctx, str);
-        print_list((List*)ptr->data, ctx);
-        EndObject(ctx);
-      }
-      return;
-    }
-    default: {
-      Panic("Invalid list type when freeing");
-      return;
-    }
-  }
 }
 
 void print_parse_node_list(ParseNode** list, PrintContext* ctx) {

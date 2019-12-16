@@ -20,26 +20,6 @@ void PrintIndent(PrintContext*);
 void Indent(PrintContext*);
 void Dedent(PrintContext*);
 
-typedef enum ListType { T_PARSENODE, T_LIST } ListType;
-
-typedef struct ListCell {
-  void* data;
-  struct ListCell* next;
-} ListCell;
-
-typedef struct List {
-  ListType type;
-  uint64_t length;
-  ListCell* head;
-} List;
-
-List* make_list(ListType);
-void push_list(List*, void*);
-void free_list(List*);
-void print_list(List*, PrintContext*);
-
-#define FOR_EACH(cell, list) for (cell = list->head; cell != NULL; cell = cell->next)
-
 typedef enum ParseNodeType {
   NBIN_EXPR,
   NIDENTIFIER,
