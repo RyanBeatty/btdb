@@ -106,7 +106,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   query->table_def = table_def;
   query->target_list = targets;
   query->where_clause = select->where_clause;
-  query->sort = select->sort_clause;
+  query->sort = (NSortBy*) select->sort_clause;
   return query;
 }
 
