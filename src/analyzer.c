@@ -51,7 +51,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   }
 
   // Validate target list contains valid references to columns.
-  CharPtrVec* targets = MakeCharPtrVec();
+  char** targets = NULL;
   ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
   for (size_t i = 0; i < arrlen(target_list); ++i) {
@@ -69,7 +69,8 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     if (!found) {
       return NULL;
     }
-    PushBack(targets, col->identifier);
+    char* copy = strdup(col->identifier);
+    arrpush(targets, copy);
   }
 
   if (select->where_clause != NULL) {
@@ -194,7 +195,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   }
 
   // Validate target list contains valid references to columns.
-  CharPtrVec* targets = MakeCharPtrVec();
+  char** targets = NULL;
   ParseNode** target_list = insert->column_list;
   assert(target_list != NULL);
   for (size_t i = 0; i < arrlen(target_list); ++i) {
@@ -212,7 +213,8 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     if (!found) {
       return NULL;
     }
-    PushBack(targets, col->identifier);
+    char* copy = strdup(col->identifier);
+    arrpush(targets, copy);
   }
 
   Tuple** values = NULL;
@@ -241,13 +243,13 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         NStringLit* str_lit = (NStringLit*)data;
         assert(str_lit->type == NSTRING_LIT);
         assert(str_lit->str_lit != NULL);
-        const char* key = VEC_VALUE(targets, col_index);
+        const char* key = targets[col_index];
         char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
         tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
       } else {
         NBoolLit* bool_lit = (NBoolLit*)data;
         assert(bool_lit->type == NBOOL_LIT);
-        const char* key = VEC_VALUE(targets, col_index);
+        const char* key = targets[col_index];
         bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
         *bool_lit_copy = bool_lit->bool_lit;
         tuple = SetCol(tuple, key, MakeDatum(T_BOOL, bool_lit_copy));

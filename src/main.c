@@ -17,7 +17,7 @@
 #include "utils.h"
 
 typedef struct Result {
-  CharPtrVec* columns;
+  char** columns;
   Tuple** tuples;  // stb_arr
 } Result;
 
@@ -91,16 +91,14 @@ int main() {
     PlanNode* plan = PlanQuery(query);
     Result results = ExecPlan(plan);
     if (results.columns != NULL) {
-      CharPtrVecIt it = NULL;
-      VEC_FOREACH(it, results.columns) { printf("    %s", *it); }
+      for (size_t i = 0; i < arrlen(results.columns); ++i) { printf("    %s", results.columns[i]); }
       printf("\n");
       printf("===============\n");
       for (size_t i = 0; i < arrlen(results.tuples); ++i) {
         Tuple* mtuple = results.tuples[i];
         assert(mtuple != NULL);
-        CharPtrVecIt it = NULL;
-        VEC_FOREACH(it, results.columns) {
-          Datum* data = GetCol(mtuple, *it);
+        for (size_t i = 0; i < arrlen(results.columns); ++i) {
+          Datum* data = GetCol(mtuple, results.columns[i]);
           if (data != NULL) {
             // TODO(ryan): This is some hacky bs to be able to print this as a string.
             // I'm going to need to do an overhaul of alot of this code in the future.

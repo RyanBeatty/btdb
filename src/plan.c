@@ -189,11 +189,11 @@ Tuple* SequentialScan(PlanNode* node) {
 
     // Column projections.
     Tuple* result_tpl = NULL;
-    CharPtrVecIt target = NULL;
-    VEC_FOREACH(target, scan->plan.target_list) {
-      Datum* data = GetCol(cur_tpl, *target);
+    for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
+      const char* col_name = scan->plan.target_list[i];
+      Datum* data = GetCol(cur_tpl, col_name);
       assert(data != NULL);
-      result_tpl = SetCol(result_tpl, *target, *data);
+      result_tpl = SetCol(result_tpl, col_name, *data);
     }
     return result_tpl;
   }

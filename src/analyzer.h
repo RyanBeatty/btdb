@@ -23,7 +23,7 @@ typedef struct Query {
 
   char* table_name;
   TableDef* table_def;
-  CharPtrVec* target_list;
+  char** target_list;
   ParseNode* where_clause;
   NAssignExpr** assign_expr_list;
   Tuple** values;
