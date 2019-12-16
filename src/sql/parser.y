@@ -19,6 +19,8 @@
   #include <stdbool.h>
   #include <string.h>
   #include <stdio.h>
+
+  #include "stb_ds.h"
   
   #include "sql/driver.h"
 
@@ -37,6 +39,7 @@
   bool bool_lit;
   ParseNode* node;
   List* list_node;
+  ParseNode** list_node2;
   SortDir sort_dir;
 }
 
@@ -78,7 +81,8 @@
 
 // %type <std::vector<std::string>> column_exp
 %type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list from_list from_clause
+%type <list_node> target_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list from_list from_clause
+%type <list_node2> insert_column_list column_list
 %type <sort_dir> sort_direction
 
 %%
@@ -351,8 +355,8 @@ column_list:
       identifier->type = NIDENTIFIER;
       identifier->identifier = $1;
 
-      List* column_list = make_list(T_PARSENODE);
-      push_list(column_list, identifier);
+      ParseNode** column_list = NULL;
+      arrpush(column_list, identifier);
       $$ = column_list;
    }
   | column_list "," STRING_GROUP {
@@ -361,8 +365,8 @@ column_list:
       identifier->type = NIDENTIFIER;
       identifier->identifier = $3;
 
-      List* column_list = $1;
-      push_list(column_list, identifier);
+      ParseNode** column_list = $1;
+      arrpush(column_list, identifier);
       $$ = column_list;
   }
 

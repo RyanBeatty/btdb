@@ -117,7 +117,7 @@ typedef struct NInsertStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
-  List* column_list;
+  ParseNode** column_list;
   List* values_list;
 } NInsertStmt;
 

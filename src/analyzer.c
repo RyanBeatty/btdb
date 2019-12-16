@@ -199,13 +199,11 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
 
   // Validate target list contains valid references to columns.
   CharPtrVec* targets = MakeCharPtrVec();
-  List* target_list = insert->column_list;
+  ParseNode** target_list = insert->column_list;
   assert(target_list != NULL);
-  assert(target_list->type == T_PARSENODE);
-  ListCell* lc = NULL;
-  FOR_EACH(lc, target_list) {
-    assert(lc->data != NULL);
-    NIdentifier* col = (NIdentifier*)lc->data;
+  for (size_t i = 0; i < arrlen(target_list); ++i) {
+    NIdentifier* col = (NIdentifier*)target_list[i];
+    assert(col != NULL);
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
@@ -225,12 +223,12 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   List* values_list = insert->values_list;
   assert(values_list != NULL);
   assert(values_list->type == T_LIST);
-  lc = NULL;
+  ListCell* lc = NULL;
   FOR_EACH(lc, values_list) {
     assert(lc->data != NULL);
     List* value_items = (List*)lc->data;
     assert(value_items->type == T_PARSENODE);
-    assert(value_items->length == target_list->length);
+    assert(value_items->length == arrlen(target_list));
 
     Tuple* tuple = NULL;
     uint64_t col_index = 0;

@@ -1,6 +1,8 @@
 #include "node.h"
 #include "utils.h"
 
+#include "stb_ds.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -93,6 +95,16 @@ void free_list(List* list) {
   }
 }
 
+void free_parse_node_list(ParseNode** list) {
+  if (list == NULL) {
+    return ;
+  }
+  for (size_t i = 0; i < arrlen(list); ++i) {
+    free_parse_node(list[i]);
+  }
+  return;
+}
+
 void print_list(List* list, PrintContext* ctx) {
   assert(list != NULL);
   switch (list->type) {
@@ -120,6 +132,14 @@ void print_list(List* list, PrintContext* ctx) {
       Panic("Invalid list type when freeing");
       return;
     }
+  }
+}
+
+void print_parse_node_list(ParseNode** list, PrintContext* ctx) {
+  assert(list != NULL);
+  for (size_t i = 0; i < arrlen(list); ++i) {
+    assert(list[i] != NULL);
+    print_parse_node(list[i], ctx);
   }
 }
 
@@ -175,7 +195,7 @@ void free_parse_node(ParseNode* node) {
       assert(insert->column_list != NULL);
       assert(insert->values_list != NULL);
       free_parse_node(insert->table_name);
-      free_list(insert->column_list);
+      free_parse_node_list(insert->column_list);
       free_list(insert->values_list);
       free(insert);
       break;
@@ -350,7 +370,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       print_parse_node(insert->table_name, ctx);
       EndObject(ctx);
       PrintObject(ctx, "column_list");
-      print_list(insert->column_list, ctx);
+      print_parse_node_list(insert->column_list, ctx);
       EndObject(ctx);
       PrintObject(ctx, "values_list");
       print_list(insert->values_list, ctx);

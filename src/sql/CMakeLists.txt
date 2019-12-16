@@ -12,28 +12,6 @@ BISON_TARGET(btdb_parser
 )
 ADD_FLEX_BISON_DEPENDENCY(btdb_scanner btdb_parser)
 
-#FLEX_TARGET(btdb_scanner2 scanner2.l  ${CMAKE_CURRENT_BINARY_DIR}/scanner2.c)
-#BISON_TARGET(btdb_parser2
-#    parser2.y
-#    ${CMAKE_CURRENT_BINARY_DIR}/parser2.c
-#)
-#ADD_FLEX_BISON_DEPENDENCY(btdb_scanner2 btdb_parser2)
-#
-#add_library(btdb_sql_parser2
-#    ${sources}
-#    ${FLEX_btdb_scanner2_OUTPUTS}
-#    ${BISON_btdb_parser2_OUTPUTS}
-#    "driver.c"
-#    "../node.c"
-#    "../node.h"
-#    "../utils.c"
-#)
-#
-#add_executable(parse_sql2
-#    main2.c
-#)
-#target_link_libraries(parse_sql2 btdb_sql_parser2)
-
 add_library(btdb_sql_parser
     ${sources}
     ${FLEX_btdb_scanner_OUTPUTS}
@@ -43,6 +21,7 @@ add_library(btdb_sql_parser
     "../utils.c"
 )
 target_include_directories(btdb_sql_parser PUBLIC src/sql)
+target_link_libraries(btdb_sql_parser stb)
 
 add_executable(parse_sql
     main.c

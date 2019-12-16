@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+// Only define once.
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
+
 #include "node.h"
 #include "sql/driver.h"
 
