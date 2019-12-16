@@ -37,7 +37,12 @@ Query* AnalyzeParseTree(ParseNode* node) {
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(select != NULL);
 
-  NIdentifier* table_name = (NIdentifier*)select->table_name;
+  List* from_clause = (List*)select->from_clause;
+  assert(from_clause != NULL);
+  assert(from_clause->type == T_PARSENODE);
+  assert(from_clause->length == 1);
+  assert(from_clause->head != NULL);
+  NIdentifier* table_name = (NIdentifier*) from_clause->head->data;
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);

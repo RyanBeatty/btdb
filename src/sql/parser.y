@@ -77,8 +77,8 @@
 %token <bool_lit> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt from_clause insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
+%type <list_node> target_list insert_column_list column_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list from_list from_clause
 %type <sort_dir> sort_direction
 
 %%
@@ -106,7 +106,7 @@ select_stmt: SELECT target_list from_clause where_clause sort_clause ";" {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
   select->type = NSELECT_STMT;
   select->target_list = $2;
-  select->table_name = $3;
+  select->from_clause = $3;
   select->where_clause = $4;
   select->sort_clause = $5;
   $$ = (ParseNode*) select;
@@ -137,12 +137,31 @@ target_list:
 
 from_clause:
   /* empty */ { $$ = NULL; }
-  | FROM STRING_GROUP {
+  | FROM from_list {
+      $$ = $2;
+    }
+
+from_list:
+  STRING_GROUP { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
       identifier->type = NIDENTIFIER;
-      identifier->identifier = $2;
-      $$ = (ParseNode*)identifier;
+      identifier->identifier = $1;
+
+      List* from_list = make_list(T_PARSENODE);
+      from_list->type = T_PARSENODE;
+      push_list(from_list, identifier);
+      $$ = from_list;
+    }
+  | from_list "," STRING_GROUP { 
+      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+      assert(identifier != NULL);
+      identifier->type = NIDENTIFIER;
+      identifier->identifier = $3;
+
+      List* from_list = $1;
+      push_list(from_list, identifier);
+      $$ = from_list;
     }
 
 where_clause:

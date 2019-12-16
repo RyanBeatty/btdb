@@ -108,7 +108,7 @@ typedef struct NSelectStmt {
   ParseNodeType type;
 
   List* target_list;
-  ParseNode* table_name;
+  List* from_clause;
   ParseNode* where_clause;
   ParseNode* sort_clause;
 } NSelectStmt;
