@@ -82,8 +82,8 @@
 
 // %type <std::vector<std::string>> column_exp
 %type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> target_list update_assign_expr_list from_list from_clause
-%type <list_node2> insert_column_list column_list insert_value_items
+%type <list_node> target_list update_assign_expr_list
+%type <list_node2> insert_column_list column_list insert_value_items from_list from_clause
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
@@ -154,9 +154,8 @@ from_list:
       identifier->type = NIDENTIFIER;
       identifier->identifier = $1;
 
-      List* from_list = make_list(T_PARSENODE);
-      from_list->type = T_PARSENODE;
-      push_list(from_list, identifier);
+      ParseNode** from_list = NULL;
+      arrpush(from_list, (ParseNode*)identifier);
       $$ = from_list;
     }
   | from_list "," STRING_GROUP { 
@@ -165,8 +164,8 @@ from_list:
       identifier->type = NIDENTIFIER;
       identifier->identifier = $3;
 
-      List* from_list = $1;
-      push_list(from_list, identifier);
+      ParseNode** from_list = $1;
+      arrpush(from_list, (ParseNode*)identifier);
       $$ = from_list;
     }
 
@@ -390,7 +389,6 @@ insert_value_items:
   expr {
       ParseNode** value_items = NULL;
       arrpush(value_items, $1);
-      push_list(value_items, $1);
       $$ = value_items;
   }
   | insert_value_items "," expr {
