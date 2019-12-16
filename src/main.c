@@ -8,7 +8,6 @@
 #include "stb_ds.h"
 
 #include "analyzer.h"
-#include "collections.h"
 #include "node.h"
 #include "plan.h"
 #include "sql/driver.h"

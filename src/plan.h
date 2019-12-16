@@ -2,7 +2,6 @@
 #define PLAN_H
 
 #include "analyzer.h"
-#include "collections.h"
 #include "node.h"
 #include "storage.h"
 

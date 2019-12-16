@@ -5,7 +5,6 @@
 #include "stb_ds.h"
 
 #include "analyzer.h"
-#include "collections.h"
 #include "plan.h"
 #include "utils.h"
 

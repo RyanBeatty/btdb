@@ -1,7 +1,8 @@
+#include <assert.h>
+
 #include "stb_ds.h"
 
 #include "analyzer.h"
-#include "collections.h"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"

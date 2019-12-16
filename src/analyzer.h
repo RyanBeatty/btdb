@@ -1,7 +1,6 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#include "collections.h"
 #include "node.h"
 #include "storage.h"
 #include "types.h"
