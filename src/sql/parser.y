@@ -40,6 +40,7 @@
   ParseNode* node;
   List* list_node;
   ParseNode** list_node2;
+  ParseNode*** list_list_node;
   SortDir sort_dir;
 }
 
@@ -81,8 +82,9 @@
 
 // %type <std::vector<std::string>> column_exp
 %type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> target_list insert_values_list insert_values_clause insert_value_items update_assign_expr_list from_list from_clause
-%type <list_node2> insert_column_list column_list
+%type <list_node> target_list update_assign_expr_list from_list from_clause
+%type <list_node2> insert_column_list column_list insert_value_items
+%type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
 %%
@@ -356,7 +358,7 @@ column_list:
       identifier->identifier = $1;
 
       ParseNode** column_list = NULL;
-      arrpush(column_list, identifier);
+      arrpush(column_list, (ParseNode*)identifier);
       $$ = column_list;
    }
   | column_list "," STRING_GROUP {
@@ -366,32 +368,34 @@ column_list:
       identifier->identifier = $3;
 
       ParseNode** column_list = $1;
-      arrpush(column_list, identifier);
+      arrpush(column_list, (ParseNode*)identifier);
       $$ = column_list;
   }
 
 insert_values_clause: VALUES insert_values_list { $$ = $2; }
+
 insert_values_list:
   "(" insert_value_items ")" {
-      List* values_list = make_list(T_LIST);
-      push_list(values_list, $2);
+      ParseNode*** values_list = NULL;
+      arrpush(values_list, $2);
       $$ = values_list;
   }
   | insert_values_list "," "(" insert_value_items ")" {
-    List* values_list = $1;
-    push_list(values_list, $4);
+    ParseNode*** values_list = $1;
+    arrpush(values_list, $4);
     $$ = values_list;
   }
 
 insert_value_items:
   expr {
-      List* value_items = make_list(T_PARSENODE);
+      ParseNode** value_items = NULL;
+      arrpush(value_items, $1);
       push_list(value_items, $1);
       $$ = value_items;
   }
   | insert_value_items "," expr {
-      List* value_items = $1;
-      push_list(value_items, $3);
+      ParseNode** value_items = $1;
+      arrpush(value_items, $3);
       $$ = value_items;
   }
 

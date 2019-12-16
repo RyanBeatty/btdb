@@ -107,9 +107,10 @@ union YYSTYPE
   ParseNode* node;
   List* list_node;
   ParseNode** list_node2;
+  ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 113 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
+#line 114 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

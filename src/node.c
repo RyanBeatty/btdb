@@ -196,7 +196,9 @@ void free_parse_node(ParseNode* node) {
       assert(insert->values_list != NULL);
       free_parse_node(insert->table_name);
       free_parse_node_list(insert->column_list);
-      free_list(insert->values_list);
+      for (size_t i = 0; i < arrlen(insert->values_list); ++i) {
+        free_parse_node_list(insert->values_list[i]);
+      }
       free(insert);
       break;
     }
@@ -373,7 +375,9 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       print_parse_node_list(insert->column_list, ctx);
       EndObject(ctx);
       PrintObject(ctx, "values_list");
-      print_list(insert->values_list, ctx);
+      for (size_t i = 0; i < arrlen(insert->values_list); ++i) {
+        print_parse_node_list(insert->values_list[i], ctx);
+      }
       EndObject(ctx);
       EndObject(ctx);
       break;

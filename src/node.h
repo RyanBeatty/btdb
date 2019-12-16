@@ -118,7 +118,7 @@ typedef struct NInsertStmt {
 
   ParseNode* table_name;
   ParseNode** column_list;
-  List* values_list;
+  ParseNode*** values_list;
 } NInsertStmt;
 
 typedef struct NDeleteStmt {

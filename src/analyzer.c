@@ -220,36 +220,34 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   }
 
   Tuple** values = NULL;
-  List* values_list = insert->values_list;
+  ParseNode*** values_list = insert->values_list;
   assert(values_list != NULL);
-  assert(values_list->type == T_LIST);
-  ListCell* lc = NULL;
-  FOR_EACH(lc, values_list) {
-    assert(lc->data != NULL);
-    List* value_items = (List*)lc->data;
-    assert(value_items->type == T_PARSENODE);
-    assert(value_items->length == arrlen(target_list));
+  for (size_t i = 0; i < arrlen(values_list); ++i) {
+    ParseNode** value_items = values_list[i];
+    assert(value_items != NULL);
+    // TODO(ryan): Change to if check and return query not valid.
+    assert(arrlen(value_items) == arrlen(target_list));
 
     Tuple* tuple = NULL;
     uint64_t col_index = 0;
-    ListCell* lc2 = NULL;
-    FOR_EACH(lc2, value_items) {
-      assert(lc2->data != NULL);
+    for (size_t j = 0; j < arrlen(value_items); ++j) {
+      ParseNode* data = value_items[j];
+      assert(data != NULL);
       // TODO(ryan): Allow for more general expressions here.
-      BType type = CheckType((ParseNode*)lc2->data, table_def);
+      BType type = CheckType(data, table_def);
       if (type == T_UNKNOWN) {
         return NULL;
       }
       assert(type == T_BOOL || type == T_STRING);
       if (type == T_STRING) {
-        NStringLit* str_lit = (NStringLit*)lc2->data;
+        NStringLit* str_lit = (NStringLit*)data;
         assert(str_lit->type == NSTRING_LIT);
         assert(str_lit->str_lit != NULL);
         const char* key = VEC_VALUE(targets, col_index);
         char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
         tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
       } else {
-        NBoolLit* bool_lit = (NBoolLit*)lc2->data;
+        NBoolLit* bool_lit = (NBoolLit*)data;
         assert(bool_lit->type == NBOOL_LIT);
         const char* key = VEC_VALUE(targets, col_index);
         bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
