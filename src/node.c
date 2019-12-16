@@ -225,7 +225,7 @@ void free_parse_node(ParseNode* node) {
       assert(update->table_name != NULL);
       assert(update->assign_expr_list != NULL);
       free_parse_node(update->table_name);
-      free_list(update->assign_expr_list);
+      free_parse_node_list(update->assign_expr_list);
       if (update->where_clause != NULL) {
         free_parse_node(update->where_clause);
       }
@@ -420,7 +420,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       print_parse_node(update->table_name, ctx);
       EndObject(ctx);
       PrintObject(ctx, "assign_expr_list");
-      print_list(update->assign_expr_list, ctx);
+      print_parse_node_list(update->assign_expr_list, ctx);
       EndObject(ctx);
       if (update->where_clause != NULL) {
         PrintObject(ctx, "where_clause");

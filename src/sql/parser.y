@@ -38,8 +38,7 @@
   char* str_lit;
   bool bool_lit;
   ParseNode* node;
-  List* list_node;
-  ParseNode** list_node2;
+  ParseNode** list_node;
   ParseNode*** list_list_node;
   SortDir sort_dir;
 }
@@ -82,8 +81,7 @@
 
 // %type <std::vector<std::string>> column_exp
 %type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> update_assign_expr_list
-%type <list_node2> target_list insert_column_list column_list insert_value_items from_list from_clause
+%type <list_node> target_list insert_column_list column_list insert_value_items from_list from_clause update_assign_expr_list
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
@@ -425,13 +423,13 @@ update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
 
 update_assign_expr_list:
   assign_expr {
-      List* value_items = make_list(T_PARSENODE);
-      push_list(value_items, $1);
+      ParseNode** value_items = NULL;
+      arrpush(value_items, $1);
       $$ = value_items;
   }
   | update_assign_expr_list "," assign_expr {
-      List* value_items = $1;
-      push_list(value_items, $3);
+      ParseNode** value_items = $1;
+      arrpush(value_items, $3);
       $$ = value_items;
   }
 

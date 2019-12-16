@@ -139,7 +139,7 @@ typedef struct NUpdateStmt {
   ParseNodeType type;
 
   ParseNode* table_name;
-  List* assign_expr_list;
+  ParseNode** assign_expr_list;
   ParseNode* where_clause;
 } NUpdateStmt;
 

@@ -25,7 +25,7 @@ typedef struct Query {
   TableDef* table_def;
   CharPtrVec* target_list;
   ParseNode* where_clause;
-  List* assign_expr_list;
+  NAssignExpr** assign_expr_list;
   Tuple** values;
   NSortBy* sort;
 } Query;

@@ -236,9 +236,9 @@ Tuple* UpdateScan(PlanNode* node) {
       }
     }
 
-    ListCell* lc = NULL;
-    FOR_EACH(lc, scan->assign_exprs) {
-      NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+    for (size_t i = 0; i < arrlen(scan->assign_exprs); ++i) {
+      NAssignExpr* assign_expr = scan->assign_exprs[i];
+      assert(assign_expr != NULL);
       assert(assign_expr->type == NASSIGN_EXPR);
       assert(assign_expr->column != NULL);
       assert(assign_expr->value_expr != NULL);

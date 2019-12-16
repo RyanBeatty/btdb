@@ -304,13 +304,11 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     return NULL;
   }
 
+  ParseNode** assign_expr_list = update->assign_expr_list;
   assert(update->assign_expr_list != NULL);
-  assert(update->assign_expr_list->type == T_PARSENODE);
-  List* assign_expr_list = update->assign_expr_list;
-  ListCell* lc = NULL;
-  FOR_EACH(lc, assign_expr_list) {
-    assert(lc->data != NULL);
-    NAssignExpr* assign_expr = (NAssignExpr*)lc->data;
+  for (size_t i = 0; i < arrlen(assign_expr_list); ++i) {
+    NAssignExpr* assign_expr = (NAssignExpr*)assign_expr_list[i];
+    assert(assign_expr != NULL);
     assert(assign_expr->type == NASSIGN_EXPR);
     assert(assign_expr->column != NULL);
     assert(assign_expr->value_expr != NULL);
@@ -341,7 +339,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   Query* query = (Query*)MakeQuery(CMD_UPDATE);
   query->table_name = table_name->identifier;
   query->table_def = table_def;
-  query->assign_expr_list = assign_expr_list;
+  query->assign_expr_list = (NAssignExpr**) assign_expr_list;
   query->where_clause = update->where_clause;
   return query;
 }

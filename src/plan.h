@@ -37,7 +37,7 @@ typedef struct ModifyScan {
   size_t next_index;
   ParseNode* where_clause;
   Tuple** insert_tuples;  // 2d stb_arr.
-  List* assign_exprs;
+  NAssignExpr** assign_exprs;
 } ModifyScan;
 
 typedef enum SortMethod { INSERTION_SORT } SortMethod;

@@ -105,12 +105,11 @@ union YYSTYPE
   char* str_lit;
   bool bool_lit;
   ParseNode* node;
-  List* list_node;
-  ParseNode** list_node2;
+  ParseNode** list_node;
   ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 114 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
+#line 113 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
