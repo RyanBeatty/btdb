@@ -182,7 +182,7 @@ void free_parse_node(ParseNode* node) {
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
       assert(select->target_list != NULL);
-      free_list(select->target_list);
+      free_parse_node_list(select->target_list);
       free_parse_node_list(select->from_clause);
       free_parse_node(select->where_clause);
       free_parse_node(select->sort_clause);
@@ -348,7 +348,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       PrintObject(ctx, "NSelectStmt");
       assert(select->target_list != NULL);
       PrintObject(ctx, "target_list");
-      print_list(select->target_list, ctx);
+      print_parse_node_list(select->target_list, ctx);
       EndObject(ctx);
       PrintObject(ctx, "from_clause");
       print_parse_node_list(select->from_clause, ctx);

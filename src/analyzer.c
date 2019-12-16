@@ -52,13 +52,11 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
 
   // Validate target list contains valid references to columns.
   CharPtrVec* targets = MakeCharPtrVec();
-  List* target_list = select->target_list;
+  ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
-  assert(target_list->type == T_PARSENODE);
-  ListCell* lc = NULL;
-  FOR_EACH(lc, target_list) {
-    assert(lc->data != NULL);
-    NIdentifier* col = (NIdentifier*)lc->data;
+  for (size_t i = 0; i < arrlen(target_list); ++i) {
+    NIdentifier* col = (NIdentifier*)target_list[i];
+    assert(col != NULL);
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;

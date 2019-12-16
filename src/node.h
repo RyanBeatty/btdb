@@ -107,7 +107,7 @@ typedef struct NBoolLit {
 typedef struct NSelectStmt {
   ParseNodeType type;
 
-  List* target_list;
+  ParseNode** target_list;
   ParseNode** from_clause;
   ParseNode* where_clause;
   ParseNode* sort_clause;
