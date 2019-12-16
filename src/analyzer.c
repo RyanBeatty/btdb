@@ -225,8 +225,10 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   for (size_t i = 0; i < arrlen(values_list); ++i) {
     ParseNode** value_items = values_list[i];
     assert(value_items != NULL);
-    // TODO(ryan): Change to if check and return query not valid.
-    assert(arrlen(value_items) == arrlen(target_list));
+
+    if (arrlen(value_items) != arrlen(target_list)) {
+      return NULL;
+    }
 
     Tuple* tuple = NULL;
     uint64_t col_index = 0;
