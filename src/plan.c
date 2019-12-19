@@ -345,7 +345,7 @@ PlanNode* PlanQuery(Query* query) {
   PlanNode* plan = calloc(1, sizeof(PlanNode));
   plan->type = N_PLAN_RESULT;
   plan->target_list = query->target_list;
-  plan->table_def = query->join_list;
+  plan->table_def = query->join_list[0];
   plan->get_next_func = GetResult;
   switch (query->cmd) {
     case CMD_SELECT: {
@@ -353,7 +353,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.type = N_PLAN_SEQ_SCAN;
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list;
+      scan->plan.table_def = query->join_list[0];
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
 
@@ -367,7 +367,7 @@ PlanNode* PlanQuery(Query* query) {
 
         // TODO(ryan): Allow for more robust sort expressions.
         sort->sort_col = (NIdentifier*)query->sort->sort_expr;
-        BType sort_col_type = GetColType(query->join_list, sort->sort_col->identifier);
+        BType sort_col_type = GetColType(scan->plan.table_def, sort->sort_col->identifier);
         assert(sort_col_type != T_UNKNOWN);
         if (sort_col_type == T_STRING) {
           if (query->sort->dir == SORT_ASC) {
@@ -399,7 +399,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.get_next_func = InsertScan;
       scan->cmd = CMD_INSERT;
       scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list;
+      scan->plan.table_def = query->join_list[0];
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->insert_tuples = query->values;
@@ -413,7 +413,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.get_next_func = UpdateScan;
       scan->cmd = CMD_UPDATE;
       scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list;
+      scan->plan.table_def = query->join_list[0];
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->assign_exprs = query->assign_expr_list;
@@ -426,7 +426,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = DeleteScan;
       scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list;
+      scan->plan.table_def = query->join_list[0];
       scan->cmd = CMD_DELETE;
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
