@@ -35,7 +35,8 @@ Query* AnalyzeSelectStmt(NSelectStmt*);
 Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
-BType CheckType(ParseNode*, TableDef*);
+void AnalyzeFromClause(Query*, ParseNode**);
+BType CheckType(ParseNode*, TableDef**);
 
 #ifdef __cplusplus
 }

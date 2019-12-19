@@ -40,15 +40,18 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
 
   ParseNode** from_clause = select->from_clause;
   assert(from_clause != NULL);
-  assert(arrlen(from_clause) == 1);
-  NIdentifier* table_name = (NIdentifier*) from_clause[0];
-  assert(table_name != NULL);
-  assert(table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != NULL);
+  TableDef** join_list = NULL;
+  for (size_t i = 0; i < arrlen(from_clause); ++i) {
+    NIdentifier* table_name = (NIdentifier*) from_clause[0];
+    assert(table_name != NULL);
+    assert(table_name->type == NIDENTIFIER);
+    assert(table_name->identifier != NULL);
 
-  TableDef* table_def = FindTableDef(table_name->identifier);
-  if (table_def == NULL) {
-    return NULL;
+    TableDef* table_def = FindTableDef(table_name->identifier);
+    if (table_def == NULL) {
+      return NULL;
+    }
+    arrpush(join_list, table_def);
   }
 
   // Validate target list contains valid references to columns.
@@ -61,10 +64,13 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-      if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
-        found = true;
-        break;
+    for (size_t j = 0; j < arrlen(join_list); ++j) {
+      TableDef* table_def = join_list[j];
+      for (size_t k = 0; k < arrlen(table_def->tuple_desc); ++k) {
+        if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
+          found = true;
+          break;
+        }
       }
     }
     if (!found) {
@@ -75,7 +81,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   }
 
   if (select->where_clause != NULL) {
-    if (CheckType(select->where_clause, table_def) != T_BOOL) {
+    if (CheckType(select->where_clause, join_list) != T_BOOL) {
       return NULL;
     }
   }
@@ -88,10 +94,13 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     assert(identifier->type == NIDENTIFIER);
     assert(identifier->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-      if (strcmp(table_def->tuple_desc[i].column_name, identifier->identifier) == 0) {
-        found = true;
-        break;
+    for (size_t i = 0; i < arrlen(join_list); ++i) {
+      TableDef* table_def = join_list[i];
+      for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+        if (strcmp(table_def->tuple_desc[j].column_name, identifier->identifier) == 0) {
+          found = true;
+          break;
+        }
       }
     }
     if (!found) {
@@ -100,17 +109,16 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   }
 
   Query* query = MakeQuery(CMD_SELECT);
-  query->table_name = table_name->identifier;
-  arrpush(query->join_list, table_def);
+  query->join_list = join_list;
   query->target_list = targets;
   query->where_clause = select->where_clause;
   query->sort = (NSortBy*) select->sort_clause;
   return query;
 }
 
-BType CheckType(ParseNode* node, TableDef* table_def) {
+BType CheckType(ParseNode* node, TableDef** join_list) {
   assert(node != NULL);
-  assert(table_def != NULL);
+  assert(join_list != NULL);
   switch (node->type) {
     case NSTRING_LIT: {
       return T_STRING;
@@ -124,10 +132,13 @@ BType CheckType(ParseNode* node, TableDef* table_def) {
       assert(identifier->identifier != NULL);
 
       ColDesc* col_type = NULL;
-      for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-        if (strcmp(table_def->tuple_desc[i].column_name, identifier->identifier) == 0) {
-          col_type = &table_def->tuple_desc[i];
-          break;
+      for (size_t i = 0; i < arrlen(join_list); ++i) {
+        TableDef* table_def = join_list[i];
+        for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+          if (strcmp(table_def->tuple_desc[j].column_name, identifier->identifier) == 0) {
+            col_type = &table_def->tuple_desc[j];
+            break;
+          }
         }
       }
       if (col_type == NULL) {
@@ -139,8 +150,8 @@ BType CheckType(ParseNode* node, TableDef* table_def) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
-      BType lhs_type = CheckType(expr->lhs, table_def);
-      BType rhs_type = CheckType(expr->rhs, table_def);
+      BType lhs_type = CheckType(expr->lhs, join_list);
+      BType rhs_type = CheckType(expr->rhs, join_list);
       if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
         return T_UNKNOWN;
       }
@@ -235,7 +246,10 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       ParseNode* data = value_items[j];
       assert(data != NULL);
       // TODO(ryan): Allow for more general expressions here.
-      BType type = CheckType(data, table_def);
+      // TODO(ryan): Hacky.
+      TableDef** defs = NULL;
+      arrpush(defs, table_def);
+      BType type = CheckType(data, defs);
       if (type == T_UNKNOWN) {
         return NULL;
       }
@@ -281,8 +295,11 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
     return NULL;
   }
 
+  // TODO: Hacky
+  TableDef** defs = NULL;
+  arrpush(defs, table_def);
   if (delete_stmt->where_clause != NULL &&
-      CheckType(delete_stmt->where_clause, table_def) != T_BOOL) {
+      CheckType(delete_stmt->where_clause, defs) != T_BOOL) {
     return NULL;
   }
 
@@ -330,12 +347,18 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
       return NULL;
     }
 
-    if (col_type->type != CheckType(assign_expr->value_expr, table_def)) {
+    // TODO: Hacky
+    TableDef** defs = NULL;
+    arrpush(defs, table_def);
+    if (col_type->type != CheckType(assign_expr->value_expr, defs)) {
       return NULL;
     }
   }
 
-  if (update->where_clause != NULL && CheckType(update->where_clause, table_def) != T_BOOL) {
+  // TODO: Hacky
+  TableDef** defs = NULL;
+  arrpush(defs, table_def);
+  if (update->where_clause != NULL && CheckType(update->where_clause, defs) != T_BOOL) {
     return NULL;
   }
 
