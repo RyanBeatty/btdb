@@ -394,6 +394,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_INSERT: {
+      assert(arrlen(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = InsertScan;
@@ -408,6 +409,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_UPDATE: {
+      assert(arrlen(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = UpdateScan;
@@ -422,6 +424,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_DELETE: {
+      assert(arrlen(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = DeleteScan;
