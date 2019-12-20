@@ -10,6 +10,7 @@ typedef enum PLanNodeType {
   N_PLAN_SEQ_SCAN,
   N_PLAN_MODIFY_SCAN,
   N_PLAN_SORT,
+  N_PLAN_NESTED_LOOP,
 } PlanNodeType;
 
 typedef struct PlanNode {
@@ -19,6 +20,7 @@ typedef struct PlanNode {
   TableDef* table_def;
   struct PlanNode* left;
   struct PlanNode* right;
+  void* (*init_func)(struct PlanNode*);
   Tuple* (*get_next_func)(struct PlanNode*);
 } PlanNode;
 
@@ -50,6 +52,12 @@ typedef struct Sort {
   size_t next_index;
   bool is_sorted;
 } Sort;
+
+typedef struct NestedLoop {
+    PlanNode plan;
+    Tuple* cur_left_tuple;
+    bool need_new_left_tuple;
+} NestedLoop;
 
 PlanNode* PlanQuery(Query*);
 

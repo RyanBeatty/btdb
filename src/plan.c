@@ -164,6 +164,13 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
   }
 }
 
+void SequentialScanInit(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_SEQ_SCAN);
+  SeqScan* scan = (SeqScan*)node;
+  scan->next_index = 0;  
+}
+
 Tuple* SequentialScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SEQ_SCAN);
@@ -333,6 +340,35 @@ Tuple* SortScan(PlanNode* node) {
   return cur_tuple;
 }
 
+Tuple* NestedLoopScan(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_NESTED_LOOP);
+  assert(node->left != NULL);
+  assert(node->right != NULL);
+  NestedLoop* join = (NestedLoop*)node;
+
+  for (;;) {
+    if (join->need_new_left_tuple) {
+      join->cur_left_tuple = join->plan.left->get_next_func(join->plan.left);
+      join->need_new_left_tuple = false;
+      if (join->cur_left_tuple == NULL) {
+        return NULL;
+      }
+      join->plan.right->init_func(join->plan.right);
+    }
+
+    Tuple* right_tuple = join->plan.right->get_next_func(join->plan.right);
+    if (right_tuple == NULL) {
+      join->need_new_left_tuple = true;
+      continue;
+    }
+
+    // have both left and right, compute new result tuple.
+    Tuple* result_tuple = NULL;
+    return result_tuple; 
+  }
+}
+
 Tuple* GetResult(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_RESULT);
@@ -351,13 +387,14 @@ PlanNode* PlanQuery(Query* query) {
     case CMD_SELECT: {
       SeqScan* scan = calloc(1, sizeof(SeqScan));
       scan->plan.type = N_PLAN_SEQ_SCAN;
+      scan->plan.init_func = SequentialScanInit;
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->join_list[0];
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
-
       plan->left = (PlanNode*)scan;
+
       if (query->sort != NULL) {
         Sort* sort = calloc(1, sizeof(Sort));
         sort->plan.type = N_PLAN_SORT;
