@@ -42,7 +42,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(from_clause != NULL);
   TableDef** join_list = NULL;
   for (size_t i = 0; i < arrlen(from_clause); ++i) {
-    NIdentifier* table_name = (NIdentifier*) from_clause[0];
+    NIdentifier* table_name = (NIdentifier*) from_clause;
     assert(table_name != NULL);
     assert(table_name->type == NIDENTIFIER);
     assert(table_name->identifier != NULL);
