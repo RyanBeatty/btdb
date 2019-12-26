@@ -42,7 +42,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(from_clause != NULL);
   TableDef** join_list = NULL;
   for (size_t i = 0; i < arrlen(from_clause); ++i) {
-    NIdentifier* table_name = (NIdentifier*) from_clause;
+    NIdentifier* table_name = (NIdentifier*) from_clause[i];
     assert(table_name != NULL);
     assert(table_name->type == NIDENTIFIER);
     assert(table_name->identifier != NULL);
@@ -216,8 +216,8 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-      if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
+    for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+      if (strcmp(table_def->tuple_desc[j].column_name, col->identifier) == 0) {
         found = true;
         break;
       }
