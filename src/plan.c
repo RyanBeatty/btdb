@@ -196,7 +196,7 @@ Tuple* SequentialScan(PlanNode* node) {
     // Column projections.
     Tuple* result_tpl = NULL;
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-      const char* col_name = scan->plan.target_list[i];
+      const char* col_name = scan->plan.target_list[i]->column_name;
       Datum* data = GetCol(cur_tpl, col_name);
       assert(data != NULL);
       result_tpl = SetCol(result_tpl, col_name, *data);

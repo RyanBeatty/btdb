@@ -55,7 +55,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   }
 
   // Validate target list contains valid references to columns.
-  char** targets = NULL;
+  TargetRef** targets = NULL;
   ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
   for (size_t i = 0; i < arrlen(target_list); ++i) {
@@ -63,21 +63,21 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     assert(col != NULL);
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    bool found = false;
+    TargetRef* ref = NULL;
     for (size_t j = 0; j < arrlen(join_list); ++j) {
       TableDef* table_def = join_list[j];
       for (size_t k = 0; k < arrlen(table_def->tuple_desc); ++k) {
         if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
-          found = true;
+          ref = (TargetRef*)calloc(1, sizeof(TargetRef));
+          ref->column_name = strdup(col->identifier);
           break;
         }
       }
     }
-    if (!found) {
+    if (ref == NULL) {
       return NULL;
     }
-    char* copy = strdup(col->identifier);
-    arrpush(targets, copy);
+    arrpush(targets, ref);
   }
 
   if (select->where_clause != NULL) {
@@ -207,7 +207,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   }
 
   // Validate target list contains valid references to columns.
-  char** targets = NULL;
+  TargetRef** targets = NULL;
   ParseNode** target_list = insert->column_list;
   assert(target_list != NULL);
   for (size_t i = 0; i < arrlen(target_list); ++i) {
@@ -216,17 +216,18 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     bool found = false;
+    TargetRef* ref = NULL;
     for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
       if (strcmp(table_def->tuple_desc[j].column_name, col->identifier) == 0) {
-        found = true;
+        ref = (TargetRef*)calloc(1, sizeof(TargetRef));
+        ref->column_name = strdup(col->identifier);
         break;
       }
     }
-    if (!found) {
+    if (ref == NULL) {
       return NULL;
     }
-    char* copy = strdup(col->identifier);
-    arrpush(targets, copy);
+    arrpush(targets, ref);
   }
 
   Tuple** values = NULL;
@@ -258,13 +259,13 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         NStringLit* str_lit = (NStringLit*)data;
         assert(str_lit->type == NSTRING_LIT);
         assert(str_lit->str_lit != NULL);
-        const char* key = targets[col_index];
+        const char* key = targets[col_index]->column_name;
         char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
         tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
       } else {
         NBoolLit* bool_lit = (NBoolLit*)data;
         assert(bool_lit->type == NBOOL_LIT);
-        const char* key = targets[col_index];
+        const char* key = targets[col_index]->column_name;
         bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
         *bool_lit_copy = bool_lit->bool_lit;
         tuple = SetCol(tuple, key, MakeDatum(T_BOOL, bool_lit_copy));

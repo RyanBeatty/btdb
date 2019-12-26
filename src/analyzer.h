@@ -17,12 +17,16 @@ typedef enum CmdType {
   CMD_UTILITY,
 } CmdType;
 
+typedef struct TargetRef {
+  const char* column_name;
+} TargetRef;
+
 typedef struct Query {
   CmdType cmd;
 
   char* table_name;
   TableDef** join_list;
-  char** target_list;
+  TargetRef** target_list;
   ParseNode* where_clause;
   NAssignExpr** assign_expr_list;
   Tuple** values;

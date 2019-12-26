@@ -16,13 +16,16 @@
 #include "utils.h"
 
 typedef struct Result {
-  char** columns;
+  const char** columns;
   Tuple** tuples;  // stb_arr
 } Result;
 
 Result ExecPlan(PlanNode* plan) {
   Result results;
-  results.columns = plan->target_list;
+  results.columns = NULL;
+  for (size_t i = 0; i < arrlen(plan->target_list); ++i) {
+    arrpush(results.columns, plan->target_list[i]->column_name);
+  }
   results.tuples = NULL;
   Tuple* tuple = plan->get_next_func(plan);
   while (tuple != NULL) {
