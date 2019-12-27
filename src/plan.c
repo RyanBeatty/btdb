@@ -365,6 +365,12 @@ Tuple* NestedLoopScan(PlanNode* node) {
 
     // have both left and right, compute new result tuple.
     Tuple* result_tuple = NULL;
+    for (size_t i = 0; i < arrlen(join->cur_left_tuple); ++i) {
+      result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name, join->cur_left_tuple[i].data);
+    }
+    for (size_t i = 0; i < arrlen(right_tuple); ++i) {
+      result_tuple = SetCol(result_tuple, right_tuple[i].column_name, right_tuple[i].data);
+    }
     return result_tuple; 
   }
 }
@@ -385,6 +391,7 @@ PlanNode* PlanQuery(Query* query) {
   plan->get_next_func = GetResult;
   switch (query->cmd) {
     case CMD_SELECT: {
+      assert(arrlen(query->join_list) != 0);
       // TODO(ryan): Special case joins for now because its easier to think about.
       // Eventually this should be cleaned up.
       if (arrlen(query->join_list) == 1) {
