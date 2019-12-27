@@ -390,6 +390,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->plan.init_func = SequentialScanInit;
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
+      assert(arrlen(query->join_list) == 1);
       scan->plan.table_def = query->join_list[0];
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;

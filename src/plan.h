@@ -20,7 +20,7 @@ typedef struct PlanNode {
   TableDef* table_def;
   struct PlanNode* left;
   struct PlanNode* right;
-  void* (*init_func)(struct PlanNode*);
+  void (*init_func)(struct PlanNode*);
   Tuple* (*get_next_func)(struct PlanNode*);
 } PlanNode;
 
