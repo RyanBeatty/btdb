@@ -70,6 +70,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
         if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
           ref = (TargetRef*)calloc(1, sizeof(TargetRef));
           ref->column_name = strdup(col->identifier);
+          ref->join_list_index = j;
           break;
         }
       }
@@ -221,6 +222,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       if (strcmp(table_def->tuple_desc[j].column_name, col->identifier) == 0) {
         ref = (TargetRef*)calloc(1, sizeof(TargetRef));
         ref->column_name = strdup(col->identifier);
+        ref->join_list_index = 0;  // Right now the join list for inserts is only one entry.
         break;
       }
     }

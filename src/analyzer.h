@@ -19,6 +19,7 @@ typedef enum CmdType {
 
 typedef struct TargetRef {
   const char* column_name;
+  size_t join_list_index;
 } TargetRef;
 
 typedef struct Query {
