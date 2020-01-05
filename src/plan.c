@@ -428,154 +428,99 @@ PlanNode* PlanQuery(Query* query) {
   PlanNode* plan = (PlanNode*)result;
   switch (query->cmd) {
     case CMD_SELECT: {
-      assert(arrlen(query->join_list) != 0);
-      // TODO(ryan): Special case joins for now because its easier to think about.
-      // Eventually this should be cleaned up.
-      if (arrlen(query->join_list) == 1) {
+      assert(arrlen(query->join_list) > 0);
+      SeqScan* scan = calloc(1, sizeof(SeqScan));
+      scan->plan.type = N_PLAN_SEQ_SCAN;
+      scan->plan.init_func = SequentialScanInit;
+      scan->plan.get_next_func = SequentialScan;
+      scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->join_list[0];
+      // scan->table_name = query->table_name;
+      // scan->where_clause = query->where_clause;
+      // plan->left = (PlanNode*)scan;
+
+      PlanNode* left_plan = (PlanNode*)scan;
+      for (size_t i = 1; i < arrlen(query->join_list); ++i) {
         SeqScan* scan = calloc(1, sizeof(SeqScan));
         scan->plan.type = N_PLAN_SEQ_SCAN;
         scan->plan.init_func = SequentialScanInit;
         scan->plan.get_next_func = SequentialScan;
         scan->plan.target_list = query->target_list;
-        assert(arrlen(query->join_list) == 1);
-        scan->plan.table_def = query->join_list[0];
-        scan->table_name = query->table_name;
-        scan->where_clause = query->where_clause;
-        plan->left = (PlanNode*)scan;
+        scan->plan.table_def = query->join_list[i];
+        PlanNode* right_plan = (PlanNode*)scan;
 
-        if (query->sort != NULL) {
-          Sort* sort = calloc(1, sizeof(Sort));
-          sort->plan.type = N_PLAN_SORT;
-          sort->plan.get_next_func = SortScan;
-          sort->plan.target_list = query->target_list;
-          sort->method = INSERTION_SORT;
-
-          // TODO(ryan): Allow for more robust sort expressions.
-          // TODO(ryan): Move comparison function selection into analyzation step because we
-          // do type checking there anyways.
-          sort->sort_col = (NIdentifier*)query->sort->sort_expr;
-          BType sort_col_type = GetColType(scan->plan.table_def, sort->sort_col->identifier);
-          assert(sort_col_type != T_UNKNOWN);
-          if (sort_col_type == T_STRING) {
-            if (query->sort->dir == SORT_ASC) {
-              sort->cmp_func = StrLT;
-            } else if (query->sort->dir == SORT_DESC) {
-              sort->cmp_func = StrGT;
-            } else {
-              Panic("invalid sort direction");
-            }
-          } else if (sort_col_type == T_BOOL) {
-            if (query->sort->dir == SORT_ASC) {
-              sort->cmp_func = BoolLT;
-            } else if (query->sort->dir == SORT_DESC) {
-              sort->cmp_func = BoolGT;
-            } else {
-              Panic("invalid sort direction");
-            }
-          }
-          sort->is_sorted = false;
-
-          sort->plan.left = (PlanNode*)scan;
-          plan->left = (PlanNode*)sort;
+        // Create table def for joined table.
+        // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
+        // should really fix this at some point.
+        ColDesc* tuple_desc = NULL;
+        for (size_t j = 0; j < arrlen(left_plan->table_def->tuple_desc); ++j) {
+          ColDesc desc = {.column_name = left_plan->table_def->tuple_desc[j].column_name,
+                          left_plan->table_def->tuple_desc[j].type};
+          arrpush(tuple_desc, desc);
         }
-      } else {
-        SeqScan* scan = calloc(1, sizeof(SeqScan));
-        scan->plan.type = N_PLAN_SEQ_SCAN;
-        scan->plan.init_func = SequentialScanInit;
-        scan->plan.get_next_func = SequentialScan;
-        scan->plan.target_list = query->target_list;
-        assert(arrlen(query->join_list) > 0);
-        scan->plan.table_def = query->join_list[0];
-        // scan->table_name = query->table_name;
-        // scan->where_clause = query->where_clause;
-        // plan->left = (PlanNode*)scan;
-
-        PlanNode* left_plan = (PlanNode*)scan;
-        for (size_t i = 1; i < arrlen(query->join_list); ++i) {
-          SeqScan* scan = calloc(1, sizeof(SeqScan));
-          scan->plan.type = N_PLAN_SEQ_SCAN;
-          scan->plan.init_func = SequentialScanInit;
-          scan->plan.get_next_func = SequentialScan;
-          scan->plan.target_list = query->target_list;
-          scan->plan.table_def = query->join_list[i];
-          PlanNode* right_plan = (PlanNode*)scan;
-
-          // Create table def for joined table.
-          // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
-          // should really fix this at some point.
-          ColDesc* tuple_desc = NULL;
-          for (size_t j = 0; j < arrlen(left_plan->table_def->tuple_desc); ++j) {
-            ColDesc desc = {.column_name = left_plan->table_def->tuple_desc[j].column_name,
-                            left_plan->table_def->tuple_desc[j].type};
-            arrpush(tuple_desc, desc);
-          }
-          for (size_t j = 0; j < arrlen(right_plan->table_def->tuple_desc); ++j) {
-            ColDesc desc = {.column_name = right_plan->table_def->tuple_desc[j].column_name,
-                            right_plan->table_def->tuple_desc[j].type};
-            arrpush(tuple_desc, desc);
-          }
-          TableDef* table_def = calloc(1, sizeof(TableDef));
-          char* tablename = calloc(
-              strlen(left_plan->table_def->name) + strlen(right_plan->table_def->name) + 1,
-              sizeof(char));
-          strcat(tablename, left_plan->table_def->name);
-          strcat(tablename, right_plan->table_def->name);
-          table_def->name = tablename;
-          table_def->tuple_desc = tuple_desc;
-
-          NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
-          nested_loop->plan.type = N_PLAN_NESTED_LOOP;
-          nested_loop->plan.get_next_func = NestedLoopScan;
-          nested_loop->plan.target_list = query->target_list;
-          nested_loop->plan.table_def = table_def;
-          nested_loop->plan.left = left_plan;
-          nested_loop->plan.right = right_plan;
-          nested_loop->cur_left_tuple = NULL;
-          nested_loop->need_new_left_tuple = true;
-
-          left_plan = (PlanNode*)nested_loop;
+        for (size_t j = 0; j < arrlen(right_plan->table_def->tuple_desc); ++j) {
+          ColDesc desc = {.column_name = right_plan->table_def->tuple_desc[j].column_name,
+                          right_plan->table_def->tuple_desc[j].type};
+          arrpush(tuple_desc, desc);
         }
+        TableDef* table_def = calloc(1, sizeof(TableDef));
+        char* tablename = calloc(
+            strlen(left_plan->table_def->name) + strlen(right_plan->table_def->name) + 1,
+            sizeof(char));
+        strcat(tablename, left_plan->table_def->name);
+        strcat(tablename, right_plan->table_def->name);
+        table_def->name = tablename;
+        table_def->tuple_desc = tuple_desc;
 
-        // TODO(ryan): Make sorting work with joins. One issue is that choosing sort function
-        // requires knowing column types of result table. and we don't have a uniform way of
-        // doing that yet.
-        if (query->sort != NULL) {
-          Sort* sort = calloc(1, sizeof(Sort));
-          sort->plan.type = N_PLAN_SORT;
-          sort->plan.get_next_func = SortScan;
-          sort->plan.target_list = query->target_list;
-          sort->method = INSERTION_SORT;
+        NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
+        nested_loop->plan.type = N_PLAN_NESTED_LOOP;
+        nested_loop->plan.get_next_func = NestedLoopScan;
+        nested_loop->plan.target_list = query->target_list;
+        nested_loop->plan.table_def = table_def;
+        nested_loop->plan.left = left_plan;
+        nested_loop->plan.right = right_plan;
+        nested_loop->cur_left_tuple = NULL;
+        nested_loop->need_new_left_tuple = true;
 
-          // TODO(ryan): Allow for more robust sort expressions.
-          // TODO(ryan): Move comparison function selection into analyzation step because we
-          // do type checking there anyways.
-          sort->sort_col = (NIdentifier*)query->sort->sort_expr;
-          BType sort_col_type = GetColType(left_plan->table_def, sort->sort_col->identifier);
-          assert(sort_col_type != T_UNKNOWN);
-          if (sort_col_type == T_STRING) {
-            if (query->sort->dir == SORT_ASC) {
-              sort->cmp_func = StrLT;
-            } else if (query->sort->dir == SORT_DESC) {
-              sort->cmp_func = StrGT;
-            } else {
-              Panic("invalid sort direction");
-            }
-          } else if (sort_col_type == T_BOOL) {
-            if (query->sort->dir == SORT_ASC) {
-              sort->cmp_func = BoolLT;
-            } else if (query->sort->dir == SORT_DESC) {
-              sort->cmp_func = BoolGT;
-            } else {
-              Panic("invalid sort direction");
-            }
-          }
-          sort->is_sorted = false;
-
-          sort->plan.left = left_plan;
-          left_plan = (PlanNode*)sort;
-        }
-        plan->left = left_plan;
+        left_plan = (PlanNode*)nested_loop;
       }
+
+      if (query->sort != NULL) {
+        Sort* sort = calloc(1, sizeof(Sort));
+        sort->plan.type = N_PLAN_SORT;
+        sort->plan.get_next_func = SortScan;
+        sort->plan.target_list = query->target_list;
+        sort->method = INSERTION_SORT;
+
+        // TODO(ryan): Allow for more robust sort expressions.
+        // TODO(ryan): Move comparison function selection into analyzation step because we
+        // do type checking there anyways.
+        sort->sort_col = (NIdentifier*)query->sort->sort_expr;
+        BType sort_col_type = GetColType(left_plan->table_def, sort->sort_col->identifier);
+        assert(sort_col_type != T_UNKNOWN);
+        if (sort_col_type == T_STRING) {
+          if (query->sort->dir == SORT_ASC) {
+            sort->cmp_func = StrLT;
+          } else if (query->sort->dir == SORT_DESC) {
+            sort->cmp_func = StrGT;
+          } else {
+            Panic("invalid sort direction");
+          }
+        } else if (sort_col_type == T_BOOL) {
+          if (query->sort->dir == SORT_ASC) {
+            sort->cmp_func = BoolLT;
+          } else if (query->sort->dir == SORT_DESC) {
+            sort->cmp_func = BoolGT;
+          } else {
+            Panic("invalid sort direction");
+          }
+        }
+        sort->is_sorted = false;
+
+        sort->plan.left = left_plan;
+        left_plan = (PlanNode*)sort;
+      }
+      plan->left = left_plan;
       return plan;
     }
     case CMD_INSERT: {
