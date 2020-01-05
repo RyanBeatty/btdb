@@ -168,7 +168,7 @@ void SequentialScanInit(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
-  scan->next_index = 0;  
+  scan->next_index = 0;
 }
 
 Tuple* SequentialScan(PlanNode* node) {
@@ -366,12 +366,13 @@ Tuple* NestedLoopScan(PlanNode* node) {
     // have both left and right, compute new result tuple.
     Tuple* result_tuple = NULL;
     for (size_t i = 0; i < arrlen(join->cur_left_tuple); ++i) {
-      result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name, join->cur_left_tuple[i].data);
+      result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name,
+                            join->cur_left_tuple[i].data);
     }
     for (size_t i = 0; i < arrlen(right_tuple); ++i) {
       result_tuple = SetCol(result_tuple, right_tuple[i].column_name, right_tuple[i].data);
     }
-    return result_tuple; 
+    return result_tuple;
   }
 }
 
@@ -384,11 +385,13 @@ Tuple* GetResult(PlanNode* node) {
 
 PlanNode* PlanQuery(Query* query) {
   assert(query != NULL);
-  PlanNode* plan = calloc(1, sizeof(PlanNode));
-  plan->type = N_PLAN_RESULT;
-  plan->target_list = query->target_list;
-  plan->table_def = query->join_list[0];
-  plan->get_next_func = GetResult;
+  ResultScan* result = calloc(1, sizeof(ResultScan));
+  result->plan.type = N_PLAN_RESULT;
+  result->plan.target_list = query->target_list;
+  result->plan.table_def = query->join_list[0];
+  result->plan.get_next_func = GetResult;
+  result->where_clause = query->where_clause;
+  PlanNode* plan = (PlanNode*)result;
   switch (query->cmd) {
     case CMD_SELECT: {
       assert(arrlen(query->join_list) != 0);
@@ -442,7 +445,6 @@ PlanNode* PlanQuery(Query* query) {
           plan->left = (PlanNode*)sort;
         }
       } else {
-
       }
       return plan;
     }

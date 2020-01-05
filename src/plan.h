@@ -15,8 +15,8 @@ typedef enum PLanNodeType {
 
 typedef struct PlanNode {
   PlanNodeType type;
-  TargetRef** target_list; // std_arr.
-  Tuple** results;  // 2d stb_arr.
+  TargetRef** target_list;  // std_arr.
+  Tuple** results;          // 2d stb_arr.
   TableDef* table_def;
   struct PlanNode* left;
   struct PlanNode* right;
@@ -54,10 +54,15 @@ typedef struct Sort {
 } Sort;
 
 typedef struct NestedLoop {
-    PlanNode plan;
-    Tuple* cur_left_tuple;
-    bool need_new_left_tuple;
+  PlanNode plan;
+  Tuple* cur_left_tuple;
+  bool need_new_left_tuple;
 } NestedLoop;
+
+typedef struct ResultScan {
+  PlanNode plan;
+  ParseNode* where_clause;
+} ResultScan;
 
 PlanNode* PlanQuery(Query*);
 
