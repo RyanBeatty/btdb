@@ -291,9 +291,7 @@ Tuple* DeleteScan(PlanNode* node) {
       }
     }
 
-    Tuple* new_tuple = CopyTuple(cur_tpl);
     DeleteHeapTuple(scan->plan.table_def->index, scan->next_index);
-    return new_tuple;
   }
 
   return NULL;
@@ -399,6 +397,12 @@ Tuple* GetResult(PlanNode* node) {
       if (!*result) {
         continue;
       }
+    }
+
+    // TODO(ryan): For now need to do this for update queries to work. Not sure if this is
+    // right in the long term.
+    if (scan->plan.target_list == NULL) {
+      return cur_tuple;
     }
 
     // Column projections.
