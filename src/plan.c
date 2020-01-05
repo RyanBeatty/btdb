@@ -479,6 +479,78 @@ PlanNode* PlanQuery(Query* query) {
           plan->left = (PlanNode*)sort;
         }
       } else {
+        SeqScan* scan = calloc(1, sizeof(SeqScan));
+        scan->plan.type = N_PLAN_SEQ_SCAN;
+        scan->plan.init_func = SequentialScanInit;
+        scan->plan.get_next_func = SequentialScan;
+        scan->plan.target_list = query->target_list;
+        assert(arrlen(query->join_list) > 0);
+        scan->plan.table_def = query->join_list[0];
+        // scan->table_name = query->table_name;
+        // scan->where_clause = query->where_clause;
+        // plan->left = (PlanNode*)scan;
+
+        PlanNode* left_plan = (PlanNode*)scan;
+        for (size_t i = 1; i < arrlen(query->join_list); ++i) {
+          SeqScan* scan = calloc(1, sizeof(SeqScan));
+          scan->plan.type = N_PLAN_SEQ_SCAN;
+          scan->plan.init_func = SequentialScanInit;
+          scan->plan.get_next_func = SequentialScan;
+          scan->plan.target_list = query->target_list;
+          scan->plan.table_def = query->join_list[i];
+          PlanNode* right_plan = (PlanNode*)scan;
+
+          NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
+          nested_loop->plan.type = N_PLAN_NESTED_LOOP;
+          nested_loop->plan.get_next_func = NestedLoopScan;
+          nested_loop->plan.target_list = query->target_list;
+          nested_loop->plan.left = left_plan;
+          nested_loop->plan.right = right_plan;
+          nested_loop->cur_left_tuple = NULL;
+          nested_loop->need_new_left_tuple = true;
+
+          left_plan = (PlanNode*)nested_loop;
+        }
+
+        plan->left = left_plan;
+
+        // TODO(ryan): Make sorting work with joins. One issue is that choosing sort function
+        // requires knowing column types of result table. and we don't have a uniform way of
+        // doing that yet. if (query->sort != NULL) {
+        //   Sort* sort = calloc(1, sizeof(Sort));
+        //   sort->plan.type = N_PLAN_SORT;
+        //   sort->plan.get_next_func = SortScan;
+        //   sort->plan.target_list = query->target_list;
+        //   sort->method = INSERTION_SORT;
+
+        //   // TODO(ryan): Allow for more robust sort expressions.
+        //   // TODO(ryan): Move comparison function selection into analyzation step because we
+        //   // do type checking there anyways.
+        //   sort->sort_col = (NIdentifier*)query->sort->sort_expr;
+        //   BType sort_col_type = GetColType(scan->plan.table_def,
+        //   sort->sort_col->identifier); assert(sort_col_type != T_UNKNOWN); if (sort_col_type
+        //   == T_STRING) {
+        //     if (query->sort->dir == SORT_ASC) {
+        //       sort->cmp_func = StrLT;
+        //     } else if (query->sort->dir == SORT_DESC) {
+        //       sort->cmp_func = StrGT;
+        //     } else {
+        //       Panic("invalid sort direction");
+        //     }
+        //   } else if (sort_col_type == T_BOOL) {
+        //     if (query->sort->dir == SORT_ASC) {
+        //       sort->cmp_func = BoolLT;
+        //     } else if (query->sort->dir == SORT_DESC) {
+        //       sort->cmp_func = BoolGT;
+        //     } else {
+        //       Panic("invalid sort direction");
+        //     }
+        //   }
+        //   sort->is_sorted = false;
+
+        //   sort->plan.left = (PlanNode*)scan;
+        //   plan->left = (PlanNode*)sort;
+        // }
       }
       return plan;
     }
