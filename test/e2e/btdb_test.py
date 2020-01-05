@@ -18,6 +18,7 @@ def test_select():
     )
 
     proc.stdin.write(b"select bar, baz from foo;\n")
+    proc.stdin.write(b"select bar from foo;\n")
     proc.stdin.write(b"select bar, baz from foo where baz = true;\n")
     proc.stdin.write(b"select bar, baz from foo where bar = 'world';\n")
     proc.stdin.write(b"select bar, baz from foo where bar = 'foo';\n")
@@ -38,6 +39,10 @@ def test_select():
         ===============
         hello\ttrue\t
         world\tfalse\t
+        btdb>     bar
+        ===============
+        hello\t
+        world\t
         btdb>     bar    baz
         ===============
         hello\ttrue\t
@@ -184,7 +189,7 @@ def test_delete_everything():
     proc.kill()
 
 
-def test_udpate():
+def test_update():
     proc = subprocess.Popen(
         ["./bin/btdb"],
         stdin=subprocess.PIPE,

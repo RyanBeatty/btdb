@@ -193,15 +193,18 @@ Tuple* SequentialScan(PlanNode* node) {
       }
     }
 
-    // Column projections.
-    Tuple* result_tpl = NULL;
-    for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-      const char* col_name = scan->plan.target_list[i]->column_name;
-      Datum* data = GetCol(cur_tpl, col_name);
-      assert(data != NULL);
-      result_tpl = SetCol(result_tpl, col_name, *data);
-    }
-    return result_tpl;
+    return cur_tpl;
+
+    // TODO(ryan): Do column projections here once we can push down things.
+    // // Column projections.
+    // Tuple* result_tpl = NULL;
+    // for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
+    //   const char* col_name = scan->plan.target_list[i]->column_name;
+    //   Datum* data = GetCol(cur_tpl, col_name);
+    //   assert(data != NULL);
+    //   result_tpl = SetCol(result_tpl, col_name, *data);
+    // }
+    // return result_tpl;
   }
 }
 
@@ -380,7 +383,34 @@ Tuple* GetResult(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_RESULT);
   assert(node->left != NULL);
-  return node->left->get_next_func(node->left);
+  ResultScan* scan = (ResultScan*)node;
+  for (;;) {
+    Tuple* cur_tuple = scan->plan.left->get_next_func(node->left);
+    if (cur_tuple == NULL) {
+      return NULL;
+    }
+
+    // Evaluate predicate if any.
+    if (scan->where_clause != NULL) {
+      Datum result_val = EvalExpr(scan->where_clause, cur_tuple);
+      assert(result_val.type == T_BOOL);
+      assert(result_val.data != NULL);
+      bool* result = (bool*)result_val.data;
+      if (!*result) {
+        continue;
+      }
+    }
+
+    // Column projections.
+    Tuple* result_tpl = NULL;
+    for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
+      const char* col_name = scan->plan.target_list[i]->column_name;
+      Datum* data = GetCol(cur_tuple, col_name);
+      assert(data != NULL);
+      result_tpl = SetCol(result_tpl, col_name, *data);
+    }
+    return result_tpl;
+  }
 }
 
 PlanNode* PlanQuery(Query* query) {
