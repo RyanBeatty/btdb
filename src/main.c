@@ -70,6 +70,9 @@ int main() {
   Tuple* table2_t1 = NULL;
   table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
   InsertTuple(1, table2_t1);
+  Tuple* table2_t2 = NULL;
+  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
+  InsertTuple(1, table2_t2);
 
   while (true) {
     printf("btdb> ");
@@ -93,7 +96,9 @@ int main() {
     PlanNode* plan = PlanQuery(query);
     Result results = ExecPlan(plan);
     if (results.columns != NULL) {
-      for (size_t i = 0; i < arrlen(results.columns); ++i) { printf("    %s", results.columns[i]); }
+      for (size_t i = 0; i < arrlen(results.columns); ++i) {
+        printf("    %s", results.columns[i]);
+      }
       printf("\n");
       printf("===============\n");
       for (size_t i = 0; i < arrlen(results.tuples); ++i) {

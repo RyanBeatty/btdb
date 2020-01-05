@@ -54,6 +54,63 @@ def test_select():
         btdb>     a
         ===============
         asdf\t
+        cab\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
+
+
+def test_select_with_joins():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    proc.stdin.write(b"select bar, baz, a from foo, b;\n")
+    proc.stdin.write(b"select bar, a from foo, b;\n")
+    proc.stdin.write(b"select bar, baz, a from foo, b where a = 'cab';\n")
+    proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
+
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tasdf\t
+        hello\ttrue\tcab\t
+        world\tfalse\tasdf\t
+        world\tfalse\tcab\t
+        btdb>     bar    a
+        ===============
+        hello\tasdf\t
+        hello\tcab\t
+        world\tasdf\t
+        world\tcab\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tcab\t
+        world\tfalse\tcab\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tasdf\t
+        world\tfalse\tasdf\t
+        hello\ttrue\tcab\t
+        world\tfalse\tcab\t
         btdb> Shutting down btdb
         """
         ),
@@ -100,6 +157,7 @@ def test_insert():
         btdb>     a
         ===============
         asdf\t
+        cab\t
         c\t
         btdb> Shutting down btdb
         """
@@ -228,6 +286,7 @@ def test_update():
         btdb> ===============
         btdb>     a
         ===============
+        updated\t
         updated\t
         btdb> Shutting down btdb
         """
