@@ -40,7 +40,7 @@ void Dedent(PrintContext* ctx) { --ctx->indent; }
 
 void free_parse_node_list(ParseNode** list) {
   if (list == NULL) {
-    return ;
+    return;
   }
   for (size_t i = 0; i < arrlen(list); ++i) {
     free_parse_node(list[i]);
@@ -146,10 +146,28 @@ void free_parse_node(ParseNode* node) {
       break;
     }
     case NSORTBY: {
-      NSortBy* sort_by = (NSortBy*) node;
+      NSortBy* sort_by = (NSortBy*)node;
       assert(sort_by->sort_expr != NULL);
       free_parse_node(sort_by->sort_expr);
       free(sort_by);
+      break;
+    }
+    case NCREATE_TABLE: {
+      NCreateTable* create_table = (NCreateTable*)node;
+      assert(create_table->table_name != NULL);
+      assert(create_table->column_defs != NULL);
+      free_parse_node(create_table->table_name);
+      free_parse_node_list(create_table->column_defs);
+      free(create_table);
+      break;
+    }
+    case NCOLUMN_DEF: {
+      NColumnDef* column_def = (NColumnDef*)node;
+      assert(column_def->col_name != NULL);
+      assert(column_def->col_type != NULL);
+      free_parse_node(column_def->col_name);
+      free_parse_node(column_def->col_type);
+      free(column_def);
       break;
     }
     default: {
@@ -202,7 +220,7 @@ const char* bin_expr_op_to_string(BinExprOp op) {
 }
 
 const char* sort_dir_to_string(SortDir dir) {
-  switch(dir) {
+  switch (dir) {
     case SORT_ASC:
       return "ASC";
     case SORT_DESC:
@@ -350,6 +368,34 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       PrintChild(ctx, "dir", sort_dir_to_string(sort_by->dir));
       PrintObject(ctx, "sort_expr");
       print_parse_node(sort_by->sort_expr, ctx);
+      EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NCREATE_TABLE: {
+      NCreateTable* create_table = (NCreateTable*)node;
+      assert(create_table->table_name != NULL);
+      assert(create_table->column_defs != NULL);
+      PrintObject(ctx, "NCreateTable");
+      PrintObject(ctx, "table_name");
+      print_parse_node(create_table->table_name, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "column_defs");
+      print_parse_node_list(create_table->column_defs, ctx);
+      EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NCOLUMN_DEF: {
+      NColumnDef* column_def = (NColumnDef*)node;
+      assert(column_def->col_name != NULL);
+      assert(column_def->col_type != NULL);
+      PrintObject(ctx, "NColumnDef");
+      PrintObject(ctx, "col_name");
+      print_parse_node(column_def->col_name, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "col_type");
+      print_parse_node(column_def->col_type, ctx);
       EndObject(ctx);
       EndObject(ctx);
       break;

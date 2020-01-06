@@ -30,12 +30,12 @@ typedef enum ParseNodeType {
   NUPDATE_STMT,
   NASSIGN_EXPR,
   NBOOL_LIT,
-  NSORTBY
+  NSORTBY,
+  NCREATE_TABLE,
+  NCOLUMN_DEF,
 } ParseNodeType;
 
-typedef enum SortDir {
-  SORT_ASC, SORT_DESC
-} SortDir;
+typedef enum SortDir { SORT_ASC, SORT_DESC } SortDir;
 
 typedef struct ParseNode {
   ParseNodeType type;
@@ -129,6 +129,20 @@ typedef struct NSortBy {
   SortDir dir;
   ParseNode* sort_expr;
 } NSortBy;
+
+typedef struct NCreateTable {
+  ParseNodeType type;
+
+  ParseNode* table_name;
+  ParseNode** column_defs;
+} NCreateTable;
+
+typedef struct NColumnDef {
+  ParseNodeType type;
+
+  ParseNode* col_name;
+  ParseNode* col_type;
+} NColumnDef;
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);

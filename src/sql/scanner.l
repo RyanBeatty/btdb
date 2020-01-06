@@ -17,6 +17,10 @@
 %%
 "," return TOK_COMMA;
 ";" return TOK_SEMICOLON;
+"create" return TOK_CREATE;
+"CREATE" return TOK_CREATE;
+"table" return TOK_TABLE;
+"TABLE" return TOK_TABLE;
 "select" return TOK_SELECT;
 "SELECT" return TOK_SELECT;
 "INSERT" return TOK_INSERT;

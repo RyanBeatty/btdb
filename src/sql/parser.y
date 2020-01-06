@@ -57,6 +57,8 @@
     ASC
     DESC
     SET
+    CREATE
+    TABLE
     LPARENS "("
     RPARENS ")"
     FROM
@@ -80,8 +82,8 @@
 %token <bool_lit> BOOLEAN_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause
-%type <list_node> target_list insert_column_list column_list insert_value_items from_list from_clause update_assign_expr_list
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt
+%type <list_node> target_list insert_column_list column_list insert_value_items from_list from_clause update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
@@ -90,19 +92,18 @@
 
 stmt:
   select_stmt {
-    // printf("select\n");
     parser->tree = $1;
   }
   | insert_stmt {
-    // printf("insert\n");
     parser->tree = $1;
   }
   | delete_stmt {
-    // printf("delete\n");
     parser->tree = $1;
   }
   | update_stmt {
-    // printf("update\n");
+    parser->tree = $1;
+  }
+  | create_table_stmt {
     parser->tree = $1;
   }
 
@@ -446,6 +447,62 @@ assign_expr: STRING_GROUP "=" expr {
   assign_expr->value_expr = $3;
   $$ = (ParseNode*) assign_expr;
 }
+
+create_table_stmt:
+  CREATE TABLE STRING_GROUP "(" table_expr ")" ";" {
+    NIdentifier* table_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(table_name != NULL);
+    table_name->type = NIDENTIFIER;
+    table_name->identifier = $3;
+
+    NCreateTable* create_table = calloc(1, sizeof(NCreateTable));
+    create_table->type = NCREATE_TABLE;
+    create_table->table_name = (ParseNode*)table_name;
+    create_table->column_defs = $5;
+    $$ = (ParseNode*)create_table;
+  }
+
+table_expr: 
+  STRING_GROUP STRING_GROUP {
+    NIdentifier* col_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(col_name != NULL);
+    col_name->type = NIDENTIFIER;
+    col_name->identifier = $1;
+
+    NIdentifier* col_type = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(col_type != NULL);
+    col_type->type = NIDENTIFIER;
+    col_type->identifier = $2;
+
+    NColumnDef* column_def = calloc(1, sizeof(NColumnDef));
+    column_def->type = NCOLUMN_DEF;
+    column_def->col_name = (ParseNode*)col_name;
+    column_def->col_type = (ParseNode*)col_type;
+
+    ParseNode** column_defs = NULL;
+    arrpush(column_defs, (ParseNode*)column_def);
+    $$ = column_defs;
+  }
+  | table_expr "," STRING_GROUP STRING_GROUP {
+    NIdentifier* col_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(col_name != NULL);
+    col_name->type = NIDENTIFIER;
+    col_name->identifier = $3;
+
+    NIdentifier* col_type = (NIdentifier*)calloc(1, sizeof(NIdentifier));
+    assert(col_type != NULL);
+    col_type->type = NIDENTIFIER;
+    col_type->identifier = $4;
+
+    NColumnDef* column_def = calloc(1, sizeof(NColumnDef));
+    column_def->type = NCOLUMN_DEF;
+    column_def->col_name = (ParseNode*)col_name;
+    column_def->col_type = (ParseNode*)col_type;
+
+    ParseNode** column_defs = $1;
+    arrpush(column_defs, (ParseNode*)column_def);
+    $$ = column_defs;
+  }
 
 
 %%

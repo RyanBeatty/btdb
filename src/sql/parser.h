@@ -72,27 +72,29 @@ extern int yydebug;
     TOK_ASC = 266,
     TOK_DESC = 267,
     TOK_SET = 268,
-    TOK_LPARENS = 269,
-    TOK_RPARENS = 270,
-    TOK_FROM = 271,
-    TOK_SEMICOLON = 272,
-    TOK_COMMA = 273,
-    TOK_WHERE = 274,
-    TOK_AND = 275,
-    TOK_OR = 276,
-    TOK_EQ = 277,
-    TOK_NEQ = 278,
-    TOK_GT = 279,
-    TOK_GE = 280,
-    TOK_LT = 281,
-    TOK_LE = 282,
-    TOK_PLUS = 283,
-    TOK_MINUS = 284,
-    TOK_MULT = 285,
-    TOK_DIV = 286,
-    TOK_STRING_GROUP = 287,
-    TOK_STRING_LITERAL = 288,
-    TOK_BOOLEAN_LITERAL = 289
+    TOK_CREATE = 269,
+    TOK_TABLE = 270,
+    TOK_LPARENS = 271,
+    TOK_RPARENS = 272,
+    TOK_FROM = 273,
+    TOK_SEMICOLON = 274,
+    TOK_COMMA = 275,
+    TOK_WHERE = 276,
+    TOK_AND = 277,
+    TOK_OR = 278,
+    TOK_EQ = 279,
+    TOK_NEQ = 280,
+    TOK_GT = 281,
+    TOK_GE = 282,
+    TOK_LT = 283,
+    TOK_LE = 284,
+    TOK_PLUS = 285,
+    TOK_MINUS = 286,
+    TOK_MULT = 287,
+    TOK_DIV = 288,
+    TOK_STRING_GROUP = 289,
+    TOK_STRING_LITERAL = 290,
+    TOK_BOOLEAN_LITERAL = 291
   };
 #endif
 
@@ -109,7 +111,7 @@ union YYSTYPE
   ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 113 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
+#line 115 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
