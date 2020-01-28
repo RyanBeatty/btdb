@@ -574,3 +574,33 @@ PlanNode* PlanQuery(Query* query) {
   }
   return NULL;
 }
+
+void ExecuteUtilityStmt(Query* query) {
+  assert(query != NULL);
+  assert(query->cmd == CMD_UTILITY);
+  assert(query->utility_stmt != NULL);
+  assert(query->utility_stmt->type == NCREATE_TABLE);
+
+  TableDef* table_def = (TableDef*)calloc(1, sizeof(TableDef));
+
+  NCreateTable* create = (NCreateTable*)query->utility_stmt;
+  NIdentifier* table_name = (NIdentifier*)create->table_name;
+  table_def->name = (char*)calloc(strlen(table_name->identifier)+1, sizeof(char));
+  strcpy(table_def->name, table_name->identifier);
+
+  ColDesc* tuple_desc = NULL;
+  for (size_t i = 0; i < arrlen(create->column_defs); ++i) {
+    NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
+    NIdentifier* col_name = (NIdentifier*)column_def->col_name;
+
+    ColDesc col_desc;
+    col_desc.column_name = (char*)calloc(strlen(col_name->identifier)+1, sizeof(char));
+    strcpy(col_desc.column_name, col_name->identifier);
+    col_desc.type = column_def->col_type_id;
+    arrpush(tuple_desc, col_desc);
+  }
+
+  table_def->tuple_desc = tuple_desc;
+  CreateTable(table_def);
+  return ;
+}

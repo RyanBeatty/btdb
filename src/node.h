@@ -8,6 +8,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "types.h"
+
 typedef struct {
   uint64_t indent;
 } PrintContext;
@@ -142,6 +144,7 @@ typedef struct NColumnDef {
 
   ParseNode* col_name;
   ParseNode* col_type;
+  BType col_type_id;
 } NColumnDef;
 
 void free_parse_node(ParseNode*);

@@ -66,4 +66,6 @@ typedef struct ResultScan {
 
 PlanNode* PlanQuery(Query*);
 
+void ExecuteUtilityStmt(Query*);
+
 #endif  // PLAN_H

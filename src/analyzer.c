@@ -401,6 +401,7 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
     if (col_type_resolved == T_UNKNOWN) {
       return NULL;
     }
+    column_def->col_type_id = col_type_resolved;
 
     NIdentifier* col_name = (NIdentifier*)column_def->col_name;
     assert(col_name != NULL);
