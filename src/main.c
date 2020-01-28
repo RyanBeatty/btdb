@@ -35,6 +35,38 @@ Result ExecPlan(PlanNode* plan) {
   return results;
 }
 
+void PrintResults(Result results) {
+  if (results.columns != NULL) {
+    for (size_t i = 0; i < arrlen(results.columns); ++i) {
+      printf("    %s", results.columns[i]);
+    }
+    printf("\n");
+    printf("===============\n");
+    for (size_t i = 0; i < arrlen(results.tuples); ++i) {
+      Tuple* mtuple = results.tuples[i];
+      assert(mtuple != NULL);
+      for (size_t i = 0; i < arrlen(results.columns); ++i) {
+        Datum* data = GetCol(mtuple, results.columns[i]);
+        if (data != NULL) {
+          // TODO(ryan): This is some hacky bs to be able to print this as a string.
+          // I'm going to need to do an overhaul of alot of this code in the future.
+          if (data->type == T_STRING) {
+            printf("%s", (char*)data->data);
+          } else if (data->type == T_BOOL) {
+            printf("%s", (*((bool*)data->data) ? "true" : "false"));
+          } else {
+            Panic("Only support printing strings or bools");
+          }
+        }
+        printf("\t");
+      }
+      printf("\n");
+    }
+  } else {
+    printf("===============\n");
+  }
+}
+
 int main() {
   printf("Starting btdb\n");
 
@@ -95,35 +127,7 @@ int main() {
     }
     PlanNode* plan = PlanQuery(query);
     Result results = ExecPlan(plan);
-    if (results.columns != NULL) {
-      for (size_t i = 0; i < arrlen(results.columns); ++i) {
-        printf("    %s", results.columns[i]);
-      }
-      printf("\n");
-      printf("===============\n");
-      for (size_t i = 0; i < arrlen(results.tuples); ++i) {
-        Tuple* mtuple = results.tuples[i];
-        assert(mtuple != NULL);
-        for (size_t i = 0; i < arrlen(results.columns); ++i) {
-          Datum* data = GetCol(mtuple, results.columns[i]);
-          if (data != NULL) {
-            // TODO(ryan): This is some hacky bs to be able to print this as a string.
-            // I'm going to need to do an overhaul of alot of this code in the future.
-            if (data->type == T_STRING) {
-              printf("%s", (char*)data->data);
-            } else if (data->type == T_BOOL) {
-              printf("%s", (*((bool*)data->data) ? "true" : "false"));
-            } else {
-              Panic("Only support printing strings or bools");
-            }
-          }
-          printf("\t");
-        }
-        printf("\n");
-      }
-    } else {
-      printf("===============\n");
-    }
+    PrintResults(results);
   }
   // TODO(ryan): Print out IO error condition if any.
 
