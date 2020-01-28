@@ -42,7 +42,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(from_clause != NULL);
   TableDef** join_list = NULL;
   for (size_t i = 0; i < arrlen(from_clause); ++i) {
-    NIdentifier* table_name = (NIdentifier*) from_clause[i];
+    NIdentifier* table_name = (NIdentifier*)from_clause[i];
     assert(table_name != NULL);
     assert(table_name->type == NIDENTIFIER);
     assert(table_name->identifier != NULL);
@@ -113,7 +113,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   query->join_list = join_list;
   query->target_list = targets;
   query->where_clause = select->where_clause;
-  query->sort = (NSortBy*) select->sort_clause;
+  query->sort = (NSortBy*)select->sort_clause;
   return query;
 }
 
@@ -368,7 +368,57 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   Query* query = (Query*)MakeQuery(CMD_UPDATE);
   query->table_name = table_name->identifier;
   arrpush(query->join_list, table_def);
-  query->assign_expr_list = (NAssignExpr**) assign_expr_list;
+  query->assign_expr_list = (NAssignExpr**)assign_expr_list;
   query->where_clause = update->where_clause;
   return query;
+}
+
+Query* AnalyzeCreateTableStmt(NCreateTable* create) {
+  assert(create != NULL);
+  assert(create->type == NCREATE_TABLE);
+
+  NIdentifier* table_name = (NIdentifier*)create->table_name;
+  assert(table_name != NULL);
+  assert(table_name->type == NIDENTIFIER);
+  assert(table_name->identifier != NULL);
+
+  // NOTE: In this case we want to make sure the table doesn't already exist.
+  TableDef* table_def = FindTableDef(table_name->identifier);
+  if (table_def != NULL) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < arrlen(create->column_defs); ++i) {
+    NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
+    assert(column_def != NULL);
+    assert(column_def->type == NCOLUMN_DEF);
+
+    NIdentifier* col_type = (NIdentifier*)column_def->col_type;
+    assert(col_type != NULL);
+    assert(col_type->type == NIDENTIFIER);
+    assert(col_type->identifier != NULL);
+    BType col_type_resolved = StringToType(col_type->identifier);
+    if (col_type_resolved == T_UNKNOWN) {
+      return NULL;
+    }
+
+    NIdentifier* col_name = (NIdentifier*)column_def->col_name;
+    assert(col_name != NULL);
+    assert(col_name->type == NIDENTIFIER);
+    assert(col_name->identifier != NULL);
+
+    // NOTE(ryan): We assume that every table has unique column names for now.
+    for (size_t j = 0; j < arrlen(TableDefs); ++j) {
+      TableDef table_def = TableDefs[j];
+      for (size_t k = 0; k < arrlen(table_def.tuple_desc); ++k) {
+        ColDesc col_desc = table_def.tuple_desc[k];
+        if (strcmp(col_name->identifier, col_desc.column_name) == 0) {
+          return NULL;
+        }
+      }
+    }
+  }
+
+  Query* query = MakeQuery(CMD_UTILITY);
+  query->utility_stmt = (ParseNode*) create;
 }

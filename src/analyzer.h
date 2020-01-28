@@ -32,6 +32,7 @@ typedef struct Query {
   NAssignExpr** assign_expr_list;
   Tuple** values;
   NSortBy* sort;
+  ParseNode* utility_stmt;
 } Query;
 
 Query* MakeQuery(CmdType);
@@ -40,6 +41,7 @@ Query* AnalyzeSelectStmt(NSelectStmt*);
 Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
+Query* AnalyzeCreateTableStmt(NCreateTable*);
 void AnalyzeFromClause(Query*, ParseNode**);
 BType CheckType(ParseNode*, TableDef**);
 

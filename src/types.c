@@ -6,6 +6,19 @@
 #include "types.h"
 #include "utils.h"
 
+BType StringToType(const char* type_str) {
+  if (type_str == NULL) {
+    return T_UNKNOWN;
+  }
+  if (strcmp(type_str, "text") == 0) {
+    return T_STRING;
+  } else if (strcmp(type_str, "bool") == 0) {
+    return T_BOOL;
+  } else {
+    return T_UNKNOWN;
+  }
+}
+
 Datum MakeDatum(BType type, void* data) {
   Datum datum = {type, data};
   return datum;

@@ -11,6 +11,8 @@ typedef enum BType {
   T_BOOL,
 } BType;
 
+BType StringToType(const char*);
+
 typedef struct Datum {
   // Datum(BType type, void* data) : type(type), data(data) {}
 
