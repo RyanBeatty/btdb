@@ -28,6 +28,9 @@ Query* AnalyzeParseTree(ParseNode* node) {
     case NUPDATE_STMT: {
       return AnalyzeUpdateStmt((NUpdateStmt*)node);
     }
+    case NCREATE_TABLE: {
+      return AnalyzeCreateTableStmt((NCreateTable*)node);
+    }
     default: {
       Panic("Unknown statement type when validating");
       return NULL;

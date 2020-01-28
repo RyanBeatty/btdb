@@ -125,9 +125,15 @@ int main() {
       printf("Query not valid\n");
       continue;
     }
-    PlanNode* plan = PlanQuery(query);
-    Result results = ExecPlan(plan);
-    PrintResults(results);
+    // TODO(ryan): This is kinda hacky...
+    if (query->cmd == CMD_UTILITY) {
+      ExecuteUtilityStmt(query);
+      printf("UTILITY DONE\n");
+    } else {
+      PlanNode* plan = PlanQuery(query);
+      Result results = ExecPlan(plan);
+      PrintResults(results);
+    }
   }
   // TODO(ryan): Print out IO error condition if any.
 
