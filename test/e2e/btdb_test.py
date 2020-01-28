@@ -345,3 +345,42 @@ def test_sort():
     )
 
     proc.kill()
+
+
+def test_create_table():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    proc.stdin.write(b"create table baz (id text, boq bool);\n")
+    proc.stdin.write(b"insert into baz (id, boq) values ('hello', true), ('world', false);\n")
+    proc.stdin.write(b"select id, boq from baz;\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> UTILITY DONE
+        btdb>     id    boq
+        ===============
+        btdb>     id    boq
+        ===============
+        hello\ttrue\t
+        world\tfalse\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
