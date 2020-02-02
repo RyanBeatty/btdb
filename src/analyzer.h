@@ -44,6 +44,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt*);
 Query* AnalyzeCreateTableStmt(NCreateTable*);
 void AnalyzeFromClause(Query*, ParseNode**);
 BType CheckType(ParseNode*, TableDef**);
+ParseNode* AnalyzeExprNode(ParseNode*, TableDef**);
 
 #ifdef __cplusplus
 }

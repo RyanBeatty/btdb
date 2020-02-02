@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 
 #include "stb_ds.h"
 
@@ -159,34 +160,95 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
         return T_UNKNOWN;
       }
-      switch (expr->op) {
-        case AND:
-        case OR: {
-          if (lhs_type != T_BOOL || rhs_type != T_BOOL) {
+
+      NBinExpr* bin_expr = (NBinExpr*)node;
+      // ASSUMPTION(ryan): We are assumping expression types must be the same.
+      if (lhs_type == T_BOOL) {
+        switch (expr->op) {
+          case AND: {
+            bin_expr->op_func = BoolAnd;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case OR: {
+            bin_expr->op_func = BoolOr;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case EQ: {
+            bin_expr->op_func = BoolEQ;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case NEQ: {
+            bin_expr->op_func = BoolNE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GT: {
+            bin_expr->op_func = BoolGT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GE: {
+            bin_expr->op_func = BoolGTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LT: {
+            bin_expr->op_func = BoolLT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LE: {
+            bin_expr->op_func = BoolLTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          default: {
+            Panic("Unknown or Unsupported BinExprOp!");
             return T_UNKNOWN;
           }
-          return T_BOOL;
         }
-        case EQ:
-        case NEQ: {
-          if (lhs_type != rhs_type) {
+      } else if (lhs_type == T_STRING) {
+        switch (expr->op) {
+          case EQ: {
+            bin_expr->op_func = StrEQ;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case NEQ: {
+            bin_expr->op_func = StrNE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GT: {
+            bin_expr->op_func = StrGT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GE: {
+            bin_expr->op_func = StrGTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LT: {
+            bin_expr->op_func = StrLT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LE: {
+            bin_expr->op_func = StrLTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          default: {
+            Panic("Unknown or Unsupported BinExprOp!");
             return T_UNKNOWN;
           }
-          return T_BOOL;
         }
-        case GT:
-        case GE:
-        case LT:
-        case LE: {
-          if (lhs_type != T_STRING || rhs_type != T_STRING) {
-            return T_UNKNOWN;
-          }
-          return T_BOOL;
-        }
-        default: {
-          Panic("Unknown or Unsupported BinExprOp!");
-          return T_UNKNOWN;
-        }
+      } else {
+        return T_UNKNOWN;
       }
     }
     default: {

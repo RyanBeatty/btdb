@@ -64,6 +64,8 @@ typedef struct NBinExpr {
   ParseNodeType type;
 
   BinExprOp op;
+  BType return_type;
+  Datum (*op_func)(Datum, Datum);
   ParseNode* lhs;
   ParseNode* rhs;
 } NBinExpr;
