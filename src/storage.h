@@ -47,6 +47,8 @@ void DeleteHeapTuple(size_t, size_t);
 
 void CreateTable(TableDef*);
 
+void InitSystemTables();
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 
 #include "stb_ds.h"
 
@@ -6,6 +7,44 @@
 
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
+
+void InitSystemTables() {
+  ColDesc* tuple_desc = NULL;
+  ColDesc col1 = {.column_name = "bar", .type = T_STRING};
+  ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
+  arrpush(tuple_desc, col1);
+  arrpush(tuple_desc, col2);
+  TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
+  CreateTable(&table_def);
+
+  Tuple* t1 = NULL;
+  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
+  bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
+  *bool_lit = true;
+  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
+
+  Tuple* t2 = NULL;
+  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
+  bool_lit = (bool*)calloc(sizeof(bool), 1);
+  *bool_lit = false;
+  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
+
+  InsertTuple(0, t1);
+  InsertTuple(0, t2);
+
+  ColDesc* table2_tuple_desc = NULL;
+  ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
+  arrpush(table2_tuple_desc, table2_col1);
+  TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
+  CreateTable(&table_def2);
+
+  Tuple* table2_t1 = NULL;
+  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
+  InsertTuple(1, table2_t1);
+  Tuple* table2_t2 = NULL;
+  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
+  InsertTuple(1, table2_t2);
+}
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
   size_t len = strlen(name);
