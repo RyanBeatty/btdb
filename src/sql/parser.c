@@ -115,40 +115,42 @@ extern int yydebug;
   enum yytokentype
   {
     TOK_EOF = 0,
-    TOK_SELECT = 258,
-    TOK_INSERT = 259,
-    TOK_DELETE = 260,
-    TOK_UPDATE = 261,
-    TOK_INTO = 262,
-    TOK_VALUES = 263,
-    TOK_ORDER = 264,
-    TOK_BY = 265,
-    TOK_ASC = 266,
-    TOK_DESC = 267,
-    TOK_SET = 268,
-    TOK_CREATE = 269,
-    TOK_TABLE = 270,
-    TOK_LPARENS = 271,
-    TOK_RPARENS = 272,
-    TOK_FROM = 273,
-    TOK_SEMICOLON = 274,
-    TOK_COMMA = 275,
-    TOK_WHERE = 276,
-    TOK_AND = 277,
-    TOK_OR = 278,
-    TOK_EQ = 279,
-    TOK_NEQ = 280,
-    TOK_GT = 281,
-    TOK_GE = 282,
-    TOK_LT = 283,
-    TOK_LE = 284,
-    TOK_PLUS = 285,
-    TOK_MINUS = 286,
-    TOK_MULT = 287,
-    TOK_DIV = 288,
-    TOK_STRING_GROUP = 289,
-    TOK_STRING_LITERAL = 290,
-    TOK_BOOLEAN_LITERAL = 291
+    TOK_SCANNER_ERROR = 258,
+    TOK_SELECT = 259,
+    TOK_INSERT = 260,
+    TOK_DELETE = 261,
+    TOK_UPDATE = 262,
+    TOK_INTO = 263,
+    TOK_VALUES = 264,
+    TOK_ORDER = 265,
+    TOK_BY = 266,
+    TOK_ASC = 267,
+    TOK_DESC = 268,
+    TOK_SET = 269,
+    TOK_CREATE = 270,
+    TOK_TABLE = 271,
+    TOK_LPARENS = 272,
+    TOK_RPARENS = 273,
+    TOK_FROM = 274,
+    TOK_SEMICOLON = 275,
+    TOK_COMMA = 276,
+    TOK_WHERE = 277,
+    TOK_AND = 278,
+    TOK_OR = 279,
+    TOK_EQ = 280,
+    TOK_NEQ = 281,
+    TOK_GT = 282,
+    TOK_GE = 283,
+    TOK_LT = 284,
+    TOK_LE = 285,
+    TOK_PLUS = 286,
+    TOK_MINUS = 287,
+    TOK_MULT = 288,
+    TOK_DIV = 289,
+    TOK_STRING_GROUP = 290,
+    TOK_STRING_LITERAL = 291,
+    TOK_BOOLEAN_LITERAL = 292,
+    TOK_INT_LITERAL = 293
   };
 #endif
 
@@ -160,12 +162,13 @@ union YYSTYPE
 
   char* str_lit;
   bool bool_lit;
+  int32_t int_lit;
   ParseNode* node;
   ParseNode** list_node;
   ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 169 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 172 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -198,7 +201,7 @@ int yyparse (struct Parser* parser);
   // Because we use %parse-param, the signature of yyerror changes.
   void yyerror(Parser*, const char*);
 
-#line 202 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 205 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
 
 #ifdef short
 # undef short
@@ -433,10 +436,10 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  18
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   117
+#define YYLAST   118
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  37
+#define YYNTOKENS  39
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  22
 /* YYNRULES -- Number of rules.  */
@@ -445,7 +448,7 @@ union yyalloc
 #define YYNSTATES  110
 
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   291
+#define YYMAXUTOK   293
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
@@ -485,19 +488,19 @@ static const yytype_uint8 yytranslate[] =
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36
+      35,    36,    37,    38
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    94,    94,    97,   100,   103,   106,   110,   121,   131,
-     143,   144,   149,   159,   171,   172,   177,   178,   187,   188,
-     189,   196,   203,   215,   222,   231,   240,   249,   258,   267,
-     276,   285,   294,   303,   312,   321,   331,   348,   351,   361,
-     372,   375,   380,   387,   392,   398,   411,   426,   431,   438,
-     452,   466,   486
+       0,    97,    97,   100,   103,   106,   109,   113,   124,   134,
+     146,   147,   152,   162,   174,   175,   180,   181,   190,   191,
+     192,   199,   206,   218,   225,   234,   243,   252,   261,   270,
+     279,   288,   297,   306,   315,   324,   334,   351,   354,   364,
+     375,   378,   383,   390,   395,   401,   414,   429,   434,   441,
+     455,   469,   489
 };
 #endif
 
@@ -506,16 +509,16 @@ static const yytype_uint16 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "EOF", "error", "$undefined", "SELECT", "INSERT", "DELETE", "UPDATE",
-  "INTO", "VALUES", "ORDER", "BY", "ASC", "DESC", "SET", "CREATE", "TABLE",
-  "\"(\"", "\")\"", "FROM", "\";\"", "\",\"", "WHERE", "AND", "OR",
-  "\"=\"", "\"!=\"", "\">\"", "\">=\"", "\"<\"", "\"<=\"", "\"+\"",
-  "\"-\"", "\"*\"", "\"/\"", "STRING_GROUP", "STRING_LITERAL",
-  "BOOLEAN_LITERAL", "$accept", "stmt", "select_stmt", "target_list",
-  "from_clause", "from_list", "where_clause", "sort_clause",
-  "sort_direction", "expr", "insert_stmt", "insert_column_list",
-  "column_list", "insert_values_clause", "insert_values_list",
-  "insert_value_items", "delete_stmt", "update_stmt",
+  "EOF", "error", "$undefined", "SCANNER_ERROR", "SELECT", "INSERT",
+  "DELETE", "UPDATE", "INTO", "VALUES", "ORDER", "BY", "ASC", "DESC",
+  "SET", "CREATE", "TABLE", "\"(\"", "\")\"", "FROM", "\";\"", "\",\"",
+  "WHERE", "AND", "OR", "\"=\"", "\"!=\"", "\">\"", "\">=\"", "\"<\"",
+  "\"<=\"", "\"+\"", "\"-\"", "\"*\"", "\"/\"", "STRING_GROUP",
+  "STRING_LITERAL", "BOOLEAN_LITERAL", "INT_LITERAL", "$accept", "stmt",
+  "select_stmt", "target_list", "from_clause", "from_list", "where_clause",
+  "sort_clause", "sort_direction", "expr", "insert_stmt",
+  "insert_column_list", "column_list", "insert_values_clause",
+  "insert_values_list", "insert_value_items", "delete_stmt", "update_stmt",
   "update_assign_expr_list", "assign_expr", "create_table_stmt",
   "table_expr", YY_NULLPTR
 };
@@ -529,14 +532,14 @@ static const yytype_uint16 yytoknum[] =
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291
+     285,   286,   287,   288,   289,   290,   291,   292,   293
 };
 # endif
 
-#define YYPACT_NINF -33
+#define YYPACT_NINF -34
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-33)))
+  (!!((Yystate) == (-34)))
 
 #define YYTABLE_NINF -1
 
@@ -547,17 +550,17 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       0,   -32,     4,    30,    15,    32,    50,   -33,   -33,   -33,
-     -33,   -33,   -33,     6,    53,    54,    73,    55,   -33,    56,
-      57,    71,    77,    71,    60,    79,   -33,    76,   -33,     8,
-      88,    64,    91,    81,    78,    -3,   -33,    67,    69,   -33,
-     -33,   -33,    41,    94,    86,   -33,    -5,    90,    89,   -33,
-       8,    60,    92,    75,    -1,   -33,     8,     8,     8,     8,
-       8,     8,     8,     8,     8,     8,     8,     8,     8,   -33,
-     -33,    80,     8,    87,   -33,    41,   -33,   -33,   -33,    93,
-      82,    52,    52,   -23,   -23,   -23,   -23,   -23,   -23,    13,
-      13,   -33,   -33,    29,   -33,    41,     3,    97,   -33,    83,
-     -33,   -33,   -33,   -33,     8,     8,   -33,    41,     5,   -33
+      -1,   -33,     3,    29,    14,    31,    50,   -34,   -34,   -34,
+     -34,   -34,   -34,     5,    52,    53,    72,    54,   -34,    55,
+      56,    70,    76,    70,    59,    78,   -34,    75,   -34,     7,
+      87,    63,    90,    80,    77,    -4,   -34,    66,    68,   -34,
+     -34,   -34,    40,    93,    85,   -34,    -6,    89,    88,   -34,
+       7,    59,    91,    74,    -2,   -34,     7,     7,     7,     7,
+       7,     7,     7,     7,     7,     7,     7,     7,     7,   -34,
+     -34,    79,     7,    86,   -34,    40,   -34,   -34,   -34,    92,
+      81,    51,    51,   -24,   -24,   -24,   -24,   -24,   -24,    12,
+      12,   -34,   -34,    28,   -34,    40,     2,    96,   -34,    82,
+     -34,   -34,   -34,   -34,     7,     7,   -34,    40,     4,   -34
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -581,9 +584,9 @@ static const yytype_uint8 yydefact[] =
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -33,   -33,   -33,   -33,   -33,   -33,   -22,   -33,   -33,   -29,
-     -33,   -33,   -33,   -33,   -33,    10,   -33,   -33,   -33,    59,
-     -33,   -33
+     -34,   -34,   -34,   -34,   -34,   -34,   -22,   -34,   -34,   -29,
+     -34,   -34,   -34,   -34,   -34,    10,   -34,   -34,   -34,    67,
+     -34,   -34
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
@@ -610,51 +613,51 @@ static const yytype_uint8 yytable[] =
       62,    63,    64,    65,    66,    67,    24,    22,    23,    25,
       26,    28,    29,    31,    34,    37,    38,    43,    45,    47,
       49,    53,    50,    55,    68,    69,    72,    97,    74,    78,
-      76,    77,    98,   105,    94,   108,    99,   106
+       0,    77,    98,   105,    94,   108,    99,   106,    76
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int8 yycheck[] =
 {
-      29,    23,    34,     3,     4,     5,     6,    30,    31,    32,
-      33,     7,    17,    35,    14,    20,    17,    20,    21,    20,
-      17,    50,    17,    20,    18,    20,    20,    56,    57,    58,
+      29,    23,    35,     4,     5,     6,     7,    31,    32,    33,
+      34,     8,    18,    35,    15,    21,    18,    21,    22,    21,
+      18,    50,    18,    21,    19,    21,    21,    56,    57,    58,
       59,    60,    61,    62,    63,    64,    65,    66,    67,    68,
-      11,    12,    34,    35,    36,    32,    33,    15,    18,    34,
-       0,    22,    23,    24,    25,    26,    27,    28,    29,    30,
-      31,    32,    33,    22,    23,    24,    25,    26,    27,    28,
-      29,    30,    31,    32,    33,   104,    24,    25,    26,    27,
-      28,    29,    30,    31,    32,    33,    13,    34,    34,    34,
-      34,    34,    21,    16,    34,    16,    20,     9,    34,     8,
-      19,    34,    24,    34,    10,    19,    16,    20,    19,    34,
-      51,    19,    19,    16,    34,   105,    34,    34
+      12,    13,    35,    36,    37,    33,    34,    16,    19,    35,
+       0,    23,    24,    25,    26,    27,    28,    29,    30,    31,
+      32,    33,    34,    23,    24,    25,    26,    27,    28,    29,
+      30,    31,    32,    33,    34,   104,    25,    26,    27,    28,
+      29,    30,    31,    32,    33,    34,    14,    35,    35,    35,
+      35,    35,    22,    17,    35,    17,    21,    10,    35,     9,
+      20,    35,    25,    35,    11,    20,    17,    21,    20,    35,
+      -1,    20,    20,    17,    35,   105,    35,    35,    51
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     3,     4,     5,     6,    14,    38,    39,    47,    53,
-      54,    57,    34,    40,     7,    18,    34,    15,     0,    18,
-      20,    41,    34,    34,    13,    34,    34,    42,    34,    21,
-      43,    16,    48,    43,    34,    55,    56,    16,    20,    34,
-      35,    36,    46,     9,    44,    34,    49,     8,    50,    19,
-      24,    20,    43,    34,    58,    34,    22,    23,    24,    25,
-      26,    27,    28,    29,    30,    31,    32,    33,    10,    19,
-      17,    20,    16,    51,    19,    46,    56,    19,    34,    17,
-      20,    46,    46,    46,    46,    46,    46,    46,    46,    46,
-      46,    46,    46,    46,    34,    46,    52,    20,    19,    34,
-      11,    12,    45,    17,    20,    16,    34,    46,    52,    17
+       0,     4,     5,     6,     7,    15,    40,    41,    49,    55,
+      56,    59,    35,    42,     8,    19,    35,    16,     0,    19,
+      21,    43,    35,    35,    14,    35,    35,    44,    35,    22,
+      45,    17,    50,    45,    35,    57,    58,    17,    21,    35,
+      36,    37,    48,    10,    46,    35,    51,     9,    52,    20,
+      25,    21,    45,    35,    60,    35,    23,    24,    25,    26,
+      27,    28,    29,    30,    31,    32,    33,    34,    11,    20,
+      18,    21,    17,    53,    20,    48,    58,    20,    35,    18,
+      21,    48,    48,    48,    48,    48,    48,    48,    48,    48,
+      48,    48,    48,    48,    35,    48,    54,    21,    20,    35,
+      12,    13,    47,    18,    21,    17,    35,    48,    54,    18
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    37,    38,    38,    38,    38,    38,    39,    40,    40,
-      41,    41,    42,    42,    43,    43,    44,    44,    45,    45,
-      45,    46,    46,    46,    46,    46,    46,    46,    46,    46,
-      46,    46,    46,    46,    46,    46,    47,    48,    49,    49,
-      50,    51,    51,    52,    52,    53,    54,    55,    55,    56,
-      57,    58,    58
+       0,    39,    40,    40,    40,    40,    40,    41,    42,    42,
+      43,    43,    44,    44,    45,    45,    46,    46,    47,    47,
+      47,    48,    48,    48,    48,    48,    48,    48,    48,    48,
+      48,    48,    48,    48,    48,    48,    49,    50,    51,    51,
+      52,    53,    53,    54,    54,    55,    56,    57,    57,    58,
+      59,    60,    60
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -1352,47 +1355,47 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 94 "parser.y"
-    {
-    parser->tree = (yyvsp[0].node);
-  }
-#line 1360 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
-    break;
-
-  case 3:
 #line 97 "parser.y"
     {
     parser->tree = (yyvsp[0].node);
   }
-#line 1368 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1363 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
-  case 4:
+  case 3:
 #line 100 "parser.y"
     {
     parser->tree = (yyvsp[0].node);
   }
-#line 1376 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1371 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
-  case 5:
+  case 4:
 #line 103 "parser.y"
     {
     parser->tree = (yyvsp[0].node);
   }
-#line 1384 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1379 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
-  case 6:
+  case 5:
 #line 106 "parser.y"
     {
     parser->tree = (yyvsp[0].node);
   }
-#line 1392 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1387 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+    break;
+
+  case 6:
+#line 109 "parser.y"
+    {
+    parser->tree = (yyvsp[0].node);
+  }
+#line 1395 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 7:
-#line 110 "parser.y"
+#line 113 "parser.y"
     {
   NSelectStmt* select = (NSelectStmt*)calloc(1, sizeof(NSelectStmt));
   select->type = NSELECT_STMT;
@@ -1402,11 +1405,11 @@ yyreduce:
   select->sort_clause = (yyvsp[-1].node);
   (yyval.node) = (ParseNode*) select;
 }
-#line 1406 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1409 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 8:
-#line 121 "parser.y"
+#line 124 "parser.y"
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1417,11 +1420,11 @@ yyreduce:
       arrpush(target_list, (ParseNode*)identifier);
       (yyval.list_node) = target_list;
     }
-#line 1421 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1424 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 9:
-#line 131 "parser.y"
+#line 134 "parser.y"
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1432,25 +1435,25 @@ yyreduce:
       arrpush(target_list, (ParseNode*)identifier);
       (yyval.list_node) = target_list;
     }
-#line 1436 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1439 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 10:
-#line 143 "parser.y"
+#line 146 "parser.y"
     { (yyval.list_node) = NULL; }
-#line 1442 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1445 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 11:
-#line 144 "parser.y"
+#line 147 "parser.y"
     {
       (yyval.list_node) = (yyvsp[0].list_node);
     }
-#line 1450 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1453 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 12:
-#line 149 "parser.y"
+#line 152 "parser.y"
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1461,11 +1464,11 @@ yyreduce:
       arrpush(from_list, (ParseNode*)identifier);
       (yyval.list_node) = from_list;
     }
-#line 1465 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1468 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 13:
-#line 159 "parser.y"
+#line 162 "parser.y"
     { 
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1476,31 +1479,31 @@ yyreduce:
       arrpush(from_list, (ParseNode*)identifier);
       (yyval.list_node) = from_list;
     }
-#line 1480 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1483 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 14:
-#line 171 "parser.y"
+#line 174 "parser.y"
     { (yyval.node) = NULL; }
-#line 1486 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1489 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 15:
-#line 172 "parser.y"
+#line 175 "parser.y"
     {
       (yyval.node) = (yyvsp[0].node);
     }
-#line 1494 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1497 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 16:
-#line 177 "parser.y"
+#line 180 "parser.y"
     { (yyval.node) = NULL; }
-#line 1500 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1503 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 17:
-#line 178 "parser.y"
+#line 181 "parser.y"
     {
     NSortBy* sort_by = calloc(1, sizeof(NSortBy));
     sort_by->type = NSORTBY;
@@ -1508,29 +1511,29 @@ yyreduce:
     sort_by->sort_expr = (yyvsp[-1].node);
     (yyval.node) = (ParseNode*)sort_by; 
   }
-#line 1512 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1515 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 18:
-#line 187 "parser.y"
+#line 190 "parser.y"
     { (yyval.sort_dir) = SORT_ASC; }
-#line 1518 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1521 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 19:
-#line 188 "parser.y"
+#line 191 "parser.y"
     { (yyval.sort_dir) = SORT_ASC; }
-#line 1524 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1527 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 20:
-#line 189 "parser.y"
+#line 192 "parser.y"
     { (yyval.sort_dir) = SORT_DESC; }
-#line 1530 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1533 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 21:
-#line 196 "parser.y"
+#line 199 "parser.y"
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1538,11 +1541,11 @@ yyreduce:
       identifier->identifier = (yyvsp[0].str_lit);
       (yyval.node) = (ParseNode*)identifier;
     }
-#line 1542 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1545 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 22:
-#line 203 "parser.y"
+#line 206 "parser.y"
     {
       // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
       size_t len = strlen((yyvsp[0].str_lit));
@@ -1555,11 +1558,11 @@ yyreduce:
       strncpy(str_lit->str_lit, (yyvsp[0].str_lit) + 1, len - 2);
       (yyval.node) = (ParseNode*)str_lit;
     }
-#line 1559 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1562 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 23:
-#line 215 "parser.y"
+#line 218 "parser.y"
     {
     NBoolLit* bool_lit = (NBoolLit*)calloc(1, sizeof(NBoolLit));
     assert(bool_lit != NULL);
@@ -1567,11 +1570,11 @@ yyreduce:
     bool_lit->bool_lit = (yyvsp[0].bool_lit);
     (yyval.node) = (ParseNode*)bool_lit;
   }
-#line 1571 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1574 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 24:
-#line 222 "parser.y"
+#line 225 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1581,11 +1584,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1585 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1588 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 25:
-#line 231 "parser.y"
+#line 234 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1595,11 +1598,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1599 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1602 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 26:
-#line 240 "parser.y"
+#line 243 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1609,11 +1612,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1613 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1616 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 27:
-#line 249 "parser.y"
+#line 252 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1623,11 +1626,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1627 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1630 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 28:
-#line 258 "parser.y"
+#line 261 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1637,11 +1640,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1641 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1644 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 29:
-#line 267 "parser.y"
+#line 270 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1651,11 +1654,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1655 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1658 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 30:
-#line 276 "parser.y"
+#line 279 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1665,11 +1668,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1669 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1672 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 31:
-#line 285 "parser.y"
+#line 288 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1679,11 +1682,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1683 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1686 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 32:
-#line 294 "parser.y"
+#line 297 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1693,11 +1696,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1697 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1700 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 33:
-#line 303 "parser.y"
+#line 306 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1707,11 +1710,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1711 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1714 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 34:
-#line 312 "parser.y"
+#line 315 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1721,11 +1724,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1725 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1728 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 35:
-#line 321 "parser.y"
+#line 324 "parser.y"
     { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
@@ -1735,11 +1738,11 @@ yyreduce:
       bin_expr->rhs = (yyvsp[0].node);
       (yyval.node) = (ParseNode*)bin_expr;
     }
-#line 1739 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1742 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 36:
-#line 331 "parser.y"
+#line 334 "parser.y"
     {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
   assert(insert != NULL);
@@ -1756,17 +1759,17 @@ yyreduce:
 
   (yyval.node) = (ParseNode*) insert;
 }
-#line 1760 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1763 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 37:
-#line 348 "parser.y"
+#line 351 "parser.y"
     { (yyval.list_node) = (yyvsp[-1].list_node); }
-#line 1766 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1769 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 38:
-#line 351 "parser.y"
+#line 354 "parser.y"
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1777,11 +1780,11 @@ yyreduce:
       arrpush(column_list, (ParseNode*)identifier);
       (yyval.list_node) = column_list;
    }
-#line 1781 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1784 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 39:
-#line 361 "parser.y"
+#line 364 "parser.y"
     {
       NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
       assert(identifier != NULL);
@@ -1792,57 +1795,57 @@ yyreduce:
       arrpush(column_list, (ParseNode*)identifier);
       (yyval.list_node) = column_list;
   }
-#line 1796 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1799 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 40:
-#line 372 "parser.y"
+#line 375 "parser.y"
     { (yyval.list_list_node) = (yyvsp[0].list_list_node); }
-#line 1802 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1805 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 41:
-#line 375 "parser.y"
+#line 378 "parser.y"
     {
       ParseNode*** values_list = NULL;
       arrpush(values_list, (yyvsp[-1].list_node));
       (yyval.list_list_node) = values_list;
   }
-#line 1812 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1815 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 42:
-#line 380 "parser.y"
+#line 383 "parser.y"
     {
     ParseNode*** values_list = (yyvsp[-4].list_list_node);
     arrpush(values_list, (yyvsp[-1].list_node));
     (yyval.list_list_node) = values_list;
   }
-#line 1822 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1825 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 43:
-#line 387 "parser.y"
+#line 390 "parser.y"
     {
       ParseNode** value_items = NULL;
       arrpush(value_items, (yyvsp[0].node));
       (yyval.list_node) = value_items;
   }
-#line 1832 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1835 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 44:
-#line 392 "parser.y"
+#line 395 "parser.y"
     {
       ParseNode** value_items = (yyvsp[-2].list_node);
       arrpush(value_items, (yyvsp[0].node));
       (yyval.list_node) = value_items;
   }
-#line 1842 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1845 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 45:
-#line 398 "parser.y"
+#line 401 "parser.y"
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
@@ -1855,11 +1858,11 @@ yyreduce:
   delete_stmt->where_clause = (yyvsp[-1].node);
   (yyval.node) = (ParseNode*) delete_stmt;
 }
-#line 1859 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1862 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 46:
-#line 411 "parser.y"
+#line 414 "parser.y"
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
@@ -1873,31 +1876,31 @@ yyreduce:
   update->where_clause = (yyvsp[-1].node);
   (yyval.node) = (ParseNode*) update;
 }
-#line 1877 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1880 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 47:
-#line 426 "parser.y"
+#line 429 "parser.y"
     {
       ParseNode** value_items = NULL;
       arrpush(value_items, (yyvsp[0].node));
       (yyval.list_node) = value_items;
   }
-#line 1887 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1890 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 48:
-#line 431 "parser.y"
+#line 434 "parser.y"
     {
       ParseNode** value_items = (yyvsp[-2].list_node);
       arrpush(value_items, (yyvsp[0].node));
       (yyval.list_node) = value_items;
   }
-#line 1897 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1900 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 49:
-#line 438 "parser.y"
+#line 441 "parser.y"
     {
   NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
   assert(identifier != NULL);
@@ -1910,11 +1913,11 @@ yyreduce:
   assign_expr->value_expr = (yyvsp[0].node);
   (yyval.node) = (ParseNode*) assign_expr;
 }
-#line 1914 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1917 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 50:
-#line 452 "parser.y"
+#line 455 "parser.y"
     {
     NIdentifier* table_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
     assert(table_name != NULL);
@@ -1927,11 +1930,11 @@ yyreduce:
     create_table->column_defs = (yyvsp[-2].list_node);
     (yyval.node) = (ParseNode*)create_table;
   }
-#line 1931 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1934 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 51:
-#line 466 "parser.y"
+#line 469 "parser.y"
     {
     NIdentifier* col_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
     assert(col_name != NULL);
@@ -1952,11 +1955,11 @@ yyreduce:
     arrpush(column_defs, (ParseNode*)column_def);
     (yyval.list_node) = column_defs;
   }
-#line 1956 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1959 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
   case 52:
-#line 486 "parser.y"
+#line 489 "parser.y"
     {
     NIdentifier* col_name = (NIdentifier*)calloc(1, sizeof(NIdentifier));
     assert(col_name != NULL);
@@ -1977,11 +1980,11 @@ yyreduce:
     arrpush(column_defs, (ParseNode*)column_def);
     (yyval.list_node) = column_defs;
   }
-#line 1981 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1984 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
     break;
 
 
-#line 1985 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
+#line 1988 "/home/rbeatty/Projects/BTDB/src/sql/parser.c"
 
       default: break;
     }
@@ -2213,9 +2216,6 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 508 "parser.y"
+#line 511 "parser.y"
 
 
-void yyerror(Parser* parser, const char* msg) {
-  fprintf(stderr, "%s\n", msg);
-}

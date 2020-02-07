@@ -37,6 +37,7 @@
 %union {
   char* str_lit;
   bool bool_lit;
+  int32_t int_lit;
   ParseNode* node;
   ParseNode** list_node;
   ParseNode*** list_list_node;
@@ -46,6 +47,7 @@
 %define api.token.prefix {TOK_}
 %token
     EOF 0
+    SCANNER_ERROR
     SELECT
     INSERT
     DELETE
@@ -80,6 +82,7 @@
 ;
 %token <str_lit> STRING_GROUP STRING_LITERAL
 %token <bool_lit> BOOLEAN_LITERAL
+%token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
 %type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt
@@ -507,6 +510,3 @@ table_expr:
 
 %%
 
-void yyerror(Parser* parser, const char* msg) {
-  fprintf(stderr, "%s\n", msg);
-}

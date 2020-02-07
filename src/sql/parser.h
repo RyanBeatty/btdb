@@ -61,40 +61,42 @@ extern int yydebug;
   enum yytokentype
   {
     TOK_EOF = 0,
-    TOK_SELECT = 258,
-    TOK_INSERT = 259,
-    TOK_DELETE = 260,
-    TOK_UPDATE = 261,
-    TOK_INTO = 262,
-    TOK_VALUES = 263,
-    TOK_ORDER = 264,
-    TOK_BY = 265,
-    TOK_ASC = 266,
-    TOK_DESC = 267,
-    TOK_SET = 268,
-    TOK_CREATE = 269,
-    TOK_TABLE = 270,
-    TOK_LPARENS = 271,
-    TOK_RPARENS = 272,
-    TOK_FROM = 273,
-    TOK_SEMICOLON = 274,
-    TOK_COMMA = 275,
-    TOK_WHERE = 276,
-    TOK_AND = 277,
-    TOK_OR = 278,
-    TOK_EQ = 279,
-    TOK_NEQ = 280,
-    TOK_GT = 281,
-    TOK_GE = 282,
-    TOK_LT = 283,
-    TOK_LE = 284,
-    TOK_PLUS = 285,
-    TOK_MINUS = 286,
-    TOK_MULT = 287,
-    TOK_DIV = 288,
-    TOK_STRING_GROUP = 289,
-    TOK_STRING_LITERAL = 290,
-    TOK_BOOLEAN_LITERAL = 291
+    TOK_SCANNER_ERROR = 258,
+    TOK_SELECT = 259,
+    TOK_INSERT = 260,
+    TOK_DELETE = 261,
+    TOK_UPDATE = 262,
+    TOK_INTO = 263,
+    TOK_VALUES = 264,
+    TOK_ORDER = 265,
+    TOK_BY = 266,
+    TOK_ASC = 267,
+    TOK_DESC = 268,
+    TOK_SET = 269,
+    TOK_CREATE = 270,
+    TOK_TABLE = 271,
+    TOK_LPARENS = 272,
+    TOK_RPARENS = 273,
+    TOK_FROM = 274,
+    TOK_SEMICOLON = 275,
+    TOK_COMMA = 276,
+    TOK_WHERE = 277,
+    TOK_AND = 278,
+    TOK_OR = 279,
+    TOK_EQ = 280,
+    TOK_NEQ = 281,
+    TOK_GT = 282,
+    TOK_GE = 283,
+    TOK_LT = 284,
+    TOK_LE = 285,
+    TOK_PLUS = 286,
+    TOK_MINUS = 287,
+    TOK_MULT = 288,
+    TOK_DIV = 289,
+    TOK_STRING_GROUP = 290,
+    TOK_STRING_LITERAL = 291,
+    TOK_BOOLEAN_LITERAL = 292,
+    TOK_INT_LITERAL = 293
   };
 #endif
 
@@ -106,12 +108,13 @@ union YYSTYPE
 
   char* str_lit;
   bool bool_lit;
+  int32_t int_lit;
   ParseNode* node;
   ParseNode** list_node;
   ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 115 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
+#line 118 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

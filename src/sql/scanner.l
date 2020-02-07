@@ -2,12 +2,17 @@
 %{
   #include <stdbool.h>
   #include <assert.h>
+  #include <stdio.h>
 
   #include "sql/parser.h"
   #include "sql/driver.h"
 //   #include "sql/context.hpp"
 
 #define YY_DECL int yylex(void)
+
+void yyerror(Parser* parser, const char* msg) {
+  fprintf(stderr, "%s\n", msg);
+}
 
 %}
 
@@ -74,6 +79,24 @@
 [a-zA-Z]+ {
     yylval.str_lit = strdup(yytext);
     return TOK_STRING_GROUP;
+}
+-?[0-9]+ {
+    char* endptr;
+    long int val;
+    errno = 0;
+    val = strtol(yytext, &endptr, 10);
+    // If out of range for int or no digits in string.
+    if (errno == ERANGE || (errno != 0 && val == 0)) {
+        yyerror(NULL, "numeric literal out of range");
+        return TOK_SCANNER_ERROR;
+    }
+
+    if (val != (int32_t) val) {
+        yyerror(NULL, "numeric literal greater than 32 bytes");
+        return TOK_SCANNER_ERROR;
+    }
+    yylval.int_lit = (int32_t) val;
+    return TOK_INT_LITERAL;
 }
 " " {}
 "\n" {}
