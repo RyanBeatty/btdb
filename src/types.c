@@ -14,6 +14,8 @@ BType StringToType(const char* type_str) {
     return T_STRING;
   } else if (strcmp(type_str, "bool") == 0) {
     return T_BOOL;
+  } else if (strcmp(type_str, "int") == 0) {
+    return T_INT;
   } else {
     return T_UNKNOWN;
   }

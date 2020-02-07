@@ -9,6 +9,7 @@ typedef enum BType {
   T_UNKNOWN,
   T_STRING,
   T_BOOL,
+  T_INT,
 } BType;
 
 BType StringToType(const char*);
