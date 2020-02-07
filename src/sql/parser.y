@@ -222,6 +222,12 @@ expr:
     bool_lit->bool_lit = $1;
     $$ = (ParseNode*)bool_lit;
   }
+  | INT_LITERAL {
+    NIntLit* int_lit = (NIntLit*)calloc(1, sizeof(NIntLit));
+    int_lit->type = NINT_LIT;
+    int_lit->int_lit = $1;
+    $$ = (ParseNode*)int_lit;
+  }
   | expr "=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);

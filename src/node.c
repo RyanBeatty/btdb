@@ -92,6 +92,11 @@ void free_parse_node(ParseNode* node) {
       free(bool_lit);
       break;
     }
+    case NINT_LIT: {
+      NIntLit* int_lit = (NIntLit*)(node);
+      free(int_lit);
+      break;
+    }
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
       assert(select->target_list != NULL);
@@ -271,6 +276,16 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       NBoolLit* bool_lit = (NBoolLit*)(node);
       PrintObject(ctx, "NBoolLit");
       PrintChild(ctx, "bool_lit", bool_lit->bool_lit ? "true" : "false");
+      EndObject(ctx);
+      break;
+    }
+    case NINT_LIT: {
+      NIntLit* int_lit = (NIntLit*)(node);
+      PrintObject(ctx, "NIntLit");
+      // Will be long enough for any int for now.
+      char* int_str = calloc(20, sizeof(char));
+      sprintf(int_str, "%" PRId32, int_lit->int_lit);
+      PrintChild(ctx, "int_lit", int_str);
       EndObject(ctx);
       break;
     }
