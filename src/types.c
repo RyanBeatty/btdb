@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "types.h"
@@ -157,4 +158,60 @@ Datum StrLTE(Datum d1, Datum d2) {
   assert(d2.data != NULL);
   bool result = strcmp((char*)d1.data, ((char*)d2.data)) <= 0;
   return MakeDatum(T_BOOL, BoolDup(&result));
+}
+
+Datum IntEQ(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) == *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+Datum IntNE(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) != *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+Datum IntGT(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) > *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+Datum IntLT(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) < *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+Datum IntGTE(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) >= *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+Datum IntLTE(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  bool result = *((int32_t*)d1.data) <= *((int32_t*)d2.data);
+  return MakeDatum(T_BOOL, BoolDup(&result)); 
+}
+int IntCmp(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  return *((int32_t*)d2.data) - *((int32_t*)d1.data);
 }

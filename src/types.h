@@ -41,8 +41,15 @@ Datum StrGT(Datum, Datum);
 Datum StrLT(Datum, Datum);
 Datum StrGTE(Datum, Datum);
 Datum StrLTE(Datum, Datum);
-Datum StrNot(Datum);
 int StrCmp(Datum, Datum);
+
+Datum IntEQ(Datum, Datum);
+Datum IntNE(Datum, Datum);
+Datum IntGT(Datum, Datum);
+Datum IntLT(Datum, Datum);
+Datum IntGTE(Datum, Datum);
+Datum IntLTE(Datum, Datum);
+int IntCmp(Datum, Datum);
 
 #ifdef __cplusplus
 }
