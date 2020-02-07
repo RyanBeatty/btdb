@@ -15,8 +15,6 @@ typedef enum BType {
 BType StringToType(const char*);
 
 typedef struct Datum {
-  // Datum(BType type, void* data) : type(type), data(data) {}
-
   enum BType type;
   // TODO(ryan): REMEMBER TO FIGURE OUT BEST WAY TO DELETE THIS, WE LEAK MEM HERE.
   void* data;
