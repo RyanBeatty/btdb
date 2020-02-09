@@ -402,6 +402,16 @@ PlanNode* PlanQuery(Query* query) {
           } else {
             Panic("invalid sort direction");
           }
+        } else if (sort_col_type == T_INT) {
+          if (query->sort->dir == SORT_ASC) {
+            sort->cmp_func = IntLT;
+          } else if (query->sort->dir == SORT_DESC) {
+            sort->cmp_func = IntGT;
+          } else {
+            Panic("invalid sort direction");
+          }
+        } else {
+          Panic("Unknown sort by type");
         }
         sort->is_sorted = false;
 
