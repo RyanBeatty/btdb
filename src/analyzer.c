@@ -66,6 +66,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     ParseNode* col_expr = target_list[i];
     assert(col_expr != NULL);
     
+    // TODO(ryan): This and the below code do some redundant checking. Clean this up eventually.
     if (CheckType(col_expr, join_list) == T_UNKNOWN) {
       return NULL;
     }
