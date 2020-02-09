@@ -40,6 +40,7 @@ Datum StrLT(Datum, Datum);
 Datum StrGTE(Datum, Datum);
 Datum StrLTE(Datum, Datum);
 int StrCmp(Datum, Datum);
+// TODO(ryan): Stop hardcoding ops in parser.
 Datum StrCat(Datum, Datum);
 
 Datum IntEQ(Datum, Datum);
