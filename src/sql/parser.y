@@ -121,24 +121,14 @@ select_stmt: SELECT target_list from_clause where_clause sort_clause ";" {
 }
 
 target_list:
-  STRING_GROUP { 
-      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-      assert(identifier != NULL);
-      identifier->type = NIDENTIFIER;
-      identifier->identifier = $1;
-
+  expr { 
       ParseNode** target_list = NULL;
-      arrpush(target_list, (ParseNode*)identifier);
+      arrpush(target_list, $1);
       $$ = target_list;
     }
-  | target_list "," STRING_GROUP { 
-      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-      assert(identifier != NULL);
-      identifier->type = NIDENTIFIER;
-      identifier->identifier = $3;
-
+  | target_list "," expr { 
       ParseNode** target_list = $1;
-      arrpush(target_list, (ParseNode*)identifier);
+      arrpush(target_list, $3);
       $$ = target_list;
     }
 
