@@ -296,10 +296,8 @@ Tuple* GetResult(PlanNode* node) {
     // Column projections.
     Tuple* result_tpl = NULL;
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-      const char* col_name = scan->plan.target_list[i]->column_name;
-      Datum* data = GetCol(cur_tuple, col_name);
-      assert(data != NULL);
-      result_tpl = SetCol(result_tpl, col_name, *data);
+      Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
+      result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
     }
     return result_tpl;
   }
