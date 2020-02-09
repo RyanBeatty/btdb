@@ -63,24 +63,28 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
   for (size_t i = 0; i < arrlen(target_list); ++i) {
-    NIdentifier* col = (NIdentifier*)target_list[i];
-    assert(col != NULL);
-    assert(col->type == NIDENTIFIER);
-    assert(col->identifier != NULL);
-    TargetRef* ref = NULL;
-    for (size_t j = 0; j < arrlen(join_list); ++j) {
-      TableDef* table_def = join_list[j];
-      for (size_t k = 0; k < arrlen(table_def->tuple_desc); ++k) {
-        if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
-          ref = (TargetRef*)calloc(1, sizeof(TargetRef));
-          ref->column_name = strdup(col->identifier);
-          ref->join_list_index = j;
-          break;
+    ParseNode* col_expr = target_list[i];
+    assert(col_expr != NULL);
+    
+    if (CheckType(col_expr, join_list) == T_UNKNOWN) {
+      return NULL;
+    }
+
+    TargetRef* ref = (TargetRef*)calloc(1, sizeof(TargetRef));
+    ref->col_expr = col_expr;
+    if (col_expr->type == NIDENTIFIER) {
+      NIdentifier* col = (NIdentifier*)target_list[i];
+      assert(col->identifier != NULL);
+      for (size_t j = 0; j < arrlen(join_list); ++j) {
+        TableDef* table_def = join_list[j];
+        for (size_t k = 0; k < arrlen(table_def->tuple_desc); ++k) {
+          if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
+            ref->column_name = strdup(col->identifier);
+            ref->join_list_index = j;
+            break;
+          }
         }
       }
-    }
-    if (ref == NULL) {
-      return NULL;
     }
     arrpush(targets, ref);
   }

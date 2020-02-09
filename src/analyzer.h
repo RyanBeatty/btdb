@@ -20,6 +20,7 @@ typedef enum CmdType {
 typedef struct TargetRef {
   const char* column_name;
   size_t join_list_index;
+  ParseNode* col_expr;  // This can be just a normal column identifier reference, or it could be a more complex expression.
 } TargetRef;
 
 typedef struct Query {
