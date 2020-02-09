@@ -131,6 +131,9 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
     case NBOOL_LIT: {
       return T_BOOL;
     }
+    case NINT_LIT: {
+      return T_INT;
+    }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
@@ -321,7 +324,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       if (type == T_UNKNOWN) {
         return NULL;
       }
-      assert(type == T_BOOL || type == T_STRING);
+      assert(type == T_BOOL || type == T_STRING || T_INT);
       if (type == T_STRING) {
         NStringLit* str_lit = (NStringLit*)data;
         assert(str_lit->type == NSTRING_LIT);
@@ -329,13 +332,20 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
         const char* key = targets[col_index]->column_name;
         char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
         tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
-      } else {
+      } else if (type == T_BOOL) {
         NBoolLit* bool_lit = (NBoolLit*)data;
         assert(bool_lit->type == NBOOL_LIT);
         const char* key = targets[col_index]->column_name;
         bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
         *bool_lit_copy = bool_lit->bool_lit;
         tuple = SetCol(tuple, key, MakeDatum(T_BOOL, bool_lit_copy));
+      } else {
+        NIntLit* int_lit = (NIntLit*)data;
+        assert(int_lit->type == NINT_LIT);
+        const char* key = targets[col_index]->column_name;
+        int32_t* int_lit_copy = (int32_t*)calloc(1, sizeof(int_lit));
+        *int_lit_copy = int_lit->int_lit;
+        tuple = SetCol(tuple, key, MakeDatum(T_INT, int_lit_copy));
       }
       ++col_index;
     }
