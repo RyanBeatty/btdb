@@ -250,12 +250,49 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
             return T_UNKNOWN;
           }
         }
+      } else if (lhs_type == T_INT) {
+        switch (expr->op) {
+          case EQ: {
+            bin_expr->op_func = IntEQ;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case NEQ: {
+            bin_expr->op_func = IntNE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GT: {
+            bin_expr->op_func = IntGT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case GE: {
+            bin_expr->op_func = IntGTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LT: {
+            bin_expr->op_func = IntLT;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          case LE: {
+            bin_expr->op_func = IntLTE;
+            bin_expr->return_type = T_BOOL;
+            return T_BOOL;
+          }
+          default: {
+            Panic("Unknown or Unsupported BinExprOp!");
+            return T_UNKNOWN;
+          }
+        }
       } else {
         return T_UNKNOWN;
       }
     }
     default: {
-      Panic("Unknown ParseNode type!");
+      Panic("Unknown ParseNode type when analyzing expression!");
       return T_UNKNOWN;
     }
   }
@@ -496,5 +533,5 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
   }
 
   Query* query = MakeQuery(CMD_UTILITY);
-  query->utility_stmt = (ParseNode*) create;
+  query->utility_stmt = (ParseNode*)create;
 }

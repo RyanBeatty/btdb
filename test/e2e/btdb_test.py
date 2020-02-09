@@ -130,6 +130,7 @@ def test_integer_support():
     proc.stdin.write(b"create table baz (foo int);\n")
     proc.stdin.write(b"insert into baz (foo) values (1), (23), (-5), (0), (-0);\n")
     proc.stdin.write(b"select foo from baz;\n")
+    proc.stdin.write(b"select foo from baz where foo > -1;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -150,6 +151,12 @@ def test_integer_support():
         1\t
         23\t
         -5\t
+        0\t
+        0\t
+        btdb>     foo
+        ===============
+        1\t
+        23\t
         0\t
         0\t
         btdb> Shutting down btdb

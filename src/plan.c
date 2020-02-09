@@ -22,6 +22,13 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       *bool_lit_copy = bool_lit->bool_lit;
       return MakeDatum(T_BOOL, bool_lit_copy);
     }
+    case NINT_LIT: {
+      NIntLit* int_lit = (NIntLit*)node;
+      assert(int_lit != NULL);
+      int32_t* int_lit_copy = (int32_t*)calloc(1, sizeof(int32_t));
+      *int_lit_copy = int_lit->int_lit;
+      return MakeDatum(T_INT, int_lit_copy);
+    }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
@@ -466,7 +473,7 @@ void ExecuteUtilityStmt(Query* query) {
 
   NCreateTable* create = (NCreateTable*)query->utility_stmt;
   NIdentifier* table_name = (NIdentifier*)create->table_name;
-  table_def->name = (char*)calloc(strlen(table_name->identifier)+1, sizeof(char));
+  table_def->name = (char*)calloc(strlen(table_name->identifier) + 1, sizeof(char));
   strcpy(table_def->name, table_name->identifier);
 
   ColDesc* tuple_desc = NULL;
@@ -475,7 +482,7 @@ void ExecuteUtilityStmt(Query* query) {
     NIdentifier* col_name = (NIdentifier*)column_def->col_name;
 
     ColDesc col_desc;
-    col_desc.column_name = (char*)calloc(strlen(col_name->identifier)+1, sizeof(char));
+    col_desc.column_name = (char*)calloc(strlen(col_name->identifier) + 1, sizeof(char));
     strcpy(col_desc.column_name, col_name->identifier);
     col_desc.type = column_def->col_type_id;
     arrpush(tuple_desc, col_desc);
@@ -483,5 +490,5 @@ void ExecuteUtilityStmt(Query* query) {
 
   table_def->tuple_desc = tuple_desc;
   CreateTable(table_def);
-  return ;
+  return;
 }
