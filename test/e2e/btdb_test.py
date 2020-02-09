@@ -119,6 +119,47 @@ def test_select_with_joins():
 
     proc.kill()
 
+def test_integer_support():
+    proc = subprocess.Popen(
+        ["./bin/btdb"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    proc.stdin.write(b"create table baz (foo int);\n")
+    proc.stdin.write(b"insert into baz (foo) values (1), (23), (-5), (0), (-0);\n")
+    proc.stdin.write(b"select foo from baz;\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> UTILITY DONE
+        btdb>     foo
+        ===============
+        btdb>     foo
+        ===============
+        1\t
+        23\t
+        -5\t
+        0\t
+        0\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
+
 
 def test_insert():
     proc = subprocess.Popen(
