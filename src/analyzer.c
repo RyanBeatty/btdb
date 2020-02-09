@@ -209,7 +209,7 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
             return T_BOOL;
           }
           default: {
-            Panic("Unknown or Unsupported BinExprOp!");
+            Panic("Unknown or Unsupported BinExprOp for bool!");
             return T_UNKNOWN;
           }
         }
@@ -246,7 +246,7 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
             return T_BOOL;
           }
           default: {
-            Panic("Unknown or Unsupported BinExprOp!");
+            Panic("Unknown or Unsupported BinExprOp for str!");
             return T_UNKNOWN;
           }
         }
@@ -282,8 +282,28 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
             bin_expr->return_type = T_BOOL;
             return T_BOOL;
           }
+          case PLUS: {
+            bin_expr->op_func = IntAdd;
+            bin_expr->return_type = T_INT;
+            return T_INT;
+          }
+          case MINUS: {
+            bin_expr->op_func = IntSub;
+            bin_expr->return_type = T_INT;
+            return T_INT;
+          }
+          case MULT: {
+            bin_expr->op_func = IntMult;
+            bin_expr->return_type = T_INT;
+            return T_INT;
+          }
+          case DIV: {
+            bin_expr->op_func = IntDiv;
+            bin_expr->return_type = T_INT;
+            return T_INT;
+          }
           default: {
-            Panic("Unknown or Unsupported BinExprOp!");
+            Panic("Unknown or Unsupported BinExprOp for int!");
             return T_UNKNOWN;
           }
         }
