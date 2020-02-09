@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "types.h"
@@ -166,7 +166,7 @@ Datum IntEQ(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) == *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 Datum IntNE(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -174,7 +174,7 @@ Datum IntNE(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) != *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 Datum IntGT(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -182,7 +182,7 @@ Datum IntGT(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) > *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 Datum IntLT(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -190,7 +190,7 @@ Datum IntLT(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) < *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 Datum IntGTE(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -198,7 +198,7 @@ Datum IntGTE(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) >= *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 Datum IntLTE(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -206,7 +206,7 @@ Datum IntLTE(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   bool result = *((int32_t*)d1.data) <= *((int32_t*)d2.data);
-  return MakeDatum(T_BOOL, BoolDup(&result)); 
+  return MakeDatum(T_BOOL, BoolDup(&result));
 }
 int IntCmp(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
@@ -214,4 +214,41 @@ int IntCmp(Datum d1, Datum d2) {
   assert(d1.data != NULL);
   assert(d2.data != NULL);
   return *((int32_t*)d2.data) - *((int32_t*)d1.data);
+}
+
+Datum IntAdd(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  int32_t* result = (int32_t*)calloc(1, sizeof(int32_t));
+  *result = *((int32_t*)d1.data) + *((int32_t*)d2.data);
+  return MakeDatum(T_INT, result);
+}
+Datum IntSub(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  int32_t* result = (int32_t*)calloc(1, sizeof(int32_t));
+  *result = *((int32_t*)d1.data) - *((int32_t*)d2.data);
+  return MakeDatum(T_INT, result);
+}
+Datum IntMult(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  int32_t* result = (int32_t*)calloc(1, sizeof(int32_t));
+  *result = *((int32_t*)d1.data) * *((int32_t*)d2.data);
+  return MakeDatum(T_INT, result);
+}
+Datum IntDiv(Datum d1, Datum d2) {
+  assert(d1.type == T_INT);
+  assert(d2.type == T_INT);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  int32_t* result = (int32_t*)calloc(1, sizeof(int32_t));
+  *result = *((int32_t*)d1.data) / *((int32_t*)d2.data);
+  return MakeDatum(T_INT, result);
 }

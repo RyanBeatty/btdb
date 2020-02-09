@@ -48,6 +48,10 @@ Datum IntLT(Datum, Datum);
 Datum IntGTE(Datum, Datum);
 Datum IntLTE(Datum, Datum);
 int IntCmp(Datum, Datum);
+Datum IntAdd(Datum, Datum);
+Datum IntSub(Datum, Datum);
+Datum IntMult(Datum, Datum);
+Datum IntDiv(Datum, Datum);
 
 #ifdef __cplusplus
 }
