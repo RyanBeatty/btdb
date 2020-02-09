@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "stb_ds.h"
 
@@ -62,6 +63,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   TargetRef** targets = NULL;
   ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
+  uint64_t anon_cols = 0;  // Need to do this for naming col exprs because all columns must have unique names. This is stupid.
   for (size_t i = 0; i < arrlen(target_list); ++i) {
     ParseNode* col_expr = target_list[i];
     assert(col_expr != NULL);
@@ -86,6 +88,14 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
           }
         }
       }
+    }
+    if (ref->column_name == NULL) {
+      // If col_expr is anonymous, need to create name.
+      int length = snprintf(NULL, 0, "?column%" PRIu64 "?", anon_cols);
+      char* result_col_name = (char*)calloc(length + 1, sizeof(char));
+      sprintf(result_col_name, "?column%" PRIu64 "?", anon_cols);
+      ref->column_name = result_col_name;
+      ++anon_cols;
     }
     arrpush(targets, ref);
   }

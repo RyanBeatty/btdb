@@ -25,12 +25,7 @@ Result ExecPlan(PlanNode* plan) {
   Result results;
   results.columns = NULL;
   for (size_t i = 0; i < arrlen(plan->target_list); ++i) {
-    // Need to do this in case col expr hasn't been named.
-    char* result_col_name = plan->target_list[i]->column_name;
-    if (result_col_name == NULL) {
-      result_col_name = strdup("?column?");
-    }
-    arrpush(results.columns, result_col_name);
+    arrpush(results.columns, plan->target_list[i]->column_name);
   }
   results.tuples = NULL;
   Tuple* tuple = plan->get_next_func(plan);
