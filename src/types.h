@@ -40,6 +40,7 @@ Datum StrLT(Datum, Datum);
 Datum StrGTE(Datum, Datum);
 Datum StrLTE(Datum, Datum);
 int StrCmp(Datum, Datum);
+Datum StrCat(Datum, Datum);
 
 Datum IntEQ(Datum, Datum);
 Datum IntNE(Datum, Datum);

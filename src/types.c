@@ -160,6 +160,18 @@ Datum StrLTE(Datum d1, Datum d2) {
   return MakeDatum(T_BOOL, BoolDup(&result));
 }
 
+Datum StrCat(Datum d1, Datum d2) {
+  assert(d1.type == T_STRING);
+  assert(d2.type == T_STRING);
+  assert(d1.data != NULL);
+  assert(d2.data != NULL);
+  char* result =
+      (char*)calloc(strlen((char*)d1.data) + strlen((char*)d1.data) + 1, sizeof(char));
+  strcpy(result, (char*)d1.data);
+  strcat(result, (char*)d2.data);
+  return MakeDatum(T_STRING, result);
+}
+
 Datum IntEQ(Datum d1, Datum d2) {
   assert(d1.type == T_INT);
   assert(d2.type == T_INT);
