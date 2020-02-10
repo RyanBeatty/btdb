@@ -165,7 +165,7 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
         }
       }
       if (col_type == NULL) {
-        Panic("Invalid column name in bin expr");
+        return T_UNKNOWN;
       }
       return col_type->type;
     }
