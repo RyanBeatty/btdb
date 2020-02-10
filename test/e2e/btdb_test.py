@@ -201,6 +201,8 @@ def test_insert():
     proc.stdin.write(b"select bar, baz from foo;\n")
     proc.stdin.write(b"insert into b (a) values ('c');\n")
     proc.stdin.write(b"select a from b;\n")
+    proc.stdin.write(b"insert into foo (bar, baz) values ('d', true and false);\n")
+    proc.stdin.write(b"select bar, baz from foo;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -228,6 +230,15 @@ def test_insert():
         asdf\t
         cab\t
         c\t
+        btdb>     bar    baz
+        ===============
+        btdb>     bar    baz
+        ===============
+        hello\ttrue\t
+        world\tfalse\t
+        a\tfalse\t
+        b\ttrue\t
+        d\tfalse\t
         btdb> Shutting down btdb
         """
         ),
