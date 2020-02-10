@@ -82,17 +82,6 @@ Tuple* SequentialScan(PlanNode* node) {
     }
 
     return cur_tpl;
-
-    // TODO(ryan): Do column projections here once we can push down things.
-    // // Column projections.
-    // Tuple* result_tpl = NULL;
-    // for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-    //   const char* col_name = scan->plan.target_list[i]->column_name;
-    //   Datum* data = GetCol(cur_tpl, col_name);
-    //   assert(data != NULL);
-    //   result_tpl = SetCol(result_tpl, col_name, *data);
-    // }
-    // return result_tpl;
   }
 }
 
