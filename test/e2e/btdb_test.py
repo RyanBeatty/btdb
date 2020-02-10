@@ -23,6 +23,7 @@ def test_select():
     proc.stdin.write(b"select bar, baz from foo where bar = 'world';\n")
     proc.stdin.write(b"select bar, baz from foo where bar = 'foo';\n")
     proc.stdin.write(b"select a from b;\n")
+    proc.stdin.write(b"select a, true, 'hello' from b;\n")
     try:
         output, err = proc.communicate(timeout=2)
     except subprocess.TimeoutExpired:
@@ -55,6 +56,10 @@ def test_select():
         ===============
         asdf\t
         cab\t
+        btdb>     a    ?column0?    ?column1?
+        ===============
+        asdf\ttrue\thello\t
+        cab\ttrue\thello\t
         btdb> Shutting down btdb
         """
         ),
