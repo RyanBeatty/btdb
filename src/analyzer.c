@@ -372,7 +372,6 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
     arrpush(targets, ref);
   }
 
-  Tuple** values = NULL;
   ParseNode*** values_list = insert->values_list;
   assert(values_list != NULL);
   for (size_t i = 0; i < arrlen(values_list); ++i) {
@@ -383,52 +382,24 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       return NULL;
     }
 
-    Tuple* tuple = NULL;
-    uint64_t col_index = 0;
+    // TODO(ryan): Hacky. I think I should be passing NULL to CheckType anyways.
+    TableDef** defs = NULL;
+    arrpush(defs, table_def);
     for (size_t j = 0; j < arrlen(value_items); ++j) {
       ParseNode* data = value_items[j];
       assert(data != NULL);
-      // TODO(ryan): Allow for more general expressions here.
-      // TODO(ryan): Hacky.
-      TableDef** defs = NULL;
-      arrpush(defs, table_def);
       BType type = CheckType(data, defs);
-      if (type == T_UNKNOWN) {
+      if (type == T_UNKNOWN || type != table_def->tuple_desc[j].type) {
         return NULL;
       }
-      assert(type == T_BOOL || type == T_STRING || T_INT);
-      if (type == T_STRING) {
-        NStringLit* str_lit = (NStringLit*)data;
-        assert(str_lit->type == NSTRING_LIT);
-        assert(str_lit->str_lit != NULL);
-        const char* key = targets[col_index]->column_name;
-        char* str_lit_copy = (char*)calloc(sizeof(char), strlen(str_lit->str_lit));
-        tuple = SetCol(tuple, key, MakeDatum(T_STRING, strdup(str_lit->str_lit)));
-      } else if (type == T_BOOL) {
-        NBoolLit* bool_lit = (NBoolLit*)data;
-        assert(bool_lit->type == NBOOL_LIT);
-        const char* key = targets[col_index]->column_name;
-        bool* bool_lit_copy = (bool*)calloc(sizeof(bool), 1);
-        *bool_lit_copy = bool_lit->bool_lit;
-        tuple = SetCol(tuple, key, MakeDatum(T_BOOL, bool_lit_copy));
-      } else {
-        NIntLit* int_lit = (NIntLit*)data;
-        assert(int_lit->type == NINT_LIT);
-        const char* key = targets[col_index]->column_name;
-        int32_t* int_lit_copy = (int32_t*)calloc(1, sizeof(int_lit));
-        *int_lit_copy = int_lit->int_lit;
-        tuple = SetCol(tuple, key, MakeDatum(T_INT, int_lit_copy));
-      }
-      ++col_index;
     }
-    arrpush(values, CopyTuple(tuple));
   }
 
   Query* query = MakeQuery(CMD_INSERT);
   query->table_name = table_name->identifier;
   arrpush(query->join_list, table_def);
   query->target_list = targets;
-  query->values = values;
+  query->values = values_list;
   return query;
 }
 

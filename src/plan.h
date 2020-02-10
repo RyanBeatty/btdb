@@ -37,7 +37,7 @@ typedef struct ModifyScan {
   const char* table_name;
   size_t next_index;
   ParseNode* where_clause;
-  Tuple** insert_tuples;  // 2d stb_arr.
+  ParseNode*** insert_tuples;  // 2d stb_arr.
   NAssignExpr** assign_exprs;
 } ModifyScan;
 

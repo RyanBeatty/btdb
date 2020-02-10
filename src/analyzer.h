@@ -31,7 +31,7 @@ typedef struct Query {
   TargetRef** target_list;
   ParseNode* where_clause;
   NAssignExpr** assign_expr_list;
-  Tuple** values;
+  ParseNode*** values;  // List of list of expressions for insert.
   NSortBy* sort;
   ParseNode* utility_stmt;
 } Query;

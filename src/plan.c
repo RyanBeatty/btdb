@@ -101,11 +101,18 @@ Tuple* InsertScan(PlanNode* node) {
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_INSERT);
-  Tuple* cur_tuple = NULL;
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
-    cur_tuple = scan->insert_tuples[i];
-    assert(cur_tuple != NULL);
-    InsertTuple(scan->plan.table_def->index, CopyTuple(cur_tuple));
+    ParseNode** insert_tuple_expr = scan->insert_tuples[i];
+    Tuple* new_tuple = NULL;
+    assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
+    for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
+      ParseNode* col_expr = insert_tuple_expr[j];
+      ColDesc col_desc = scan->plan.table_def->tuple_desc[j];
+      Datum data = EvalExpr(col_expr, NULL);
+      new_tuple = SetCol(new_tuple, col_desc.column_name, data);
+    }
+    assert(new_tuple != NULL);
+    InsertTuple(scan->plan.table_def->index, new_tuple);
   }
   return NULL;
 }
