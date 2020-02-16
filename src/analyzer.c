@@ -173,6 +173,16 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       if (lhs_type == T_UNKNOWN || rhs_type == T_UNKNOWN) {
         return T_UNKNOWN;
       }
+      if (lhs_type == T_NULL && rhs_type == T_NULL) {
+        return T_UNKNOWN;
+      }
+
+      // Null type causes expression type to become whichever is the non null type.
+      if (lhs_type == T_NULL) {
+        lhs_type = rhs_type;
+      } else if (rhs_type == T_NULL) {
+        rhs_type = lhs_type;
+      }
 
       NBinExpr* bin_expr = (NBinExpr*)node;
       // ASSUMPTION(ryan): We are assumping expression types must be the same.

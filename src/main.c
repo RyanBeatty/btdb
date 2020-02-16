@@ -57,6 +57,8 @@ void PrintResults(Result results) {
             printf("%s", (*((bool*)data->data) ? "true" : "false"));
           } else if (data->type == T_INT) {
             printf("%" PRId32, *((int32_t*)data->data));
+          } else if (data->type == T_NULL) {
+            printf("\t");
           } else {
             Panic("Only support printing strings, ints, or bools");
           }

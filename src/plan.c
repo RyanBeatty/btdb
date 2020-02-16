@@ -26,6 +26,9 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
         case T_STRING: {
           return MakeDatum(T_STRING, strdup(literal->data.str_lit));
         }
+        case T_NULL: {
+          return MakeDatum(T_NULL, NULL);
+        }
         default: {
           Panic("Unknown literal type in EvalExpr");
           return MakeDatum(T_UNKNOWN, NULL);
@@ -44,8 +47,13 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
+      
       Datum lhs_value = EvalExpr(expr->lhs, cur_tuple);
       Datum rhs_value = EvalExpr(expr->rhs, cur_tuple);
+      // Theres probably a way I can add some info/state in the analyzing phase to avoid this check here.
+      if (lhs_value.type == T_NULL || rhs_value.type == T_NULL) {
+        return MakeDatum(T_NULL, NULL);
+      }
       return expr->op_func(lhs_value, rhs_value);
     }
     default: {
