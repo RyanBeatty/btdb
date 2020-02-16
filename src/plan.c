@@ -10,6 +10,24 @@
 
 Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
   switch (node->type) {
+    case NLITERAL: {
+      NLiteral* literal = (NLiteral*)node;
+      switch (literal->lit_type) {
+        case T_BOOL: {
+          bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
+          *bool_lit_copy = literal->data.bool_lit;
+          return MakeDatum(T_BOOL, bool_lit_copy);
+        }
+        case T_INT: {
+          int32_t* int_lit_copy = (int32_t*)calloc(1, sizeof(int32_t));
+          *int_lit_copy = literal->data.int_lit;
+          return MakeDatum(T_INT, int_lit_copy);
+        }
+        case T_STRING: {
+          return MakeDatum(T_STRING, strdup(literal->data.str_lit));
+        }
+      }
+    }
     case NSTRING_LIT: {
       NStringLit* str_lit = (NStringLit*)node;
       assert(str_lit->str_lit != NULL);

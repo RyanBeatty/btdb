@@ -140,6 +140,10 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
   assert(node != NULL);
   assert(join_list != NULL);
   switch (node->type) {
+    case NLITERAL: {
+      NLiteral* literal = (NLiteral*)node;
+      return literal->lit_type;
+    }
     case NSTRING_LIT: {
       return T_STRING;
     }
