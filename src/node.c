@@ -97,6 +97,15 @@ void free_parse_node(ParseNode* node) {
       free(int_lit);
       break;
     }
+    case NLITERAL: {
+      NLiteral* literal = (NLiteral*)node;
+      assert(literal != NULL);
+      if (literal->lit_type == T_STRING && literal->data.str_lit != NULL) {
+        free(literal->data.str_lit);
+      }
+      free(literal);
+      break;
+    }
     case NSELECT_STMT: {
       NSelectStmt* select = (NSelectStmt*)node;
       assert(select->target_list != NULL);
@@ -412,6 +421,34 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       PrintObject(ctx, "col_type");
       print_parse_node(column_def->col_type, ctx);
       EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NLITERAL: {
+      NLiteral* literal = (NLiteral*) node;
+      assert(literal != NULL);
+      PrintObject(ctx, "NLiteral");
+      switch (literal->lit_type) {
+        case T_BOOL: {
+          PrintChild(ctx, "data", literal->data.bool_lit ? "true" : "false");
+          break;
+        }
+        case T_INT: {
+          // Will be long enough for any int for now.
+          char* int_str = calloc(20, sizeof(char));
+          sprintf(int_str, "%" PRId32, literal->data.int_lit);
+          PrintChild(ctx, "data", int_str);
+          break;
+        }
+        case T_STRING: {
+          PrintChild(ctx, "data", literal->data.str_lit);
+          break;
+        }
+        default: {
+          Panic("Cannot print unknown literal");
+          break;
+        }
+      }
       EndObject(ctx);
       break;
     }

@@ -197,27 +197,28 @@ expr:
       // TODO(ryan): Need to remove leading and trailing ' characters. figure out better way.
       size_t len = strlen($1);
       assert(len >= 2);
-      NStringLit* str_lit = (NStringLit*)calloc(1, sizeof(NStringLit));
-      assert(str_lit != NULL);
-      str_lit->type = NSTRING_LIT;
-      str_lit->str_lit = (char*)calloc(len - 2 + 1, sizeof(char));
-      assert(str_lit->str_lit != NULL);
-      strncpy(str_lit->str_lit, $1 + 1, len - 2);
-      $$ = (ParseNode*)str_lit;
+
+      NLiteral* literal = (NLiteral*)calloc(1, sizeof(NLiteral));
+      literal->type = NLITERAL;
+      literal->lit_type = T_STRING;
+      literal->data.str_lit = (char*)calloc(len - 2 + 1, sizeof(char));
+      strncpy(literal->data.str_lit, $1 + 1, len - 2);
+      $$ = (ParseNode*)literal;
     }
   | BOOLEAN_LITERAL {
-    NBoolLit* bool_lit = (NBoolLit*)calloc(1, sizeof(NBoolLit));
-    assert(bool_lit != NULL);
-    bool_lit->type = NBOOL_LIT;
-    bool_lit->bool_lit = $1;
-    $$ = (ParseNode*)bool_lit;
-  }
+      NLiteral* literal = (NLiteral*)calloc(1, sizeof(NLiteral));
+      literal->type = NLITERAL;
+      literal->lit_type = T_BOOL;
+      literal->data.bool_lit = $1;
+      $$ = (ParseNode*)literal;
+    }
   | INT_LITERAL {
-    NIntLit* int_lit = (NIntLit*)calloc(1, sizeof(NIntLit));
-    int_lit->type = NINT_LIT;
-    int_lit->int_lit = $1;
-    $$ = (ParseNode*)int_lit;
-  }
+      NLiteral* literal = (NLiteral*)calloc(1, sizeof(NLiteral));
+      literal->type = NLITERAL;
+      literal->lit_type = T_INT;
+      literal->data.int_lit = $1;
+      $$ = (ParseNode*)literal;
+    }
   | expr "=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);
