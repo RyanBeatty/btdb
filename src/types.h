@@ -16,7 +16,6 @@ BType StringToType(const char*);
 
 typedef struct Datum {
   enum BType type;
-  // TODO(ryan): REMEMBER TO FIGURE OUT BEST WAY TO DELETE THIS, WE LEAK MEM HERE.
   void* data;
 } Datum;
 
