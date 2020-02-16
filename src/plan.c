@@ -26,6 +26,10 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
         case T_STRING: {
           return MakeDatum(T_STRING, strdup(literal->data.str_lit));
         }
+        default: {
+          Panic("Unknown literal type in EvalExpr");
+          return MakeDatum(T_UNKNOWN, NULL);
+        }
       }
     }
     case NSTRING_LIT: {
