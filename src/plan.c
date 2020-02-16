@@ -32,25 +32,6 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
         }
       }
     }
-    case NSTRING_LIT: {
-      NStringLit* str_lit = (NStringLit*)node;
-      assert(str_lit->str_lit != NULL);
-      return MakeDatum(T_STRING, strdup(str_lit->str_lit));
-    }
-    case NBOOL_LIT: {
-      NBoolLit* bool_lit = (NBoolLit*)node;
-      assert(bool_lit != NULL);
-      bool* bool_lit_copy = (bool*)calloc(1, sizeof(bool));
-      *bool_lit_copy = bool_lit->bool_lit;
-      return MakeDatum(T_BOOL, bool_lit_copy);
-    }
-    case NINT_LIT: {
-      NIntLit* int_lit = (NIntLit*)node;
-      assert(int_lit != NULL);
-      int32_t* int_lit_copy = (int32_t*)calloc(1, sizeof(int32_t));
-      *int_lit_copy = int_lit->int_lit;
-      return MakeDatum(T_INT, int_lit_copy);
-    }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;

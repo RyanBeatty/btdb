@@ -144,15 +144,6 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       NLiteral* literal = (NLiteral*)node;
       return literal->lit_type;
     }
-    case NSTRING_LIT: {
-      return T_STRING;
-    }
-    case NBOOL_LIT: {
-      return T_BOOL;
-    }
-    case NINT_LIT: {
-      return T_INT;
-    }
     case NIDENTIFIER: {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;

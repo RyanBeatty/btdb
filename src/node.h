@@ -25,17 +25,14 @@ void Dedent(PrintContext*);
 typedef enum ParseNodeType {
   NBIN_EXPR,
   NIDENTIFIER,
-  NSTRING_LIT,
   NSELECT_STMT,
   NINSERT_STMT,
   NDELETE_STMT,
   NUPDATE_STMT,
   NASSIGN_EXPR,
-  NBOOL_LIT,
   NSORTBY,
   NCREATE_TABLE,
   NCOLUMN_DEF,
-  NINT_LIT,
   NLITERAL,
 } ParseNodeType;
 
@@ -77,18 +74,6 @@ typedef struct NIdentifier {
 
   char* identifier;
 } NIdentifier;
-
-typedef struct NStringLit {
-  ParseNodeType type;
-
-  char* str_lit;
-} NStringLit;
-
-typedef struct NBoolLit {
-  ParseNodeType type;
-
-  bool bool_lit;
-} NBoolLit;
 
 typedef struct NSelectStmt {
   ParseNodeType type;
@@ -150,12 +135,6 @@ typedef struct NColumnDef {
   ParseNode* col_type;
   BType col_type_id;
 } NColumnDef;
-
-typedef struct NIntLit {
-  ParseNodeType type;
-
-  int32_t int_lit;
-} NIntLit;
 
 typedef struct NLiteral {
   ParseNodeType type;

@@ -80,23 +80,6 @@ void free_parse_node(ParseNode* node) {
       free(bin_expr);
       break;
     }
-    case NSTRING_LIT: {
-      NStringLit* str_lit = (NStringLit*)(node);
-      assert(str_lit->str_lit != NULL);
-      free(str_lit->str_lit);
-      free(str_lit);
-      break;
-    }
-    case NBOOL_LIT: {
-      NBoolLit* bool_lit = (NBoolLit*)(node);
-      free(bool_lit);
-      break;
-    }
-    case NINT_LIT: {
-      NIntLit* int_lit = (NIntLit*)(node);
-      free(int_lit);
-      break;
-    }
     case NLITERAL: {
       NLiteral* literal = (NLiteral*)node;
       assert(literal != NULL);
@@ -271,30 +254,6 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
         print_parse_node(bin_expr->rhs, ctx);
         EndObject(ctx);
       }
-      EndObject(ctx);
-      break;
-    }
-    case NSTRING_LIT: {
-      NStringLit* str_lit = (NStringLit*)(node);
-      PrintObject(ctx, "NStringLit");
-      PrintChild(ctx, "str_lit", str_lit->str_lit);
-      EndObject(ctx);
-      break;
-    }
-    case NBOOL_LIT: {
-      NBoolLit* bool_lit = (NBoolLit*)(node);
-      PrintObject(ctx, "NBoolLit");
-      PrintChild(ctx, "bool_lit", bool_lit->bool_lit ? "true" : "false");
-      EndObject(ctx);
-      break;
-    }
-    case NINT_LIT: {
-      NIntLit* int_lit = (NIntLit*)(node);
-      PrintObject(ctx, "NIntLit");
-      // Will be long enough for any int for now.
-      char* int_str = calloc(20, sizeof(char));
-      sprintf(int_str, "%" PRId32, int_lit->int_lit);
-      PrintChild(ctx, "int_lit", int_str);
       EndObject(ctx);
       break;
     }
