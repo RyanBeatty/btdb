@@ -64,6 +64,8 @@ void yyerror(Parser* parser, const char* msg) {
 "/" return TOK_DIV;
 "(" return TOK_LPARENS;
 ")" return TOK_RPARENS;
+"NULL" return TOK_NULL;
+"null" return TOK_NULL;
 "true" {
     yylval.bool_lit = true;
     return TOK_BOOLEAN_LITERAL;

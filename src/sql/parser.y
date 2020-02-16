@@ -79,6 +79,7 @@
     MINUS "-"
     MULT "*"
     DIV "/"
+    NULL
 ;
 %token <str_lit> STRING_GROUP STRING_LITERAL
 %token <bool_lit> BOOLEAN_LITERAL
@@ -219,6 +220,12 @@ expr:
       literal->data.int_lit = $1;
       $$ = (ParseNode*)literal;
     }
+  | NULL {
+    NLiteral* literal = (NLiteral*)calloc(1, sizeof(NLiteral));
+    literal->type = NLITERAL;
+    literal->lit_type = T_NULL;
+    $$ = (ParseNode*)literal;
+  }
   | expr "=" expr { 
       NBinExpr* bin_expr = (NBinExpr*)calloc(1, sizeof(NBinExpr));
       assert(bin_expr != NULL);

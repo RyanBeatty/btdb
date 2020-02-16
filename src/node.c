@@ -403,6 +403,10 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
           PrintChild(ctx, "data", literal->data.str_lit);
           break;
         }
+        case T_NULL: {
+          PrintChild(ctx, "data", "NULL");
+          break;
+        }
         default: {
           Panic("Cannot print unknown literal");
           break;
