@@ -394,7 +394,8 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
       ParseNode* data = value_items[j];
       assert(data != NULL);
       BType type = CheckType(data, defs);
-      if (type == T_UNKNOWN || type != table_def->tuple_desc[j].type) {
+      // Need to allow NULL values to pass this check.
+      if (type == T_UNKNOWN || (type != T_NULL && type != table_def->tuple_desc[j].type)) {
         return NULL;
       }
     }
