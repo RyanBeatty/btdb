@@ -167,6 +167,13 @@ void free_parse_node(ParseNode* node) {
       free(column_def);
       break;
     }
+    case NRANGEVAR: {
+      NRangeVar* range_var = (NRangeVar*)node;
+      assert(range_var->table_name != NULL);
+      free_parse_node(range_var->table_name);
+      free(range_var);
+      break;
+    }
     default: {
       Panic("Unkown Parse Node Type when freeing");
       break;
@@ -379,6 +386,17 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       EndObject(ctx);
       PrintObject(ctx, "col_type");
       print_parse_node(column_def->col_type, ctx);
+      EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NRANGEVAR: {
+      NRangeVar* range_var = (NRangeVar*)node;
+      assert(range_var != NULL);
+      assert(range_var->table_name != NULL);
+      PrintObject(ctx, "NRangeVar");
+      PrintObject(ctx, "table_name");
+      print_parse_node(range_var->table_name, ctx);
       EndObject(ctx);
       EndObject(ctx);
       break;

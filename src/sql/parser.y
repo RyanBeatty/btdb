@@ -80,6 +80,8 @@
     MULT "*"
     DIV "/"
     NULL
+    JOIN
+    ON
 ;
 %token <str_lit> STRING_GROUP STRING_LITERAL
 %token <bool_lit> BOOLEAN_LITERAL

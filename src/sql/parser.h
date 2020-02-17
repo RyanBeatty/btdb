@@ -94,10 +94,12 @@ extern int yydebug;
     TOK_MULT = 288,
     TOK_DIV = 289,
     TOK_NULL = 290,
-    TOK_STRING_GROUP = 291,
-    TOK_STRING_LITERAL = 292,
-    TOK_BOOLEAN_LITERAL = 293,
-    TOK_INT_LITERAL = 294
+    TOK_JOIN = 291,
+    TOK_ON = 292,
+    TOK_STRING_GROUP = 293,
+    TOK_STRING_LITERAL = 294,
+    TOK_BOOLEAN_LITERAL = 295,
+    TOK_INT_LITERAL = 296
   };
 #endif
 
@@ -115,7 +117,7 @@ union YYSTYPE
   ParseNode*** list_list_node;
   SortDir sort_dir;
 
-#line 119 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
+#line 121 "/home/rbeatty/Projects/BTDB/src/sql/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

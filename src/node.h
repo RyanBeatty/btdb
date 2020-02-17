@@ -34,6 +34,7 @@ typedef enum ParseNodeType {
   NCREATE_TABLE,
   NCOLUMN_DEF,
   NLITERAL,
+  NRANGEVAR,
 } ParseNodeType;
 
 typedef enum SortDir { SORT_ASC, SORT_DESC } SortDir;
@@ -83,6 +84,12 @@ typedef struct NSelectStmt {
   ParseNode* where_clause;
   ParseNode* sort_clause;
 } NSelectStmt;
+
+typedef struct NRangeVar {
+  ParseNodeType type;
+
+  ParseNode* table_name;
+} NRangeVar;
 
 typedef struct NInsertStmt {
   ParseNodeType type;
