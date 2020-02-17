@@ -145,7 +145,7 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       return literal->lit_type;
     }
     case NIDENTIFIER: {
-      // TODO(ryan): Not true in the future.
+      // TODO(ryan): Assuming that first col match is correct col, will not be true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
 
