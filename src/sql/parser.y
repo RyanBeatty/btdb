@@ -88,7 +88,7 @@
 %token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var
 %type <list_node> target_list insert_column_list column_list insert_value_items from_list from_clause update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
@@ -142,26 +142,24 @@ from_clause:
     }
 
 from_list:
-  STRING_GROUP { 
-      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-      assert(identifier != NULL);
-      identifier->type = NIDENTIFIER;
-      identifier->identifier = $1;
-
+  range_var { 
       ParseNode** from_list = NULL;
-      arrpush(from_list, (ParseNode*)identifier);
+      arrpush(from_list, $1);
       $$ = from_list;
     }
-  | from_list "," STRING_GROUP { 
-      NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-      assert(identifier != NULL);
-      identifier->type = NIDENTIFIER;
-      identifier->identifier = $3;
-
+  | from_list "," range_var { 
       ParseNode** from_list = $1;
-      arrpush(from_list, (ParseNode*)identifier);
+      arrpush(from_list, $3);
       $$ = from_list;
     }
+
+range_var:
+  STRING_GROUP {
+    NRangeVar* range_var = (NRangeVar*)calloc(1, sizeof(NRangeVar));
+    range_var->type = NRANGEVAR;
+    range_var->table_name = $1;
+    $$ = (ParseNode*)range_var;
+  }
 
 where_clause:
   /* empty */ { $$ = NULL; }
