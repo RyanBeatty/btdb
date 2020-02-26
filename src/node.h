@@ -88,7 +88,7 @@ typedef struct NSelectStmt {
 typedef struct NRangeVar {
   ParseNodeType type;
 
-  ParseNode* table_name;
+  char* table_name;
 } NRangeVar;
 
 typedef struct NInsertStmt {

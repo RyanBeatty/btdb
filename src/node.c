@@ -170,7 +170,7 @@ void free_parse_node(ParseNode* node) {
     case NRANGEVAR: {
       NRangeVar* range_var = (NRangeVar*)node;
       assert(range_var->table_name != NULL);
-      free_parse_node(range_var->table_name);
+      free(range_var->table_name);
       free(range_var);
       break;
     }
@@ -395,9 +395,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       assert(range_var != NULL);
       assert(range_var->table_name != NULL);
       PrintObject(ctx, "NRangeVar");
-      PrintObject(ctx, "table_name");
-      print_parse_node(range_var->table_name, ctx);
-      EndObject(ctx);
+      PrintChild(ctx, "table_name", range_var->table_name);
       EndObject(ctx);
       break;
     }
