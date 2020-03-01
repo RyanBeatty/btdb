@@ -410,15 +410,10 @@ delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
   $$ = (ParseNode*) delete_stmt;
 }
 
-update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
-  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-  assert(identifier != NULL);
-  identifier->type = NIDENTIFIER;
-  identifier->identifier = $2;
-
+update_stmt: UPDATE range_var SET update_assign_expr_list where_clause ";" {
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
   update->type = NUPDATE_STMT;
-  update->range_var = (ParseNode*) identifier;
+  update->range_var = $2;
   update->assign_expr_list = $4;
   update->where_clause = $5;
   $$ = (ParseNode*) update;

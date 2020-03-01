@@ -441,12 +441,12 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   assert(update != NULL);
   assert(update->type == NUPDATE_STMT);
 
-  NIdentifier* table_name = (NIdentifier*)update->range_var;
-  assert(table_name != NULL);
-  assert(table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != NULL);
+  NRangeVar* range_var = (NRangeVar*)update->range_var;
+  assert(range_var != NULL);
+  assert(range_var->type == NRANGEVAR);
+  assert(range_var->table_name != NULL);  
 
-  TableDef* table_def = FindTableDef(table_name->identifier);
+  TableDef* table_def = FindTableDef(range_var->table_name);
   if (table_def == NULL) {
     return NULL;
   }
@@ -490,7 +490,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   }
 
   Query* query = (Query*)MakeQuery(CMD_UPDATE);
-  query->table_name = table_name->identifier;
+  query->table_name = range_var->table_name;
   arrpush(query->join_list, table_def);
   query->assign_expr_list = (NAssignExpr**)assign_expr_list;
   query->where_clause = update->where_clause;
