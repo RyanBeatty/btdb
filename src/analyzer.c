@@ -412,12 +412,12 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
 Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   assert(delete_stmt->type == NDELETE_STMT);
 
-  NIdentifier* table_name = (NIdentifier*)delete_stmt->table_name;
-  assert(delete_stmt->table_name != NULL);
-  assert(delete_stmt->table_name->type == NIDENTIFIER);
-  assert(table_name->identifier != NULL);
+  NRangeVar* range_var = (NRangeVar*)delete_stmt->range_var;
+  assert(range_var != NULL);
+  assert(range_var->type == NRANGEVAR);
+  assert(range_var->table_name != NULL);
 
-  TableDef* table_def = FindTableDef(table_name->identifier);
+  TableDef* table_def = FindTableDef(range_var->table_name);
   if (table_def == NULL) {
     return NULL;
   }
@@ -431,7 +431,7 @@ Query* AnalyzeDeleteStmt(NDeleteStmt* delete_stmt) {
   }
 
   Query* query = (Query*)MakeQuery(CMD_DELETE);
-  query->table_name = table_name->identifier;
+  query->table_name = range_var->table_name;
   arrpush(query->join_list, table_def);
   query->where_clause = delete_stmt->where_clause;
   return query;
@@ -444,7 +444,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   NRangeVar* range_var = (NRangeVar*)update->range_var;
   assert(range_var != NULL);
   assert(range_var->type == NRANGEVAR);
-  assert(range_var->table_name != NULL);  
+  assert(range_var->table_name != NULL);
 
   TableDef* table_def = FindTableDef(range_var->table_name);
   if (table_def == NULL) {

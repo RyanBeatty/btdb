@@ -397,15 +397,10 @@ insert_value_items:
       $$ = value_items;
   }
 
-delete_stmt: DELETE FROM STRING_GROUP where_clause ";" {
-  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-  assert(identifier != NULL);
-  identifier->type = NIDENTIFIER;
-  identifier->identifier = $3;
-
+delete_stmt: DELETE FROM range_var where_clause ";" {
   NDeleteStmt* delete_stmt = (NDeleteStmt*) calloc(1, sizeof(NDeleteStmt));
   delete_stmt->type = NDELETE_STMT;
-  delete_stmt->table_name = (ParseNode*) identifier;
+  delete_stmt->range_var = $3;
   delete_stmt->where_clause = $4;
   $$ = (ParseNode*) delete_stmt;
 }

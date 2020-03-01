@@ -114,7 +114,7 @@ void free_parse_node(ParseNode* node) {
     }
     case NDELETE_STMT: {
       NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
-      assert(delete_stmt->table_name != NULL);
+      assert(delete_stmt->range_var != NULL);
       if (delete_stmt->where_clause != NULL) {
         free_parse_node(delete_stmt->where_clause);
       }
@@ -305,10 +305,10 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NDELETE_STMT: {
       NDeleteStmt* delete_stmt = (NDeleteStmt*)node;
-      assert(delete_stmt->table_name != NULL);
+      assert(delete_stmt->range_var != NULL);
       PrintObject(ctx, "NDeleteStmt");
-      PrintObject(ctx, "table_name");
-      print_parse_node(delete_stmt->table_name, ctx);
+      PrintObject(ctx, "range_var");
+      print_parse_node(delete_stmt->range_var, ctx);
       EndObject(ctx);
       if (delete_stmt->where_clause != NULL) {
         PrintObject(ctx, "where_clause");

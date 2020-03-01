@@ -102,7 +102,7 @@ typedef struct NInsertStmt {
 typedef struct NDeleteStmt {
   ParseNodeType type;
 
-  ParseNode* table_name;
+  ParseNode* range_var;
   ParseNode* where_clause;
 } NDeleteStmt;
 
