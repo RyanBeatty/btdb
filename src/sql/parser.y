@@ -335,17 +335,12 @@ expr:
       $$ = (ParseNode*)bin_expr;
     }
 
-insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";" {
+insert_stmt: INSERT INTO range_var insert_column_list insert_values_clause ";" {
   NInsertStmt* insert = (NInsertStmt*) calloc(1, sizeof(NInsertStmt));
   assert(insert != NULL);
   insert->type = NINSERT_STMT;
 
-  NIdentifier* identifier = (NIdentifier*)calloc(1, sizeof(NIdentifier));
-  assert(identifier != NULL);
-  identifier->type = NIDENTIFIER;
-  identifier->identifier = $3;
-
-  insert->range_var = (ParseNode*) identifier;
+  insert->range_var = $3;
   insert->column_list = $4;
   insert->values_list = $5;
 
