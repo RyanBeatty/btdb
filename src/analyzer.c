@@ -47,12 +47,12 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(from_clause != NULL);
   TableDef** join_list = NULL;
   for (size_t i = 0; i < arrlen(from_clause); ++i) {
-    NIdentifier* table_name = (NIdentifier*)from_clause[i];
-    assert(table_name != NULL);
-    assert(table_name->type == NIDENTIFIER);
-    assert(table_name->identifier != NULL);
+    NRangeVar* range_var = (NRangeVar*)from_clause[i];
+    assert(range_var != NULL);
+    assert(range_var->type == NRANGEVAR);
+    assert(range_var->table_name != NULL);
 
-    TableDef* table_def = FindTableDef(table_name->identifier);
+    TableDef* table_def = FindTableDef(range_var->table_name);
     if (table_def == NULL) {
       return NULL;
     }
