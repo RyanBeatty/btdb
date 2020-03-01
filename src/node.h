@@ -94,7 +94,7 @@ typedef struct NRangeVar {
 typedef struct NInsertStmt {
   ParseNodeType type;
 
-  ParseNode* table_name;
+  ParseNode* range_var;
   ParseNode** column_list;
   ParseNode*** values_list;
 } NInsertStmt;

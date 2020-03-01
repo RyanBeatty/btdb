@@ -101,10 +101,10 @@ void free_parse_node(ParseNode* node) {
     }
     case NINSERT_STMT: {
       NInsertStmt* insert = (NInsertStmt*)node;
-      assert(insert->table_name != NULL);
+      assert(insert->range_var != NULL);
       assert(insert->column_list != NULL);
       assert(insert->values_list != NULL);
-      free_parse_node(insert->table_name);
+      free_parse_node(insert->range_var);
       free_parse_node_list(insert->column_list);
       for (size_t i = 0; i < arrlen(insert->values_list); ++i) {
         free_parse_node_list(insert->values_list[i]);
@@ -285,12 +285,12 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NINSERT_STMT: {
       NInsertStmt* insert = (NInsertStmt*)node;
-      assert(insert->table_name != NULL);
+      assert(insert->range_var != NULL);
       assert(insert->column_list != NULL);
       assert(insert->values_list != NULL);
       PrintObject(ctx, "NInsertStmt");
-      PrintObject(ctx, "table_name");
-      print_parse_node(insert->table_name, ctx);
+      PrintObject(ctx, "range_var");
+      print_parse_node(insert->range_var, ctx);
       EndObject(ctx);
       PrintObject(ctx, "column_list");
       print_parse_node_list(insert->column_list, ctx);

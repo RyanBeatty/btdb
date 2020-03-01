@@ -345,7 +345,7 @@ insert_stmt: INSERT INTO STRING_GROUP insert_column_list insert_values_clause ";
   identifier->type = NIDENTIFIER;
   identifier->identifier = $3;
 
-  insert->table_name = (ParseNode*) identifier;
+  insert->range_var = (ParseNode*) identifier;
   insert->column_list = $4;
   insert->values_list = $5;
 

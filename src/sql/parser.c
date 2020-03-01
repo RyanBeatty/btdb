@@ -1777,7 +1777,7 @@ yyreduce:
   identifier->type = NIDENTIFIER;
   identifier->identifier = (yyvsp[-3].str_lit);
 
-  insert->table_name = (ParseNode*) identifier;
+  insert->range_var = (ParseNode*) identifier;
   insert->column_list = (yyvsp[-2].list_node);
   insert->values_list = (yyvsp[-1].list_list_node);
 

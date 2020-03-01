@@ -342,7 +342,7 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   assert(insert != NULL);
   assert(insert->type == NINSERT_STMT);
 
-  NIdentifier* table_name = (NIdentifier*)insert->table_name;
+  NIdentifier* table_name = (NIdentifier*)insert->range_var;
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);
