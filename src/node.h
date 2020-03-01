@@ -35,6 +35,7 @@ typedef enum ParseNodeType {
   NCOLUMN_DEF,
   NLITERAL,
   NRANGEVAR,
+  NJOIN,
 } ParseNodeType;
 
 typedef enum SortDir { SORT_ASC, SORT_DESC } SortDir;
@@ -154,6 +155,18 @@ typedef struct NLiteral {
     char* str_lit;
   } data;
 } NLiteral;
+
+typedef enum JoinMethod {
+  JOIN_INNER
+} JoinMethod;
+
+typedef struct NJoin {
+  ParseNodeType type;
+
+  JoinMethod join_method;
+  ParseNode* left;
+  ParseNode* right;
+} NJoin;
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);

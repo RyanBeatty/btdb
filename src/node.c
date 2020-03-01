@@ -174,6 +174,13 @@ void free_parse_node(ParseNode* node) {
       free(range_var);
       break;
     }
+    case NJOIN: {
+      NJoin* join = (NJoin*)node;
+      free_parse_node(join->left);
+      free_parse_node(join->right);
+      free(join);
+      break;
+    }
     default: {
       Panic("Unkown Parse Node Type when freeing");
       break;
@@ -220,6 +227,17 @@ const char* bin_expr_op_to_string(BinExprOp op) {
       return "OR";
     }
     default: { Panic("Unknown BinExpOp"); }
+  }
+}
+
+const char* join_method_to_string(JoinMethod method) {
+  switch (method) {
+    case JOIN_INNER: {
+      return "INNER";
+    }
+    default: {
+      Panic("Unknown Join Method");
+    }
   }
 }
 
@@ -396,6 +414,19 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       assert(range_var->table_name != NULL);
       PrintObject(ctx, "NRangeVar");
       PrintChild(ctx, "table_name", range_var->table_name);
+      EndObject(ctx);
+      break;
+    }
+    case NJOIN: {
+      NJoin* join = (NJoin*)node;
+      PrintObject(ctx, "NJoin");
+      PrintChild(ctx, "join_method", join_method_to_string(join->join_method));
+      PrintObject(ctx, "left");
+      print_parse_node(join->left, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "right");
+      print_parse_node(join->right, ctx);
+      EndObject(ctx);
       EndObject(ctx);
       break;
     }
