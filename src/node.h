@@ -116,7 +116,7 @@ typedef struct NAssignExpr {
 typedef struct NUpdateStmt {
   ParseNodeType type;
 
-  ParseNode* table_name;
+  ParseNode* range_var;
   ParseNode** assign_expr_list;
   ParseNode* where_clause;
 } NUpdateStmt;

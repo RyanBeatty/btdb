@@ -132,9 +132,9 @@ void free_parse_node(ParseNode* node) {
     }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
-      assert(update->table_name != NULL);
+      assert(update->range_var != NULL);
       assert(update->assign_expr_list != NULL);
-      free_parse_node(update->table_name);
+      free_parse_node(update->range_var);
       free_parse_node_list(update->assign_expr_list);
       if (update->where_clause != NULL) {
         free_parse_node(update->where_clause);
@@ -334,11 +334,11 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
     }
     case NUPDATE_STMT: {
       NUpdateStmt* update = (NUpdateStmt*)node;
-      assert(update->table_name != NULL);
+      assert(update->range_var != NULL);
       assert(update->assign_expr_list != NULL);
       PrintObject(ctx, "NUpdateStmt");
-      PrintObject(ctx, "table_name");
-      print_parse_node(update->table_name, ctx);
+      PrintObject(ctx, "range_var");
+      print_parse_node(update->range_var, ctx);
       EndObject(ctx);
       PrintObject(ctx, "assign_expr_list");
       print_parse_node_list(update->assign_expr_list, ctx);

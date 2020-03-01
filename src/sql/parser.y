@@ -418,7 +418,7 @@ update_stmt: UPDATE STRING_GROUP SET update_assign_expr_list where_clause ";" {
 
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
   update->type = NUPDATE_STMT;
-  update->table_name = (ParseNode*) identifier;
+  update->range_var = (ParseNode*) identifier;
   update->assign_expr_list = $4;
   update->where_clause = $5;
   $$ = (ParseNode*) update;

@@ -441,7 +441,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
   assert(update != NULL);
   assert(update->type == NUPDATE_STMT);
 
-  NIdentifier* table_name = (NIdentifier*)update->table_name;
+  NIdentifier* table_name = (NIdentifier*)update->range_var;
   assert(table_name != NULL);
   assert(table_name->type == NIDENTIFIER);
   assert(table_name->identifier != NULL);

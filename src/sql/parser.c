@@ -1888,7 +1888,7 @@ yyreduce:
 
   NUpdateStmt* update = (NUpdateStmt*) calloc(1, sizeof(NUpdateStmt));
   update->type = NUPDATE_STMT;
-  update->table_name = (ParseNode*) identifier;
+  update->range_var = (ParseNode*) identifier;
   update->assign_expr_list = (yyvsp[-2].list_node);
   update->where_clause = (yyvsp[-1].node);
   (yyval.node) = (ParseNode*) update;
