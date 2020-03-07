@@ -155,12 +155,13 @@ join_item:
     join->right = $3;
     $$ = (ParseNode*)join;    
   }
-  | join_item JOIN join_item {
+  | join_item JOIN join_item ON expr {
     NJoin* join = (NJoin*)calloc(1, sizeof(NJoin));
     join->type = NJOIN;
     join->join_method = JOIN_INNER;
     join->left = $1;
     join->right = $3;
+    join->qual_cond = $5;
     // TODO(ryan): Add in qual_cond
     $$ = (ParseNode*)join;
   }
