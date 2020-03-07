@@ -43,20 +43,9 @@ Query* AnalyzeParseTree(ParseNode* node) {
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(select != NULL);
 
-  ParseNode** from_clause = select->from_clause;
-  assert(from_clause != NULL);
-  TableDef** join_list = NULL;
-  for (size_t i = 0; i < arrlen(from_clause); ++i) {
-    NRangeVar* range_var = (NRangeVar*)from_clause[i];
-    assert(range_var != NULL);
-    assert(range_var->type == NRANGEVAR);
-    assert(range_var->table_name != NULL);
-
-    TableDef* table_def = FindTableDef(range_var->table_name);
-    if (table_def == NULL) {
-      return NULL;
-    }
-    arrpush(join_list, table_def);
+  TableDef** join_list = BuildJoinList(select->from_clause, NULL);
+  if (join_list == NULL) {
+    return NULL;
   }
 
   // Validate target list contains valid references to columns.
@@ -335,6 +324,35 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       Panic("Unknown ParseNode type when analyzing expression!");
       return T_UNKNOWN;
     }
+  }
+}
+
+TableDef** BuildJoinList(ParseNode* node, TableDef** join_list) {
+  assert(node != NULL);
+  assert(node->type == NJOIN || node->type == NRANGEVAR);
+  if (node->type == NJOIN) {
+    NJoin* join = (NJoin*)node;
+    assert(join->left != NULL);
+    join_list = BuildJoinList(join->left, join_list);
+    if (join_list == NULL) {
+      return NULL;
+    }
+    if (join->right != NULL) {
+      join_list = BuildJoinList(join->right, join_list);
+    }
+    return join_list;
+  } else {
+    NRangeVar* range_var = (NRangeVar*)node;
+    assert(range_var != NULL);
+    assert(range_var->type == NRANGEVAR);
+    assert(range_var->table_name != NULL);
+
+    TableDef* table_def = FindTableDef(range_var->table_name);
+    if (table_def == NULL) {
+      return NULL;
+    }
+    arrpush(join_list, table_def);
+    return join_list;
   }
 }
 
