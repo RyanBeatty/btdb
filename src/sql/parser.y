@@ -88,8 +88,8 @@
 %token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_list cross_join
-%type <list_node> target_list insert_column_list column_list insert_value_items from_list from_clause update_assign_expr_list table_expr
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_list cross_join from_clause
+%type <list_node> target_list insert_column_list column_list insert_value_items from_list update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
@@ -137,7 +137,7 @@ target_list:
 
 from_clause:
   /* empty */ { $$ = NULL; }
-  | FROM from_list {
+  | FROM join_list {
       $$ = $2;
     }
 
@@ -167,14 +167,18 @@ cross_join:
     $$ = (ParseNode*) join;
   }
   | cross_join "," range_var {
-    NJoin* join = $1;
-    join->right = $3;
-
-    NJoin* join2 = (NJoin*)calloc(1, sizeof(NJoin));
-    join2->type = NJOIN;
-    join2->join_method = JOIN_INNER;
-    join2->left = (ParseNode*)join;
-    $$ = (ParseNode*)join2;
+    NJoin* join = (NJoin*)$1;
+    if (join->right == NULL) {
+      join->right = $3;
+      $$ = (ParseNode*)join;
+    } else {
+      NJoin* join2 = (NJoin*)calloc(1, sizeof(NJoin));
+      join2->type = NJOIN;
+      join2->join_method = JOIN_INNER;
+      join2->left = (ParseNode*)join;
+      join2->right = $3;
+      $$ = (ParseNode*)join2;
+    }
   }
 
 range_var:
