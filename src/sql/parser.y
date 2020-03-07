@@ -88,7 +88,7 @@
 %token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_list cross_join from_clause
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_list join_item from_clause
 %type <list_node> target_list insert_column_list column_list insert_value_items from_list update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
@@ -154,19 +154,14 @@ from_list:
     }
 
 join_list:
-  cross_join {
-    $$ = $1;
-  }
-
-cross_join:
-  range_var {
+  join_item {
     NJoin* join = (NJoin*)calloc(1, sizeof(NJoin));
     join->type = NJOIN;
     join->join_method = JOIN_INNER;
     join->left = $1;
     $$ = (ParseNode*) join;
   }
-  | cross_join "," range_var {
+  | join_list "," join_item {
     NJoin* join = (NJoin*)$1;
     if (join->right == NULL) {
       join->right = $3;
@@ -180,6 +175,12 @@ cross_join:
       $$ = (ParseNode*)join2;
     }
   }
+
+join_item:
+  range_var {
+    $$ = $1;
+  }
+
 
 range_var:
   STRING_GROUP {

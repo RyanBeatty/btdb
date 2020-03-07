@@ -166,6 +166,7 @@ typedef struct NJoin {
   JoinMethod join_method;
   ParseNode* left;
   ParseNode* right;
+  ParseNode* qual_cond;
 } NJoin;
 
 void free_parse_node(ParseNode*);

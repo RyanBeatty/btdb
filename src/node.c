@@ -178,6 +178,7 @@ void free_parse_node(ParseNode* node) {
       NJoin* join = (NJoin*)node;
       free_parse_node(join->left);
       free_parse_node(join->right);
+      free_parse_node(join->qual_cond);
       free(join);
       break;
     }
@@ -426,6 +427,9 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       EndObject(ctx);
       PrintObject(ctx, "right");
       print_parse_node(join->right, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "qual_cond");
+      print_parse_node(join->qual_cond, ctx);
       EndObject(ctx);
       EndObject(ctx);
       break;
