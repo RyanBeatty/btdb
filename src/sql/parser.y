@@ -88,8 +88,8 @@
 %token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_list join_item from_clause
-%type <list_node> target_list insert_column_list column_list insert_value_items from_list update_assign_expr_list table_expr
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_item from_clause
+%type <list_node> target_list insert_column_list column_list insert_value_items update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
 
@@ -137,48 +137,32 @@ target_list:
 
 from_clause:
   /* empty */ { $$ = NULL; }
-  | FROM join_list {
+  | FROM join_item {
       $$ = $2;
     }
 
-from_list:
-  range_var { 
-      ParseNode** from_list = NULL;
-      arrpush(from_list, $1);
-      $$ = from_list;
-    }
-  | from_list "," range_var { 
-      ParseNode** from_list = $1;
-      arrpush(from_list, $3);
-      $$ = from_list;
-    }
-
-join_list:
-  join_item {
+%left JOIN;
+%left ",";
+join_item:
+  range_var {
+    $$ = $1;
+  }
+  | join_item "," join_item {
     NJoin* join = (NJoin*)calloc(1, sizeof(NJoin));
     join->type = NJOIN;
     join->join_method = JOIN_INNER;
     join->left = $1;
-    $$ = (ParseNode*) join;
+    join->right = $3;
+    $$ = (ParseNode*)join;    
   }
-  | join_list "," join_item {
-    NJoin* join = (NJoin*)$1;
-    if (join->right == NULL) {
-      join->right = $3;
-      $$ = (ParseNode*)join;
-    } else {
-      NJoin* join2 = (NJoin*)calloc(1, sizeof(NJoin));
-      join2->type = NJOIN;
-      join2->join_method = JOIN_INNER;
-      join2->left = (ParseNode*)join;
-      join2->right = $3;
-      $$ = (ParseNode*)join2;
-    }
-  }
-
-join_item:
-  range_var {
-    $$ = $1;
+  | join_item JOIN join_item {
+    NJoin* join = (NJoin*)calloc(1, sizeof(NJoin));
+    join->type = NJOIN;
+    join->join_method = JOIN_INNER;
+    join->left = $1;
+    join->right = $3;
+    // TODO(ryan): Add in qual_cond
+    $$ = (ParseNode*)join;
   }
 
 
