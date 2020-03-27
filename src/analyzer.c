@@ -349,6 +349,7 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list) {
     }
 
     // TODO: Also build joined table table def. i.e. If I join table A and B, make tabledef AB.
+    // BUG: Shouldn't pass in join_list here, should pass in joined tabledef for this node.
     if (join->qual_cond != NULL && CheckType(join->qual_cond, join_list) != T_BOOL) {
       return NULL;
     }
