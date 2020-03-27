@@ -34,6 +34,7 @@ typedef struct Query {
   ParseNode*** values;  // List of list of expressions for insert.
   NSortBy* sort;
   ParseNode* utility_stmt;
+  ParseNode* join_tree;  // Can be NJoin or NRangeVar.
 } Query;
 
 Query* MakeQuery(CmdType);
@@ -45,7 +46,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt*);
 Query* AnalyzeCreateTableStmt(NCreateTable*);
 void AnalyzeFromClause(Query*, ParseNode**);
 BType CheckType(ParseNode*, TableDef**);
-TableDef** BuildJoinList(ParseNode*, TableDef**);
+TableDef** AnalyzeJoinList(ParseNode*, TableDef**);
 ParseNode* AnalyzeExprNode(ParseNode*, TableDef**);
 
 #ifdef __cplusplus

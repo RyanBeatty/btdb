@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 #include "stb_ds.h"
 
@@ -43,7 +43,7 @@ Query* AnalyzeParseTree(ParseNode* node) {
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(select != NULL);
 
-  TableDef** join_list = BuildJoinList(select->from_clause, NULL);
+  TableDef** join_list = AnalyzeJoinList(select->from_clause, NULL);
   if (join_list == NULL) {
     return NULL;
   }
@@ -52,12 +52,14 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   TargetRef** targets = NULL;
   ParseNode** target_list = select->target_list;
   assert(target_list != NULL);
-  uint64_t anon_cols = 0;  // Need to do this for naming col exprs because all columns must have unique names. This is stupid.
+  uint64_t anon_cols = 0;  // Need to do this for naming col exprs because all columns must
+                           // have unique names. This is stupid.
   for (size_t i = 0; i < arrlen(target_list); ++i) {
     ParseNode* col_expr = target_list[i];
     assert(col_expr != NULL);
-    
-    // TODO(ryan): This and the below code do some redundant checking. Clean this up eventually.
+
+    // TODO(ryan): This and the below code do some redundant checking. Clean this up
+    // eventually.
     if (CheckType(col_expr, join_list) == T_UNKNOWN) {
       return NULL;
     }
@@ -122,6 +124,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   query->target_list = targets;
   query->where_clause = select->where_clause;
   query->sort = (NSortBy*)select->sort_clause;
+  query->join_tree = select->from_clause;
   return query;
 }
 
@@ -134,7 +137,8 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       return literal->lit_type;
     }
     case NIDENTIFIER: {
-      // TODO(ryan): Assuming that first col match is correct col, will not be true in the future.
+      // TODO(ryan): Assuming that first col match is correct col, will not be true in the
+      // future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
 
@@ -327,18 +331,26 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
   }
 }
 
-TableDef** BuildJoinList(ParseNode* node, TableDef** join_list) {
+TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list) {
   assert(node != NULL);
   assert(node->type == NJOIN || node->type == NRANGEVAR);
   if (node->type == NJOIN) {
     NJoin* join = (NJoin*)node;
     assert(join->left != NULL);
-    join_list = BuildJoinList(join->left, join_list);
+    join_list = AnalyzeJoinList(join->left, join_list);
     if (join_list == NULL) {
       return NULL;
     }
     if (join->right != NULL) {
-      join_list = BuildJoinList(join->right, join_list);
+      join_list = AnalyzeJoinList(join->right, join_list);
+      if (join_list == NULL) {
+        return NULL;
+      }
+    }
+
+    // TODO: Also build joined table table def. i.e. If I join table A and B, make tabledef AB.
+    if (join->qual_cond != NULL && CheckType(join->qual_cond, join_list) != T_BOOL) {
+      return NULL;
     }
     return join_list;
   } else {
