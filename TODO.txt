@@ -1,0 +1,16 @@
+Implementing join types
+* build rangetable which consists of tabledef of every table + every intermediate table
+* All verification code should take the range table the expression belongs to as an argument.
+* Another issue is that right now AnalyzeJoinStatement sort of flattens out everything into a list of table defs.
+Most of the code makes the assumption that when we join, it is in Inner join. The planner also plans using this flattened join list structure,
+but this is incorrect since the join list will eventually have intermediate entries. What I really want is a tree. Leaf nodes in the trees are
+rangetableentries containing a reference to the table def in the range table list that need to be scanned. Inner nodes are join nodes containing
+join method, a reference to the intermediate table def in the range table list, and left and right children. When planning, traverse the tree.
+RangeTableEntries map to Sequential Scans. Inner join nodes map to nested loops (taking into account join method and the qual condition).
+
+
+* Convert fromclause into a list by doing a preorder traversal. For each node in the from clause,
+  build the corresponding range table entries and remember indexes.
+* When planning, iterate backwards over the join tree list and plan each node. (maybe building the jointree list
+  is stupid, and I should just recursively process the join tree when planning?)
+* 
