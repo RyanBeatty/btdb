@@ -82,8 +82,10 @@ def test_select_with_joins():
     proc.stdin.write(b"select bar, baz, a from foo, b where a = 'cab';\n")
     proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
     proc.stdin.write(b"insert into b (a) values ('hello');\n")
     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
 
     try:
         output, err = proc.communicate(timeout=2)
@@ -121,11 +123,19 @@ def test_select_with_joins():
         world\tfalse\tcab\t
         btdb>     bar    baz    a
         ===============
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\t\t\t
+        world\tfalse\t\t\t
         btdb>     a
         ===============
         btdb>     bar    baz    a
         ===============
         hello\ttrue\thello\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\thello\t
+        world\tfalse\t\t\t
         btdb> Shutting down btdb
         """
         ),

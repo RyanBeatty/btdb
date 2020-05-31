@@ -244,6 +244,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
   assert(node->right != NULL);
   NestedLoop* join = (NestedLoop*)node;
 
+  bool no_result_for_cur_left_tuple = false;
   for (;;) {
     if (join->need_new_left_tuple) {
       join->cur_left_tuple = join->plan.left->get_next_func(join->plan.left);
@@ -252,28 +253,40 @@ Tuple* NestedLoopScan(PlanNode* node) {
         return NULL;
       }
       join->plan.right->init_func(join->plan.right);
+      no_result_for_cur_left_tuple = true;
     }
 
     Tuple* right_tuple = join->plan.right->get_next_func(join->plan.right);
     if (right_tuple == NULL) {
+      join->need_new_left_tuple = true;
       switch (join->join_method) {
         case JOIN_INNER: {
-          join->need_new_left_tuple = true;
           continue;
         }
         case JOIN_LEFT:
         case JOIN_RIGHT: {
-          // TODO: Check this works.
-          // const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
-          // for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
-          //   Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
-          //   if (d == NULL) {
-          //     // add null to right tuple.
-          //     right_tuple =
-          //         SetCol(right_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
-          //   }
-          // }
-          break;
+          // If we have not found any result for the cur left tuple, need to make sure we
+          // insert an entry in results.
+          if (no_result_for_cur_left_tuple) {
+            Tuple* result_tuple = NULL;
+            for (size_t i = 0; i < arrlen(join->cur_left_tuple); ++i) {
+              result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name,
+                                    join->cur_left_tuple[i].data);
+            }
+            // Fill in right tuple cols with nulls.
+            const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
+            for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
+              Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
+              if (d == NULL) {
+                // add null to right tuple.
+                result_tuple =
+                    SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
+              }
+            }
+            return result_tuple;
+          } else {
+            continue;
+          }
         }
         case JOIN_OUTER: {
           Panic("Outer join not implemented");
@@ -304,6 +317,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
       }
     }
 
+    no_result_for_cur_left_tuple = false;
     return result_tuple;
   }
 }
