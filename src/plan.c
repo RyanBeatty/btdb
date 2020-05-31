@@ -321,34 +321,11 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
       PlanNode* left_plan = PlanJoin(query, join_node->left);
       PlanNode* right_plan = PlanJoin(query, join_node->right);
 
-      // Create table def for joined table.
-      // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
-      // should really fix this at some point.
-      ColDesc* tuple_desc = NULL;
-      for (size_t j = 0; j < arrlen(left_plan->table_def->tuple_desc); ++j) {
-        ColDesc desc = {.column_name = left_plan->table_def->tuple_desc[j].column_name,
-                        left_plan->table_def->tuple_desc[j].type};
-        arrpush(tuple_desc, desc);
-      }
-      for (size_t j = 0; j < arrlen(right_plan->table_def->tuple_desc); ++j) {
-        ColDesc desc = {.column_name = right_plan->table_def->tuple_desc[j].column_name,
-                        right_plan->table_def->tuple_desc[j].type};
-        arrpush(tuple_desc, desc);
-      }
-      TableDef* table_def = calloc(1, sizeof(TableDef));
-      char* tablename =
-          calloc(strlen(left_plan->table_def->name) + strlen(right_plan->table_def->name) + 1,
-                 sizeof(char));
-      strcat(tablename, left_plan->table_def->name);
-      strcat(tablename, right_plan->table_def->name);
-      table_def->name = tablename;
-      table_def->tuple_desc = tuple_desc;
-
       NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
       nested_loop->plan.type = N_PLAN_NESTED_LOOP;
       nested_loop->plan.get_next_func = NestedLoopScan;
       nested_loop->plan.target_list = query->target_list;
-      nested_loop->plan.table_def = table_def;
+      nested_loop->plan.table_def = query->join_list[join_node->join_list_index];
       nested_loop->plan.left = left_plan;
       nested_loop->plan.right = right_plan;
       nested_loop->cur_left_tuple = NULL;

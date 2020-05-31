@@ -358,30 +358,39 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list,
       right_table_def = join_list[right_table_def_index];
     }
 
-    // // Create table def for joined table.
-    // // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
-    // // should really fix this at some point.
-    // ColDesc* tuple_desc = NULL;
-    // for (size_t j = 0; j < arrlen(left_table_def->tuple_desc); ++j) {
-    //   ColDesc desc = {.column_name = left_table_def->tuple_desc[j].column_name,
-    //                   left_table_def->tuple_desc[j].type};
-    //   arrpush(tuple_desc, desc);
-    // }
-    // for (size_t j = 0; j < arrlen(right_table_def->tuple_desc); ++j) {
-    //   ColDesc desc = {.column_name = right_table_def->tuple_desc[j].column_name,
-    //                   right_table_def->tuple_desc[j].type};
-    //   arrpush(tuple_desc, desc);
-    // }
-    // TableDef* table_def = calloc(1, sizeof(TableDef));
-    // char* tablename =
-    //     calloc(strlen(left_table_def->name) + strlen(right_table_def->name) + 1,
-    //     sizeof(char));
-    // strcat(tablename, left_table_def->name);
-    // strcat(tablename, right_table_def->name);
-    // table_def->name = tablename;
-    // table_def->tuple_desc = tuple_desc;
+    // Create table def for joined table.
+    // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
+    // should really fix this at some point.
+    ColDesc* tuple_desc = NULL;
+    for (size_t j = 0; j < arrlen(left_table_def->tuple_desc); ++j) {
+      ColDesc desc = {.column_name = left_table_def->tuple_desc[j].column_name,
+                      left_table_def->tuple_desc[j].type};
+      arrpush(tuple_desc, desc);
+    }
+    for (size_t j = 0; j < arrlen(right_table_def->tuple_desc); ++j) {
+      ColDesc desc = {.column_name = right_table_def->tuple_desc[j].column_name,
+                      right_table_def->tuple_desc[j].type};
+      arrpush(tuple_desc, desc);
+    }
+    TableDef* table_def = calloc(1, sizeof(TableDef));
+    table_def->tuple_desc = tuple_desc;
+    if (right_table_def != NULL) {
+      char* tablename = calloc(
+          strlen(left_table_def->name) + strlen(right_table_def->name) + 1, sizeof(char));
+      strcat(tablename, left_table_def->name);
+      strcat(tablename, right_table_def->name);
+      table_def->name = tablename;
+    } else {
+      char* tablename =
+          calloc(strlen(left_table_def->name) + strlen("_intermediate") + 1, sizeof(char));
+      strcat(tablename, left_table_def->name);
+      strcat(tablename, "intermediate");
+      table_def->name = tablename;
+    }
 
-    // TODO: Add to join list.
+    join->join_list_index = arrlen(join_list);
+    *last_table_def_index = join->join_list_index;
+    arrpush(join_list, table_def);
 
     // TODO: Also build joined table table def. i.e. If I join table A and B, make tabledef AB.
     // BUG: Shouldn't pass in join_list here, should pass in joined tabledef for this node.
