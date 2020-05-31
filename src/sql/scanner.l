@@ -68,6 +68,12 @@ void yyerror(Parser* parser, const char* msg) {
 "null" return TOK_NULL;
 "JOIN" return TOK_JOIN;
 "join" return TOK_JOIN;
+"LEFT" return TOK_LEFT;
+"left" return TOK_LEFT;
+"RIGHT" return TOK_RIGHT;
+"right" return TOK_RIGHT;
+"OUTER" return TOK_OUTER;
+"outer" return TOK_OUTER;
 "ON" return TOK_ON;
 "on" return TOK_ON;
 "true" {

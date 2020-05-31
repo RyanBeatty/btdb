@@ -157,7 +157,10 @@ typedef struct NLiteral {
 } NLiteral;
 
 typedef enum JoinMethod {
-  JOIN_INNER
+  JOIN_INNER,
+  JOIN_OUTER,
+  JOIN_LEFT,
+  JOIN_RIGHT,
 } JoinMethod;
 
 typedef struct NJoin {

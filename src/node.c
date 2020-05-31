@@ -1,13 +1,13 @@
 #include "node.h"
-#include "utils.h"
-
-#include "stb_ds.h"
 
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "stb_ds.h"
+#include "utils.h"
 
 PrintContext MakePrintContext() {
   PrintContext ctx = {0};
@@ -227,7 +227,9 @@ const char* bin_expr_op_to_string(BinExprOp op) {
     case OR: {
       return "OR";
     }
-    default: { Panic("Unknown BinExpOp"); }
+    default: {
+      Panic("Unknown BinExpOp");
+    }
   }
 }
 
@@ -235,6 +237,15 @@ const char* join_method_to_string(JoinMethod method) {
   switch (method) {
     case JOIN_INNER: {
       return "INNER";
+    }
+    case JOIN_LEFT: {
+      return "LEFT";
+    }
+    case JOIN_RIGHT: {
+      return "JOIN_RIGHT";
+    }
+    case JOIN_OUTER: {
+      return "JOIN_OUTER";
     }
     default: {
       Panic("Unknown Join Method");
@@ -435,7 +446,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       break;
     }
     case NLITERAL: {
-      NLiteral* literal = (NLiteral*) node;
+      NLiteral* literal = (NLiteral*)node;
       assert(literal != NULL);
       PrintObject(ctx, "NLiteral");
       switch (literal->lit_type) {

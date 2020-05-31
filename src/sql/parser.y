@@ -42,6 +42,7 @@
   ParseNode** list_node;
   ParseNode*** list_list_node;
   SortDir sort_dir;
+  JoinMethod join_method;
 }
 
 %define api.token.prefix {TOK_}
@@ -81,6 +82,9 @@
     DIV "/"
     NULL
     JOIN
+    LEFT
+    RIGHT
+    OUTER
     ON
 ;
 %token <str_lit> STRING_GROUP STRING_LITERAL
@@ -92,6 +96,7 @@
 %type <list_node> target_list insert_column_list column_list insert_value_items update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
+%type <join_method> join_method
 
 %%
 %start stmt;
@@ -155,10 +160,10 @@ join_item:
     join->right = $3;
     $$ = (ParseNode*)join;    
   }
-  | join_item JOIN join_item ON expr {
+  | join_item join_method join_item ON expr {
     NJoin* join = (NJoin*)calloc(1, sizeof(NJoin));
     join->type = NJOIN;
-    join->join_method = JOIN_INNER;
+    join->join_method = $2;
     join->left = $1;
     join->right = $3;
     join->qual_cond = $5;
@@ -166,6 +171,19 @@ join_item:
     $$ = (ParseNode*)join;
   }
 
+join_method:
+  JOIN {
+    $$ = JOIN_INNER;
+  }
+  | LEFT JOIN {
+    $$ = JOIN_LEFT;
+  }
+  | RIGHT JOIN {
+    $$ = JOIN_RIGHT;
+  }
+  | OUTER  {
+    $$ = JOIN_OUTER;
+  }
 
 range_var:
   STRING_GROUP {
