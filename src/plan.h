@@ -57,6 +57,7 @@ typedef struct NestedLoop {
   PlanNode plan;
   Tuple* cur_left_tuple;
   bool need_new_left_tuple;
+  JoinMethod join_method;
 } NestedLoop;
 
 typedef struct ResultScan {

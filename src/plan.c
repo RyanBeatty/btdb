@@ -256,8 +256,32 @@ Tuple* NestedLoopScan(PlanNode* node) {
 
     Tuple* right_tuple = join->plan.right->get_next_func(join->plan.right);
     if (right_tuple == NULL) {
-      join->need_new_left_tuple = true;
-      continue;
+      switch (join->join_method) {
+        case JOIN_INNER: {
+          join->need_new_left_tuple = true;
+          continue;
+        }
+        case JOIN_LEFT:
+        case JOIN_RIGHT: {
+          // TODO: Check this works.
+          // const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
+          // for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
+          //   Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
+          //   if (d == NULL) {
+          //     // add null to right tuple.
+          //     right_tuple =
+          //         SetCol(right_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
+          //   }
+          // }
+          break;
+        }
+        case JOIN_OUTER: {
+          Panic("Outer join not implemented");
+        }
+        default: {
+          Panic("Unknown join method when nested looping");
+        }
+      }
     }
 
     // have both left and right, compute new result tuple.
@@ -330,6 +354,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
       nested_loop->plan.right = right_plan;
       nested_loop->cur_left_tuple = NULL;
       nested_loop->need_new_left_tuple = true;
+      nested_loop->join_method = join_node->join_method;
 
       return (PlanNode*)nested_loop;
     }
