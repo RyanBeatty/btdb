@@ -1,11 +1,11 @@
 
+#include "plan.h"
+
 #include <assert.h>
 #include <stdbool.h>
 
-#include "stb_ds.h"
-
 #include "analyzer.h"
-#include "plan.h"
+#include "stb_ds.h"
 #include "utils.h"
 
 Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
@@ -47,10 +47,11 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       NBinExpr* expr = (NBinExpr*)node;
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
-      
+
       Datum lhs_value = EvalExpr(expr->lhs, cur_tuple);
       Datum rhs_value = EvalExpr(expr->rhs, cur_tuple);
-      // Theres probably a way I can add some info/state in the analyzing phase to avoid this check here.
+      // Theres probably a way I can add some info/state in the analyzing phase to avoid this
+      // check here.
       if (lhs_value.type == T_NULL || rhs_value.type == T_NULL) {
         return MakeDatum(T_NULL, NULL);
       }
@@ -310,6 +311,69 @@ Tuple* GetResult(PlanNode* node) {
   }
 }
 
+PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
+  assert(query != NULL);
+  assert(join_tree != NULL);
+  switch (join_tree->type) {
+    case NJOIN: {
+      NJoin* join_node = (NJoin*)join_tree;
+
+      PlanNode* left_plan = PlanJoin(query, join_node->left);
+      PlanNode* right_plan = PlanJoin(query, join_node->right);
+
+      // Create table def for joined table.
+      // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
+      // should really fix this at some point.
+      ColDesc* tuple_desc = NULL;
+      for (size_t j = 0; j < arrlen(left_plan->table_def->tuple_desc); ++j) {
+        ColDesc desc = {.column_name = left_plan->table_def->tuple_desc[j].column_name,
+                        left_plan->table_def->tuple_desc[j].type};
+        arrpush(tuple_desc, desc);
+      }
+      for (size_t j = 0; j < arrlen(right_plan->table_def->tuple_desc); ++j) {
+        ColDesc desc = {.column_name = right_plan->table_def->tuple_desc[j].column_name,
+                        right_plan->table_def->tuple_desc[j].type};
+        arrpush(tuple_desc, desc);
+      }
+      TableDef* table_def = calloc(1, sizeof(TableDef));
+      char* tablename =
+          calloc(strlen(left_plan->table_def->name) + strlen(right_plan->table_def->name) + 1,
+                 sizeof(char));
+      strcat(tablename, left_plan->table_def->name);
+      strcat(tablename, right_plan->table_def->name);
+      table_def->name = tablename;
+      table_def->tuple_desc = tuple_desc;
+
+      NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
+      nested_loop->plan.type = N_PLAN_NESTED_LOOP;
+      nested_loop->plan.get_next_func = NestedLoopScan;
+      nested_loop->plan.target_list = query->target_list;
+      nested_loop->plan.table_def = table_def;
+      nested_loop->plan.left = left_plan;
+      nested_loop->plan.right = right_plan;
+      nested_loop->cur_left_tuple = NULL;
+      nested_loop->need_new_left_tuple = true;
+
+      return (PlanNode*)nested_loop;
+    }
+    case NRANGEVAR: {
+      NRangeVar* range_var = (NRangeVar*)join_tree;
+
+      SeqScan* scan = calloc(1, sizeof(SeqScan));
+      scan->plan.type = N_PLAN_SEQ_SCAN;
+      scan->plan.init_func = SequentialScanInit;
+      scan->plan.get_next_func = SequentialScan;
+      scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->join_list[range_var->join_list_index];
+      return (PlanNode*)scan;
+    }
+    default: {
+      Panic("Unknown join node type during planning!");
+      return NULL;
+    }
+  }
+}
+
 PlanNode* PlanQuery(Query* query) {
   assert(query != NULL);
   ResultScan* result = calloc(1, sizeof(ResultScan));
@@ -322,61 +386,9 @@ PlanNode* PlanQuery(Query* query) {
   switch (query->cmd) {
     case CMD_SELECT: {
       assert(arrlen(query->join_list) > 0);
-      SeqScan* scan = calloc(1, sizeof(SeqScan));
-      scan->plan.type = N_PLAN_SEQ_SCAN;
-      scan->plan.init_func = SequentialScanInit;
-      scan->plan.get_next_func = SequentialScan;
-      scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list[0];
-      // scan->table_name = query->table_name;
-      // scan->where_clause = query->where_clause;
-      // plan->left = (PlanNode*)scan;
 
-      PlanNode* left_plan = (PlanNode*)scan;
-      for (size_t i = 1; i < arrlen(query->join_list); ++i) {
-        SeqScan* scan = calloc(1, sizeof(SeqScan));
-        scan->plan.type = N_PLAN_SEQ_SCAN;
-        scan->plan.init_func = SequentialScanInit;
-        scan->plan.get_next_func = SequentialScan;
-        scan->plan.target_list = query->target_list;
-        scan->plan.table_def = query->join_list[i];
-        PlanNode* right_plan = (PlanNode*)scan;
-
-        // Create table def for joined table.
-        // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
-        // should really fix this at some point.
-        ColDesc* tuple_desc = NULL;
-        for (size_t j = 0; j < arrlen(left_plan->table_def->tuple_desc); ++j) {
-          ColDesc desc = {.column_name = left_plan->table_def->tuple_desc[j].column_name,
-                          left_plan->table_def->tuple_desc[j].type};
-          arrpush(tuple_desc, desc);
-        }
-        for (size_t j = 0; j < arrlen(right_plan->table_def->tuple_desc); ++j) {
-          ColDesc desc = {.column_name = right_plan->table_def->tuple_desc[j].column_name,
-                          right_plan->table_def->tuple_desc[j].type};
-          arrpush(tuple_desc, desc);
-        }
-        TableDef* table_def = calloc(1, sizeof(TableDef));
-        char* tablename = calloc(
-            strlen(left_plan->table_def->name) + strlen(right_plan->table_def->name) + 1,
-            sizeof(char));
-        strcat(tablename, left_plan->table_def->name);
-        strcat(tablename, right_plan->table_def->name);
-        table_def->name = tablename;
-        table_def->tuple_desc = tuple_desc;
-
-        NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
-        nested_loop->plan.type = N_PLAN_NESTED_LOOP;
-        nested_loop->plan.get_next_func = NestedLoopScan;
-        nested_loop->plan.target_list = query->target_list;
-        nested_loop->plan.table_def = table_def;
-        nested_loop->plan.left = left_plan;
-        nested_loop->plan.right = right_plan;
-        nested_loop->cur_left_tuple = NULL;
-        nested_loop->need_new_left_tuple = true;
-
-        left_plan = (PlanNode*)nested_loop;
-      }
+      PlanNode* left_plan = PlanJoin(query, query->join_tree);
+      assert(left_plan != NULL);
 
       if (query->sort != NULL) {
         Sort* sort = calloc(1, sizeof(Sort));

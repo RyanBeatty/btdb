@@ -172,6 +172,7 @@ typedef struct NJoin {
   ParseNode* left;
   ParseNode* right;
   ParseNode* qual_cond;
+  size_t join_list_index;  // Set during analyze phase.
 } NJoin;
 
 void free_parse_node(ParseNode*);

@@ -158,6 +158,7 @@ join_item:
     join->join_method = JOIN_INNER;
     join->left = $1;
     join->right = $3;
+    join->join_list_index = 0;
     $$ = (ParseNode*)join;    
   }
   | join_item join_method join_item ON expr {
@@ -167,6 +168,7 @@ join_item:
     join->left = $1;
     join->right = $3;
     join->qual_cond = $5;
+    join->join_list_index = 0;
     // TODO(ryan): Add in qual_cond
     $$ = (ParseNode*)join;
   }

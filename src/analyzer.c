@@ -43,7 +43,8 @@ Query* AnalyzeParseTree(ParseNode* node) {
 Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(select != NULL);
 
-  TableDef** join_list = AnalyzeJoinList(select->from_clause, NULL);
+  size_t last_table_def_index = 0;
+  TableDef** join_list = AnalyzeJoinList(select->from_clause, NULL, &last_table_def_index);
   if (join_list == NULL) {
     return NULL;
   }
@@ -331,22 +332,56 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
   }
 }
 
-TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list) {
+// TODO: Passing in the last_table_def_index here is unfortunate but mostly a consequence of
+// the join tree being two kinds of ParseNodes. I think Ideally I define some other parent
+// struct that has both the parse node type and join_list_index fields in the same place.
+TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list,
+                           size_t* last_table_def_index) {
   assert(node != NULL);
   assert(node->type == NJOIN || node->type == NRANGEVAR);
   if (node->type == NJOIN) {
     NJoin* join = (NJoin*)node;
     assert(join->left != NULL);
-    join_list = AnalyzeJoinList(join->left, join_list);
+    size_t left_table_def_index = 0;
+    join_list = AnalyzeJoinList(join->left, join_list, &left_table_def_index);
     if (join_list == NULL) {
       return NULL;
     }
+    TableDef* left_table_def = join_list[left_table_def_index];
+    TableDef* right_table_def = NULL;
     if (join->right != NULL) {
-      join_list = AnalyzeJoinList(join->right, join_list);
+      size_t right_table_def_index = 0;
+      join_list = AnalyzeJoinList(join->right, join_list, &right_table_def_index);
       if (join_list == NULL) {
         return NULL;
       }
+      right_table_def = join_list[right_table_def_index];
     }
+
+    // // Create table def for joined table.
+    // // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
+    // // should really fix this at some point.
+    // ColDesc* tuple_desc = NULL;
+    // for (size_t j = 0; j < arrlen(left_table_def->tuple_desc); ++j) {
+    //   ColDesc desc = {.column_name = left_table_def->tuple_desc[j].column_name,
+    //                   left_table_def->tuple_desc[j].type};
+    //   arrpush(tuple_desc, desc);
+    // }
+    // for (size_t j = 0; j < arrlen(right_table_def->tuple_desc); ++j) {
+    //   ColDesc desc = {.column_name = right_table_def->tuple_desc[j].column_name,
+    //                   right_table_def->tuple_desc[j].type};
+    //   arrpush(tuple_desc, desc);
+    // }
+    // TableDef* table_def = calloc(1, sizeof(TableDef));
+    // char* tablename =
+    //     calloc(strlen(left_table_def->name) + strlen(right_table_def->name) + 1,
+    //     sizeof(char));
+    // strcat(tablename, left_table_def->name);
+    // strcat(tablename, right_table_def->name);
+    // table_def->name = tablename;
+    // table_def->tuple_desc = tuple_desc;
+
+    // TODO: Add to join list.
 
     // TODO: Also build joined table table def. i.e. If I join table A and B, make tabledef AB.
     // BUG: Shouldn't pass in join_list here, should pass in joined tabledef for this node.
@@ -365,6 +400,7 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list) {
       return NULL;
     }
     range_var->join_list_index = arrlen(join_list);
+    *last_table_def_index = range_var->join_list_index;
     arrpush(join_list, table_def);
     return join_list;
   }
