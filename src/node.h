@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "types.h"
 
@@ -90,6 +91,7 @@ typedef struct NRangeVar {
   ParseNodeType type;
 
   char* table_name;
+  size_t join_list_index;  // Set during analyze phase.
 } NRangeVar;
 
 typedef struct NInsertStmt {

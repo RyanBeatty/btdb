@@ -190,6 +190,7 @@ range_var:
     NRangeVar* range_var = (NRangeVar*)calloc(1, sizeof(NRangeVar));
     range_var->type = NRANGEVAR;
     range_var->table_name = $1;
+    range_var->join_list_index = 0;
     $$ = (ParseNode*)range_var;
   }
 

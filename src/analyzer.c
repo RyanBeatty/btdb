@@ -1,10 +1,10 @@
+#include "analyzer.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 
 #include "stb_ds.h"
-
-#include "analyzer.h"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"
@@ -364,6 +364,7 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list) {
     if (table_def == NULL) {
       return NULL;
     }
+    range_var->join_list_index = arrlen(join_list);
     arrpush(join_list, table_def);
     return join_list;
   }
