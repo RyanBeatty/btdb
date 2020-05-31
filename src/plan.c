@@ -293,6 +293,17 @@ Tuple* NestedLoopScan(PlanNode* node) {
     for (size_t i = 0; i < arrlen(right_tuple); ++i) {
       result_tuple = SetCol(result_tuple, right_tuple[i].column_name, right_tuple[i].data);
     }
+
+    if (join->qual_condition != NULL) {
+      Datum result_val = EvalExpr(join->qual_condition, result_tuple);
+      assert(result_val.type == T_BOOL);
+      assert(result_val.data != NULL);
+      bool* result = (bool*)result_val.data;
+      if (!*result) {
+        continue;
+      }
+    }
+
     return result_tuple;
   }
 }
@@ -355,6 +366,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
       nested_loop->cur_left_tuple = NULL;
       nested_loop->need_new_left_tuple = true;
       nested_loop->join_method = join_node->join_method;
+      nested_loop->qual_condition = join_node->qual_cond;
 
       return (PlanNode*)nested_loop;
     }
