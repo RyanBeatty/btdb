@@ -83,9 +83,11 @@ def test_select_with_joins():
     proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
     proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
     proc.stdin.write(b"insert into b (a) values ('hello');\n")
     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
     proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
 
     try:
         output, err = proc.communicate(timeout=2)
@@ -127,6 +129,10 @@ def test_select_with_joins():
         ===============
         hello\ttrue\t\t\t
         world\tfalse\t\t\t
+        btdb>     bar    baz    a
+        ===============
+        \t\t\t\tasdf\t
+        \t\t\t\tcab\t
         btdb>     a
         ===============
         btdb>     bar    baz    a
@@ -136,6 +142,11 @@ def test_select_with_joins():
         ===============
         hello\ttrue\thello\t
         world\tfalse\t\t\t
+        btdb>     bar    baz    a
+        ===============
+        \t\t\t\tasdf\t
+        \t\t\t\tcab\t
+        hello\ttrue\thello\t
         btdb> Shutting down btdb
         """
         ),

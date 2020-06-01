@@ -382,6 +382,11 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
       nested_loop->join_method = join_node->join_method;
       nested_loop->qual_condition = join_node->qual_cond;
 
+      if (nested_loop->join_method == JOIN_RIGHT) {
+        nested_loop->plan.left = right_plan;
+        nested_loop->plan.right = left_plan;
+      }
+
       return (PlanNode*)nested_loop;
     }
     case NRANGEVAR: {
