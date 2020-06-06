@@ -14,3 +14,9 @@ RangeTableEntries map to Sequential Scans. Inner join nodes map to nested loops 
 * When planning, iterate backwards over the join tree list and plan each node. (maybe building the jointree list
   is stupid, and I should just recursively process the join tree when planning?)
 * 
+
+
+Implementing Datum as uintptr_t
+* First step is probably changing NULL from being a datum type to being a flag passed into every expression function.
+Example: GetCol() should take a isNull out parameter. Expression code can just use the out parameter instead of having a whole
+separate type for null.
