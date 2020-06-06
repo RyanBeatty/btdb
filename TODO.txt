@@ -20,3 +20,6 @@ Implementing Datum as uintptr_t
 * First step is probably changing NULL from being a datum type to being a flag passed into every expression function.
 Example: GetCol() should take a isNull out parameter. Expression code can just use the out parameter instead of having a whole
 separate type for null.
+* Next would be annotating binexpr nodes with the type of the expression.
+* Can convert the data field of Datum to uintptr_t.
+* Remove type field from Datum and convert from struct to typedef of uintptr_t. Type info should come from tupledesc or binexpr node.
