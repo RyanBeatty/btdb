@@ -144,14 +144,14 @@ Tuple2* GetTuple(size_t table_index, size_t index) {
   return Tables[table_index][index];
 }
 
-void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
+void UpdateTuple(size_t table_index, Tuple2* tuple, size_t index) {
   if (index >= arrlen(Tables[table_index])) {
     return;
   }
 
   Tuple2* old_tuple = GetTuple(table_index, index);
   assert(old_tuple != NULL);
-  old_tuple->data = tuple;
+  *old_tuple = *tuple;
   return;
 }
 
