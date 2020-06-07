@@ -1,9 +1,9 @@
+#include "storage.h"
+
 #include <assert.h>
 #include <stdbool.h>
 
 #include "stb_ds.h"
-
-#include "storage.h"
 
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
@@ -124,8 +124,15 @@ Tuple* CopyTuple(Tuple* tuple) {
   return new_tuple;
 }
 
+Tuple2* FromTuple(Tuple* tuple) {
+  Tuple2* tuple2 = calloc(1, sizeof(Tuple2));
+  tuple2->data = tuple;
+  return tuple2;
+}
+
 void InsertTuple(size_t index, Tuple* tuple) {
-  arrpush(Tables[index], tuple);
+  Tuple2* t2 = FromTuple(tuple);
+  arrpush(Tables[index], t2);
   return;
 }
 
@@ -135,7 +142,7 @@ Tuple* GetTuple(size_t table_index, size_t index) {
   if (index >= arrlen(Tables[table_index])) {
     return NULL;
   }
-  return Tables[table_index][index];
+  return Tables[table_index][index]->data;
 }
 
 void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {

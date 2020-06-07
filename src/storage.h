@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 #include "types.h"
 
 typedef struct ColDesc {
@@ -36,7 +38,13 @@ Datum* GetCol(Tuple*, const char*);
 Tuple* SetCol(Tuple*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);
 
-typedef Tuple** Table;
+typedef struct Tuple2 {
+  TuplePair* data;
+} Tuple2;
+
+Tuple2* FromTuple(Tuple*);
+
+typedef Tuple2** Table;
 
 extern Table* Tables;  // sbarr
 
