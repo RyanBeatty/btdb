@@ -32,13 +32,9 @@ typedef struct TuplePair {
   Datum data;
 } TuplePair;
 
-typedef TuplePair Tuple;  // sbarr
-
 typedef struct Tuple2 {
   TuplePair* data;
 } Tuple2;
-
-Tuple2* FromTuple(Tuple*);
 
 Datum* GetCol(Tuple2*, const char*);
 void SetCol(Tuple2*, const char*, Datum);

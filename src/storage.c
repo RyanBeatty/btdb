@@ -8,12 +8,6 @@
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
 
-Tuple2* FromTuple(Tuple* tuple) {
-  Tuple2* tuple2 = calloc(1, sizeof(Tuple2));
-  tuple2->data = tuple;
-  return tuple2;
-}
-
 void InitSystemTables() {
   ColDesc* tuple_desc = NULL;
   ColDesc col1 = {.column_name = "bar", .type = T_STRING};
