@@ -17,13 +17,13 @@ void InitSystemTables() {
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
 
-  Tuple2* t1 = calloc(1, sizeof(Tuple2));
+  Tuple* t1 = calloc(1, sizeof(Tuple));
   SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
   SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  Tuple2* t2 = calloc(1, sizeof(Tuple2));
+  Tuple* t2 = calloc(1, sizeof(Tuple));
   SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
@@ -38,10 +38,10 @@ void InitSystemTables() {
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
-  Tuple2* table2_t1 = calloc(1, sizeof(Tuple2));
+  Tuple* table2_t1 = calloc(1, sizeof(Tuple));
   SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
   InsertTuple(1, table2_t1);
-  Tuple2* table2_t2 = calloc(1, sizeof(Tuple2));
+  Tuple* table2_t2 = calloc(1, sizeof(Tuple));
   SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
   InsertTuple(1, table2_t2);
 }
@@ -89,7 +89,7 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 //   return;
 // }
 
-Datum* GetCol(Tuple2* tuple, const char* col_name) {
+Datum* GetCol(Tuple* tuple, const char* col_name) {
   size_t i = 0;
   for (; i < arrlen(tuple->data); ++i) {
     if (strcmp(tuple->data[i].column_name, col_name) == 0) {
@@ -100,7 +100,7 @@ Datum* GetCol(Tuple2* tuple, const char* col_name) {
   return NULL;
 }
 
-void SetCol(Tuple2* tuple, const char* col_name, Datum data) {
+void SetCol(Tuple* tuple, const char* col_name, Datum data) {
   Datum* old_data = GetCol(tuple, col_name);
   if (old_data == NULL) {
     TuplePair pair;
@@ -114,8 +114,8 @@ void SetCol(Tuple2* tuple, const char* col_name, Datum data) {
   return;
 }
 
-Tuple2* CopyTuple(Tuple2* tuple) {
-  Tuple2* new_tuple = calloc(1, sizeof(Tuple2));
+Tuple* CopyTuple(Tuple* tuple) {
+  Tuple* new_tuple = calloc(1, sizeof(Tuple));
   TuplePair pair;
   for (size_t i = 0; i < arrlen(tuple->data); ++i) {
     pair = tuple->data[i];
@@ -124,12 +124,12 @@ Tuple2* CopyTuple(Tuple2* tuple) {
   return new_tuple;
 }
 
-void InsertTuple(size_t index, Tuple2* tuple) {
+void InsertTuple(size_t index, Tuple* tuple) {
   arrpush(Tables[index], tuple);
   return;
 }
 
-Tuple2* GetTuple(size_t table_index, size_t index) {
+Tuple* GetTuple(size_t table_index, size_t index) {
   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
   // arrdel() doesn't automatically clear the moved over spaces.
   if (index >= arrlen(Tables[table_index])) {
@@ -138,12 +138,12 @@ Tuple2* GetTuple(size_t table_index, size_t index) {
   return Tables[table_index][index];
 }
 
-void UpdateTuple(size_t table_index, Tuple2* tuple, size_t index) {
+void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
   if (index >= arrlen(Tables[table_index])) {
     return;
   }
 
-  Tuple2* old_tuple = GetTuple(table_index, index);
+  Tuple* old_tuple = GetTuple(table_index, index);
   assert(old_tuple != NULL);
   *old_tuple = *tuple;
   return;

@@ -8,7 +8,7 @@
 #include "stb_ds.h"
 #include "utils.h"
 
-Datum EvalExpr(ParseNode* node, Tuple2* cur_tuple) {
+Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
   switch (node->type) {
     case NLITERAL: {
       NLiteral* literal = (NLiteral*)node;
@@ -71,12 +71,12 @@ void SequentialScanInit(PlanNode* node) {
   scan->next_index = 0;
 }
 
-Tuple2* SequentialScan(PlanNode* node) {
+Tuple* SequentialScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   for (;;) {
-    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
       return NULL;
     }
@@ -97,14 +97,14 @@ Tuple2* SequentialScan(PlanNode* node) {
   }
 }
 
-Tuple2* InsertScan(PlanNode* node) {
+Tuple* InsertScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_INSERT);
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
     ParseNode** insert_tuple_expr = scan->insert_tuples[i];
-    Tuple2* new_tuple = calloc(1, sizeof(Tuple2));
+    Tuple* new_tuple = calloc(1, sizeof(Tuple));
     assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
     for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
@@ -118,13 +118,13 @@ Tuple2* InsertScan(PlanNode* node) {
   return NULL;
 }
 
-Tuple2* UpdateScan(PlanNode* node) {
+Tuple* UpdateScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
-    Tuple2* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl == NULL || cur_tpl->data == NULL) {
       return NULL;
     }
@@ -164,13 +164,13 @@ Tuple2* UpdateScan(PlanNode* node) {
   return NULL;
 }
 
-Tuple2* DeleteScan(PlanNode* node) {
+Tuple* DeleteScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
-    Tuple2* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
     if (cur_tpl == NULL || cur_tpl->data == NULL) {
       return NULL;
     }
@@ -193,13 +193,13 @@ Tuple2* DeleteScan(PlanNode* node) {
   return NULL;
 }
 
-Tuple2* SortScan(PlanNode* node) {
+Tuple* SortScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SORT);
   Sort* sort = (Sort*)node;
 
   if (!sort->is_sorted) {
-    Tuple2* cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
+    Tuple* cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
     while (cur_tuple != NULL) {
       arrpush(sort->plan.results, cur_tuple);
       cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
@@ -207,9 +207,9 @@ Tuple2* SortScan(PlanNode* node) {
 
     assert(sort->method == INSERTION_SORT);
     for (size_t i = 0; i < arrlen(sort->plan.results); ++i) {
-      Tuple2* insert_tuple = sort->plan.results[i];
+      Tuple* insert_tuple = sort->plan.results[i];
       for (size_t j = 0; j < i; ++j) {
-        Tuple2* cur_tuple = sort->plan.results[j];
+        Tuple* cur_tuple = sort->plan.results[j];
 
         Datum* left = GetCol(insert_tuple, sort->sort_col->identifier);
         Datum* right = GetCol(cur_tuple, sort->sort_col->identifier);
@@ -217,7 +217,7 @@ Tuple2* SortScan(PlanNode* node) {
         assert(right != NULL);
         Datum result = sort->cmp_func(*left, *right);
         if (*(bool*)result.data) {
-          Tuple2* swap = cur_tuple;
+          Tuple* swap = cur_tuple;
           sort->plan.results[j] = insert_tuple;
           sort->plan.results[i] = swap;
           insert_tuple = swap;
@@ -232,12 +232,12 @@ Tuple2* SortScan(PlanNode* node) {
     return NULL;
   }
 
-  Tuple2* cur_tuple = sort->plan.results[sort->next_index];
+  Tuple* cur_tuple = sort->plan.results[sort->next_index];
   ++sort->next_index;
   return cur_tuple;
 }
 
-Tuple2* NestedLoopScan(PlanNode* node) {
+Tuple* NestedLoopScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_NESTED_LOOP);
   assert(node->left != NULL);
@@ -256,7 +256,7 @@ Tuple2* NestedLoopScan(PlanNode* node) {
       no_result_for_cur_left_tuple = true;
     }
 
-    Tuple2* right_tuple = join->plan.right->get_next_func(join->plan.right);
+    Tuple* right_tuple = join->plan.right->get_next_func(join->plan.right);
     if (right_tuple == NULL) {
       join->need_new_left_tuple = true;
       switch (join->join_method) {
@@ -268,7 +268,7 @@ Tuple2* NestedLoopScan(PlanNode* node) {
           // If we have not found any result for the cur left tuple, need to make sure we
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
-            Tuple2* result_tuple = calloc(1, sizeof(Tuple2));
+            Tuple* result_tuple = calloc(1, sizeof(Tuple));
             for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
               SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
                      join->cur_left_tuple->data[i].data);
@@ -297,7 +297,7 @@ Tuple2* NestedLoopScan(PlanNode* node) {
     }
 
     // have both left and right, compute new result tuple.
-    Tuple2* result_tuple = calloc(1, sizeof(Tuple2));
+    Tuple* result_tuple = calloc(1, sizeof(Tuple));
     for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
       SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
              join->cur_left_tuple->data[i].data);
@@ -321,13 +321,13 @@ Tuple2* NestedLoopScan(PlanNode* node) {
   }
 }
 
-Tuple2* GetResult(PlanNode* node) {
+Tuple* GetResult(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_RESULT);
   assert(node->left != NULL);
   ResultScan* scan = (ResultScan*)node;
   for (;;) {
-    Tuple2* cur_tuple = scan->plan.left->get_next_func(node->left);
+    Tuple* cur_tuple = scan->plan.left->get_next_func(node->left);
     if (cur_tuple == NULL) {
       return NULL;
     }
@@ -350,7 +350,7 @@ Tuple2* GetResult(PlanNode* node) {
     }
 
     // Column projections.
-    Tuple2* result_tpl = calloc(1, sizeof(Tuple2));
+    Tuple* result_tpl = calloc(1, sizeof(Tuple));
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
       Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
       SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);

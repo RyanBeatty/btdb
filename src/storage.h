@@ -32,22 +32,22 @@ typedef struct TuplePair {
   Datum data;
 } TuplePair;
 
-typedef struct Tuple2 {
+typedef struct Tuple {
   TuplePair* data;
-} Tuple2;
+} Tuple;
 
-Datum* GetCol(Tuple2*, const char*);
-void SetCol(Tuple2*, const char*, Datum);
-Tuple2* CopyTuple(Tuple2*);
+Datum* GetCol(Tuple*, const char*);
+void SetCol(Tuple*, const char*, Datum);
+Tuple* CopyTuple(Tuple*);
 
-typedef Tuple2** Table;
+typedef Tuple** Table;
 
 extern Table* Tables;  // sbarr
 
-void InsertTuple(size_t, Tuple2*);
+void InsertTuple(size_t, Tuple*);
 // TODO: This appears to be unused.
-void UpdateTuple(size_t, Tuple2*, size_t);
-Tuple2* GetTuple(size_t, size_t);
+void UpdateTuple(size_t, Tuple*, size_t);
+Tuple* GetTuple(size_t, size_t);
 void DeleteHeapTuple(size_t, size_t);
 
 void CreateTable(TableDef*);
