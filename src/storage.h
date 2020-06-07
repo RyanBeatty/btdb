@@ -42,7 +42,7 @@ Tuple2* FromTuple(Tuple*);
 
 Datum* GetCol(Tuple2*, const char*);
 void SetCol(Tuple2*, const char*, Datum);
-Tuple* CopyTuple(Tuple*);
+Tuple2* CopyTuple(Tuple2*);
 
 typedef Tuple2** Table;
 

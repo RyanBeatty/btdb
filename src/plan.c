@@ -158,7 +158,7 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(updated_value.type == data->type);
       *data = updated_value;
     }
-    return CopyTuple(cur_tpl->data);
+    return CopyTuple(cur_tpl)->data;
   }
 
   return NULL;

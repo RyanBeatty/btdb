@@ -120,14 +120,14 @@ void SetCol(Tuple2* tuple, const char* col_name, Datum data) {
   return;
 }
 
-Tuple* CopyTuple(Tuple* tuple) {
+Tuple2* CopyTuple(Tuple2* tuple) {
   Tuple2* new_tuple = calloc(1, sizeof(Tuple2));
   TuplePair pair;
-  for (size_t i = 0; i < arrlen(tuple); ++i) {
-    pair = tuple[i];
+  for (size_t i = 0; i < arrlen(tuple->data); ++i) {
+    pair = tuple->data[i];
     SetCol(new_tuple, pair.column_name, pair.data);
   }
-  return new_tuple->data;
+  return new_tuple;
 }
 
 void InsertTuple(size_t index, Tuple2* tuple) {
