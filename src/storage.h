@@ -41,7 +41,7 @@ typedef struct Tuple2 {
 Tuple2* FromTuple(Tuple*);
 
 Datum* GetCol(Tuple2*, const char*);
-Tuple* SetCol(Tuple*, const char*, Datum);
+void SetCol(Tuple2*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);
 
 typedef Tuple2** Table;

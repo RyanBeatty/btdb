@@ -104,16 +104,16 @@ Tuple* InsertScan(PlanNode* node) {
   assert(scan->cmd == CMD_INSERT);
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
     ParseNode** insert_tuple_expr = scan->insert_tuples[i];
-    Tuple* new_tuple = NULL;
+    Tuple2* new_tuple = calloc(1, sizeof(Tuple2));
     assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
     for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
       ColDesc col_desc = scan->plan.table_def->tuple_desc[j];
       Datum data = EvalExpr(col_expr, NULL);
-      new_tuple = SetCol(new_tuple, col_desc.column_name, data);
+      SetCol(new_tuple, col_desc.column_name, data);
     }
     assert(new_tuple != NULL);
-    InsertTuple(scan->plan.table_def->index, FromTuple(new_tuple));
+    InsertTuple(scan->plan.table_def->index, new_tuple);
   }
   return NULL;
 }
@@ -268,10 +268,10 @@ Tuple* NestedLoopScan(PlanNode* node) {
           // If we have not found any result for the cur left tuple, need to make sure we
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
-            Tuple* result_tuple = NULL;
+            Tuple2* result_tuple = calloc(1, sizeof(Tuple2));
             for (size_t i = 0; i < arrlen(join->cur_left_tuple); ++i) {
-              result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name,
-                                    join->cur_left_tuple[i].data);
+              SetCol(result_tuple, join->cur_left_tuple[i].column_name,
+                     join->cur_left_tuple[i].data);
             }
             // Fill in right tuple cols with nulls.
             const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
@@ -279,11 +279,10 @@ Tuple* NestedLoopScan(PlanNode* node) {
               Datum* d = GetCol(FromTuple(join->cur_left_tuple), tuple_desc[i].column_name);
               if (d == NULL) {
                 // add null to right tuple.
-                result_tuple =
-                    SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
+                SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
               }
             }
-            return result_tuple;
+            return result_tuple->data;
           } else {
             continue;
           }
@@ -298,17 +297,16 @@ Tuple* NestedLoopScan(PlanNode* node) {
     }
 
     // have both left and right, compute new result tuple.
-    Tuple* result_tuple = NULL;
+    Tuple2* result_tuple = calloc(1, sizeof(Tuple2));
     for (size_t i = 0; i < arrlen(join->cur_left_tuple); ++i) {
-      result_tuple = SetCol(result_tuple, join->cur_left_tuple[i].column_name,
-                            join->cur_left_tuple[i].data);
+      SetCol(result_tuple, join->cur_left_tuple[i].column_name, join->cur_left_tuple[i].data);
     }
     for (size_t i = 0; i < arrlen(right_tuple); ++i) {
-      result_tuple = SetCol(result_tuple, right_tuple[i].column_name, right_tuple[i].data);
+      SetCol(result_tuple, right_tuple[i].column_name, right_tuple[i].data);
     }
 
     if (join->qual_condition != NULL) {
-      Datum result_val = EvalExpr(join->qual_condition, FromTuple(result_tuple));
+      Datum result_val = EvalExpr(join->qual_condition, result_tuple);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -318,7 +316,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
     }
 
     no_result_for_cur_left_tuple = false;
-    return result_tuple;
+    return result_tuple->data;
   }
 }
 
@@ -351,12 +349,12 @@ Tuple* GetResult(PlanNode* node) {
     }
 
     // Column projections.
-    Tuple* result_tpl = NULL;
+    Tuple2* result_tpl = calloc(1, sizeof(Tuple2));
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
       Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, FromTuple(cur_tuple));
-      result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
+      SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
     }
-    return result_tpl;
+    return result_tpl->data;
   }
 }
 

@@ -23,20 +23,20 @@ void InitSystemTables() {
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
 
-  Tuple* t1 = NULL;
-  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
+  Tuple2* t1 = calloc(1, sizeof(Tuple2));
+  SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
-  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
+  SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  Tuple* t2 = NULL;
-  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
+  Tuple2* t2 = calloc(1, sizeof(Tuple2));
+  SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
-  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
+  SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  InsertTuple(0, FromTuple(t1));
-  InsertTuple(0, FromTuple(t2));
+  InsertTuple(0, t1);
+  InsertTuple(0, t2);
 
   ColDesc* table2_tuple_desc = NULL;
   ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
@@ -44,12 +44,12 @@ void InitSystemTables() {
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
-  Tuple* table2_t1 = NULL;
-  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
-  InsertTuple(1, FromTuple(table2_t1));
-  Tuple* table2_t2 = NULL;
-  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
-  InsertTuple(1, FromTuple(table2_t2));
+  Tuple2* table2_t1 = calloc(1, sizeof(Tuple2));
+  SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
+  InsertTuple(1, table2_t1);
+  Tuple2* table2_t2 = calloc(1, sizeof(Tuple2));
+  SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
+  InsertTuple(1, table2_t2);
 }
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
@@ -106,28 +106,28 @@ Datum* GetCol(Tuple2* tuple, const char* col_name) {
   return NULL;
 }
 
-Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
-  Datum* old_data = GetCol(FromTuple(tuple), col_name);
+void SetCol(Tuple2* tuple, const char* col_name, Datum data) {
+  Datum* old_data = GetCol(tuple, col_name);
   if (old_data == NULL) {
     TuplePair pair;
     pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));
     strncpy(pair.column_name, col_name, strlen(col_name));
     pair.data = data;
-    arrpush(tuple, pair);
-    return tuple;
+    arrpush(tuple->data, pair);
+    return;
   }
   *old_data = data;
-  return tuple;
+  return;
 }
 
 Tuple* CopyTuple(Tuple* tuple) {
-  Tuple* new_tuple = NULL;
+  Tuple2* new_tuple = calloc(1, sizeof(Tuple2));
   TuplePair pair;
   for (size_t i = 0; i < arrlen(tuple); ++i) {
     pair = tuple[i];
-    new_tuple = SetCol(new_tuple, pair.column_name, pair.data);
+    SetCol(new_tuple, pair.column_name, pair.data);
   }
-  return new_tuple;
+  return new_tuple->data;
 }
 
 void InsertTuple(size_t index, Tuple2* tuple) {
