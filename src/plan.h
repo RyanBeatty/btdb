@@ -21,7 +21,7 @@ typedef struct PlanNode {
   struct PlanNode* left;
   struct PlanNode* right;
   void (*init_func)(struct PlanNode*);
-  Tuple* (*get_next_func)(struct PlanNode*);
+  Tuple2* (*get_next_func)(struct PlanNode*);
 } PlanNode;
 
 typedef struct SeqScan {
@@ -55,7 +55,7 @@ typedef struct Sort {
 
 typedef struct NestedLoop {
   PlanNode plan;
-  Tuple* cur_left_tuple;
+  Tuple2* cur_left_tuple;
   bool need_new_left_tuple;
   JoinMethod join_method;
   ParseNode* qual_condition;

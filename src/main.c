@@ -17,7 +17,7 @@
 
 typedef struct Result {
   const char** columns;
-  Tuple** tuples;  // stb_arr
+  Tuple2** tuples;  // stb_arr
 } Result;
 
 Result ExecPlan(PlanNode* plan) {
@@ -27,7 +27,7 @@ Result ExecPlan(PlanNode* plan) {
     arrpush(results.columns, plan->target_list[i]->column_name);
   }
   results.tuples = NULL;
-  Tuple* tuple = plan->get_next_func(plan);
+  Tuple2* tuple = plan->get_next_func(plan);
   while (tuple != NULL) {
     arrpush(results.tuples, tuple);
     tuple = plan->get_next_func(plan);
@@ -43,10 +43,10 @@ void PrintResults(Result results) {
     printf("\n");
     printf("===============\n");
     for (size_t i = 0; i < arrlen(results.tuples); ++i) {
-      Tuple* mtuple = results.tuples[i];
+      Tuple2* mtuple = results.tuples[i];
       assert(mtuple != NULL);
       for (size_t i = 0; i < arrlen(results.columns); ++i) {
-        Datum* data = GetCol(FromTuple(mtuple), results.columns[i]);
+        Datum* data = GetCol(mtuple, results.columns[i]);
         if (data != NULL) {
           // TODO(ryan): This is some hacky bs to be able to print this as a string.
           // I'm going to need to do an overhaul of alot of this code in the future.
