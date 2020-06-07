@@ -113,7 +113,7 @@ Tuple* InsertScan(PlanNode* node) {
       new_tuple = SetCol(new_tuple, col_desc.column_name, data);
     }
     assert(new_tuple != NULL);
-    InsertTuple(scan->plan.table_def->index, new_tuple);
+    InsertTuple(scan->plan.table_def->index, FromTuple(new_tuple));
   }
   return NULL;
 }

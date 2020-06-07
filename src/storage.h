@@ -48,7 +48,7 @@ typedef Tuple2** Table;
 
 extern Table* Tables;  // sbarr
 
-void InsertTuple(size_t, Tuple*);
+void InsertTuple(size_t, Tuple2*);
 void UpdateTuple(size_t, Tuple*, size_t);
 Tuple* GetTuple(size_t, size_t);
 void DeleteHeapTuple(size_t, size_t);

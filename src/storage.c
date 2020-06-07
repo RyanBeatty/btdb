@@ -8,6 +8,12 @@
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
 
+Tuple2* FromTuple(Tuple* tuple) {
+  Tuple2* tuple2 = calloc(1, sizeof(Tuple2));
+  tuple2->data = tuple;
+  return tuple2;
+}
+
 void InitSystemTables() {
   ColDesc* tuple_desc = NULL;
   ColDesc col1 = {.column_name = "bar", .type = T_STRING};
@@ -29,8 +35,8 @@ void InitSystemTables() {
   *bool_lit = false;
   t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  InsertTuple(0, t1);
-  InsertTuple(0, t2);
+  InsertTuple(0, FromTuple(t1));
+  InsertTuple(0, FromTuple(t2));
 
   ColDesc* table2_tuple_desc = NULL;
   ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
@@ -40,10 +46,10 @@ void InitSystemTables() {
 
   Tuple* table2_t1 = NULL;
   table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
-  InsertTuple(1, table2_t1);
+  InsertTuple(1, FromTuple(table2_t1));
   Tuple* table2_t2 = NULL;
   table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
-  InsertTuple(1, table2_t2);
+  InsertTuple(1, FromTuple(table2_t2));
 }
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
@@ -124,15 +130,8 @@ Tuple* CopyTuple(Tuple* tuple) {
   return new_tuple;
 }
 
-Tuple2* FromTuple(Tuple* tuple) {
-  Tuple2* tuple2 = calloc(1, sizeof(Tuple2));
-  tuple2->data = tuple;
-  return tuple2;
-}
-
-void InsertTuple(size_t index, Tuple* tuple) {
-  Tuple2* t2 = FromTuple(tuple);
-  arrpush(Tables[index], t2);
+void InsertTuple(size_t index, Tuple2* tuple) {
+  arrpush(Tables[index], tuple);
   return;
 }
 
