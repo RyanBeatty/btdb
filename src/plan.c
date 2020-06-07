@@ -76,10 +76,11 @@ Tuple* SequentialScan(PlanNode* node) {
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl == NULL) {
+    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
+    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
       return NULL;
     }
+    Tuple* cur_tpl = cur_tpl2->data;
     ++scan->next_index;
 
     // Evaluate predicate if any.
@@ -124,10 +125,11 @@ Tuple* UpdateScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl == NULL) {
+    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
+    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
       return NULL;
     }
+    Tuple* cur_tpl = cur_tpl2->data;
     ++scan->next_index;
 
     // Evaluate predicate if any.
@@ -170,10 +172,11 @@ Tuple* DeleteScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl == NULL) {
+    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
+    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
       return NULL;
     }
+    Tuple* cur_tpl = cur_tpl2->data;
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {

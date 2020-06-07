@@ -135,13 +135,13 @@ void InsertTuple(size_t index, Tuple2* tuple) {
   return;
 }
 
-Tuple* GetTuple(size_t table_index, size_t index) {
+Tuple2* GetTuple(size_t table_index, size_t index) {
   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
   // arrdel() doesn't automatically clear the moved over spaces.
   if (index >= arrlen(Tables[table_index])) {
     return NULL;
   }
-  return Tables[table_index][index]->data;
+  return Tables[table_index][index];
 }
 
 void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
@@ -149,9 +149,9 @@ void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
     return;
   }
 
-  Tuple* old_tuple = GetTuple(table_index, index);
+  Tuple2* old_tuple = GetTuple(table_index, index);
   assert(old_tuple != NULL);
-  *old_tuple = *tuple;
+  old_tuple->data = tuple;
   return;
 }
 
