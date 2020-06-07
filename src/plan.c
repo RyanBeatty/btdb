@@ -8,7 +8,7 @@
 #include "stb_ds.h"
 #include "utils.h"
 
-Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
+Datum EvalExpr(ParseNode* node, Tuple2* cur_tuple) {
   switch (node->type) {
     case NLITERAL: {
       NLiteral* literal = (NLiteral*)node;
@@ -39,7 +39,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      Datum* data = GetCol(FromTuple((Tuple*)cur_tuple), identifier->identifier);
+      Datum* data = GetCol(cur_tuple, identifier->identifier);
       assert(data != NULL);
       return *data;
     }
@@ -80,12 +80,11 @@ Tuple* SequentialScan(PlanNode* node) {
     if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
       return NULL;
     }
-    Tuple* cur_tpl = cur_tpl2->data;
     ++scan->next_index;
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tpl);
+      Datum result_val = EvalExpr(scan->where_clause, cur_tpl2);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -94,7 +93,7 @@ Tuple* SequentialScan(PlanNode* node) {
       }
     }
 
-    return cur_tpl;
+    return cur_tpl2->data;
   }
 }
 
@@ -125,11 +124,10 @@ Tuple* UpdateScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
-    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
+    Tuple2* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    if (cur_tpl == NULL || cur_tpl->data == NULL) {
       return NULL;
     }
-    Tuple* cur_tpl = cur_tpl2->data;
     ++scan->next_index;
 
     // Evaluate predicate if any.
@@ -154,13 +152,13 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(col->type == NIDENTIFIER);
       assert(col->identifier != NULL);
 
-      Datum* data = GetCol(FromTuple(cur_tpl), col->identifier);
+      Datum* data = GetCol(cur_tpl, col->identifier);
       assert(data != NULL);
       Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
       assert(updated_value.type == data->type);
       *data = updated_value;
     }
-    return CopyTuple(cur_tpl);
+    return CopyTuple(cur_tpl->data);
   }
 
   return NULL;
@@ -172,11 +170,10 @@ Tuple* DeleteScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
-    Tuple2* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
+    Tuple2* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    if (cur_tpl == NULL || cur_tpl->data == NULL) {
       return NULL;
     }
-    Tuple* cur_tpl = cur_tpl2->data;
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
@@ -311,7 +308,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
     }
 
     if (join->qual_condition != NULL) {
-      Datum result_val = EvalExpr(join->qual_condition, result_tuple);
+      Datum result_val = EvalExpr(join->qual_condition, FromTuple(result_tuple));
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -338,7 +335,7 @@ Tuple* GetResult(PlanNode* node) {
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tuple);
+      Datum result_val = EvalExpr(scan->where_clause, FromTuple(cur_tuple));
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -356,7 +353,7 @@ Tuple* GetResult(PlanNode* node) {
     // Column projections.
     Tuple* result_tpl = NULL;
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-      Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
+      Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, FromTuple(cur_tuple));
       result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
     }
     return result_tpl;
