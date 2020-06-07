@@ -95,11 +95,11 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 //   return;
 // }
 
-Datum* GetCol(Tuple* tuple, const char* col_name) {
+Datum* GetCol(Tuple2* tuple, const char* col_name) {
   size_t i = 0;
-  for (; i < arrlen(tuple); ++i) {
-    if (strcmp(tuple[i].column_name, col_name) == 0) {
-      return &tuple[i].data;
+  for (; i < arrlen(tuple->data); ++i) {
+    if (strcmp(tuple->data[i].column_name, col_name) == 0) {
+      return &tuple->data[i].data;
     }
   }
 
@@ -107,7 +107,7 @@ Datum* GetCol(Tuple* tuple, const char* col_name) {
 }
 
 Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
-  Datum* old_data = GetCol(tuple, col_name);
+  Datum* old_data = GetCol(FromTuple(tuple), col_name);
   if (old_data == NULL) {
     TuplePair pair;
     pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));

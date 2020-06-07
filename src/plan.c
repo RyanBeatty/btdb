@@ -39,7 +39,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      Datum* data = GetCol((Tuple*)cur_tuple, identifier->identifier);
+      Datum* data = GetCol(FromTuple((Tuple*)cur_tuple), identifier->identifier);
       assert(data != NULL);
       return *data;
     }
@@ -154,7 +154,7 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(col->type == NIDENTIFIER);
       assert(col->identifier != NULL);
 
-      Datum* data = GetCol(cur_tpl, col->identifier);
+      Datum* data = GetCol(FromTuple(cur_tpl), col->identifier);
       assert(data != NULL);
       Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
       assert(updated_value.type == data->type);
@@ -214,8 +214,8 @@ Tuple* SortScan(PlanNode* node) {
       for (size_t j = 0; j < i; ++j) {
         Tuple* cur_tuple = sort->plan.results[j];
 
-        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier);
-        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier);
+        Datum* left = GetCol(FromTuple(insert_tuple), sort->sort_col->identifier);
+        Datum* right = GetCol(FromTuple(cur_tuple), sort->sort_col->identifier);
         assert(left != NULL);
         assert(right != NULL);
         Datum result = sort->cmp_func(*left, *right);
@@ -279,7 +279,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
             // Fill in right tuple cols with nulls.
             const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
             for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
-              Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
+              Datum* d = GetCol(FromTuple(join->cur_left_tuple), tuple_desc[i].column_name);
               if (d == NULL) {
                 // add null to right tuple.
                 result_tuple =

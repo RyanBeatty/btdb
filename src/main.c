@@ -6,12 +6,11 @@
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
-#include "stb_ds.h"
-
 #include "analyzer.h"
 #include "node.h"
 #include "plan.h"
 #include "sql/driver.h"
+#include "stb_ds.h"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"
@@ -47,7 +46,7 @@ void PrintResults(Result results) {
       Tuple* mtuple = results.tuples[i];
       assert(mtuple != NULL);
       for (size_t i = 0; i < arrlen(results.columns); ++i) {
-        Datum* data = GetCol(mtuple, results.columns[i]);
+        Datum* data = GetCol(FromTuple(mtuple), results.columns[i]);
         if (data != NULL) {
           // TODO(ryan): This is some hacky bs to be able to print this as a string.
           // I'm going to need to do an overhaul of alot of this code in the future.

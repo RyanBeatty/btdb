@@ -34,15 +34,15 @@ typedef struct TuplePair {
 
 typedef TuplePair Tuple;  // sbarr
 
-Datum* GetCol(Tuple*, const char*);
-Tuple* SetCol(Tuple*, const char*, Datum);
-Tuple* CopyTuple(Tuple*);
-
 typedef struct Tuple2 {
   TuplePair* data;
 } Tuple2;
 
 Tuple2* FromTuple(Tuple*);
+
+Datum* GetCol(Tuple2*, const char*);
+Tuple* SetCol(Tuple*, const char*, Datum);
+Tuple* CopyTuple(Tuple*);
 
 typedef Tuple2** Table;
 
