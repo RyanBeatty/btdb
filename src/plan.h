@@ -16,7 +16,7 @@ typedef enum PLanNodeType {
 typedef struct PlanNode {
   PlanNodeType type;
   TargetRef** target_list;  // std_arr.
-  Tuple** results;          // 2d stb_arr.
+  Tuple2** results;         // 2d stb_arr.
   TableDef* table_def;
   struct PlanNode* left;
   struct PlanNode* right;

@@ -201,18 +201,18 @@ Tuple* SortScan(PlanNode* node) {
   if (!sort->is_sorted) {
     Tuple* cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
     while (cur_tuple != NULL) {
-      arrpush(sort->plan.results, cur_tuple);
+      arrpush(sort->plan.results, FromTuple(cur_tuple));
       cur_tuple = sort->plan.left->get_next_func(sort->plan.left);
     }
 
     assert(sort->method == INSERTION_SORT);
     for (size_t i = 0; i < arrlen(sort->plan.results); ++i) {
-      Tuple* insert_tuple = sort->plan.results[i];
+      Tuple2* insert_tuple = sort->plan.results[i];
       for (size_t j = 0; j < i; ++j) {
-        Tuple* cur_tuple = sort->plan.results[j];
+        Tuple2* cur_tuple = sort->plan.results[j];
 
-        Datum* left = GetCol(FromTuple(insert_tuple), sort->sort_col->identifier);
-        Datum* right = GetCol(FromTuple(cur_tuple), sort->sort_col->identifier);
+        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier);
+        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier);
         assert(left != NULL);
         assert(right != NULL);
         Datum result = sort->cmp_func(*left, *right);
@@ -232,9 +232,9 @@ Tuple* SortScan(PlanNode* node) {
     return NULL;
   }
 
-  Tuple* cur_tuple = sort->plan.results[sort->next_index];
+  Tuple2* cur_tuple = sort->plan.results[sort->next_index];
   ++sort->next_index;
-  return cur_tuple;
+  return cur_tuple->data;
 }
 
 Tuple* NestedLoopScan(PlanNode* node) {
