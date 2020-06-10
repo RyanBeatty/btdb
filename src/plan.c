@@ -104,7 +104,7 @@ Tuple* InsertScan(PlanNode* node) {
   assert(scan->cmd == CMD_INSERT);
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
     ParseNode** insert_tuple_expr = scan->insert_tuples[i];
-    Tuple* new_tuple = calloc(1, sizeof(Tuple));
+    Tuple* new_tuple = MakeTuple();
     assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
     for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
@@ -268,7 +268,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
           // If we have not found any result for the cur left tuple, need to make sure we
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
-            Tuple* result_tuple = calloc(1, sizeof(Tuple));
+            Tuple* result_tuple = MakeTuple();
             for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
               SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
                      join->cur_left_tuple->data[i].data);
@@ -297,7 +297,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
     }
 
     // have both left and right, compute new result tuple.
-    Tuple* result_tuple = calloc(1, sizeof(Tuple));
+    Tuple* result_tuple = MakeTuple();
     for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
       SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
              join->cur_left_tuple->data[i].data);
@@ -350,7 +350,7 @@ Tuple* GetResult(PlanNode* node) {
     }
 
     // Column projections.
-    Tuple* result_tpl = calloc(1, sizeof(Tuple));
+    Tuple* result_tpl = MakeTuple();
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
       Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
       SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);

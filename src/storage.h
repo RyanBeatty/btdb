@@ -36,6 +36,7 @@ typedef struct Tuple {
   TuplePair* data;
 } Tuple;
 
+Tuple* MakeTuple();
 Datum* GetCol(Tuple*, const char*);
 void SetCol(Tuple*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);

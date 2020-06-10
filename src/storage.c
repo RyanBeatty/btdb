@@ -8,6 +8,11 @@
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
 
+Tuple* MakeTuple() {
+  Tuple* t = calloc(1, sizeof(Tuple));
+  return t;
+}
+
 void InitSystemTables() {
   ColDesc* tuple_desc = NULL;
   ColDesc col1 = {.column_name = "bar", .type = T_STRING};
@@ -17,13 +22,13 @@ void InitSystemTables() {
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
 
-  Tuple* t1 = calloc(1, sizeof(Tuple));
+  Tuple* t1 = MakeTuple();
   SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
   SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  Tuple* t2 = calloc(1, sizeof(Tuple));
+  Tuple* t2 = MakeTuple();
   SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
@@ -38,10 +43,10 @@ void InitSystemTables() {
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
-  Tuple* table2_t1 = calloc(1, sizeof(Tuple));
+  Tuple* table2_t1 = MakeTuple();
   SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
   InsertTuple(1, table2_t1);
-  Tuple* table2_t2 = calloc(1, sizeof(Tuple));
+  Tuple* table2_t2 = MakeTuple();
   SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
   InsertTuple(1, table2_t2);
 }
@@ -115,7 +120,7 @@ void SetCol(Tuple* tuple, const char* col_name, Datum data) {
 }
 
 Tuple* CopyTuple(Tuple* tuple) {
-  Tuple* new_tuple = calloc(1, sizeof(Tuple));
+  Tuple* new_tuple = MakeTuple();
   TuplePair pair;
   for (size_t i = 0; i < arrlen(tuple->data); ++i) {
     pair = tuple->data[i];
