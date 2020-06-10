@@ -33,6 +33,7 @@ typedef struct TuplePair {
 } TuplePair;
 
 typedef struct Tuple {
+  size_t num_cols;
   TuplePair* data;
 } Tuple;
 

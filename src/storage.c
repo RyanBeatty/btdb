@@ -96,7 +96,7 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 
 Datum* GetCol(Tuple* tuple, const char* col_name) {
   size_t i = 0;
-  for (; i < arrlen(tuple->data); ++i) {
+  for (; i < tuple->num_cols; ++i) {
     if (strcmp(tuple->data[i].column_name, col_name) == 0) {
       return &tuple->data[i].data;
     }
@@ -113,6 +113,7 @@ void SetCol(Tuple* tuple, const char* col_name, Datum data) {
     strncpy(pair.column_name, col_name, strlen(col_name));
     pair.data = data;
     arrpush(tuple->data, pair);
+    ++tuple->num_cols;
     return;
   }
   *old_data = data;
@@ -122,7 +123,7 @@ void SetCol(Tuple* tuple, const char* col_name, Datum data) {
 Tuple* CopyTuple(Tuple* tuple) {
   Tuple* new_tuple = MakeTuple();
   TuplePair pair;
-  for (size_t i = 0; i < arrlen(tuple->data); ++i) {
+  for (size_t i = 0; i < tuple->num_cols; ++i) {
     pair = tuple->data[i];
     SetCol(new_tuple, pair.column_name, pair.data);
   }
