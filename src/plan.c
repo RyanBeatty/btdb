@@ -110,7 +110,7 @@ Tuple* InsertScan(PlanNode* node) {
       ParseNode* col_expr = insert_tuple_expr[j];
       ColDesc col_desc = scan->plan.table_def->tuple_desc[j];
       Datum data = EvalExpr(col_expr, NULL);
-      SetCol(new_tuple, col_desc.column_name, data);
+      new_tuple = SetCol(new_tuple, col_desc.column_name, data);
     }
     assert(new_tuple != NULL);
     InsertTuple(scan->plan.table_def->index, new_tuple);
@@ -269,9 +269,9 @@ Tuple* NestedLoopScan(PlanNode* node) {
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
             Tuple* result_tuple = MakeTuple();
-            for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
-              SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
-                     join->cur_left_tuple->data[i].data);
+            for (size_t i = 0; i < join->cur_left_tuple->num_cols; ++i) {
+              result_tuple = SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
+                                    join->cur_left_tuple->data[i].data);
             }
             // Fill in right tuple cols with nulls.
             const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
@@ -279,7 +279,8 @@ Tuple* NestedLoopScan(PlanNode* node) {
               Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
               if (d == NULL) {
                 // add null to right tuple.
-                SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
+                result_tuple =
+                    SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
               }
             }
             return result_tuple;
@@ -298,12 +299,13 @@ Tuple* NestedLoopScan(PlanNode* node) {
 
     // have both left and right, compute new result tuple.
     Tuple* result_tuple = MakeTuple();
-    for (size_t i = 0; i < arrlen(join->cur_left_tuple->data); ++i) {
-      SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
-             join->cur_left_tuple->data[i].data);
+    for (size_t i = 0; i < join->cur_left_tuple->num_cols; ++i) {
+      result_tuple = SetCol(result_tuple, join->cur_left_tuple->data[i].column_name,
+                            join->cur_left_tuple->data[i].data);
     }
-    for (size_t i = 0; i < arrlen(right_tuple->data); ++i) {
-      SetCol(result_tuple, right_tuple->data[i].column_name, right_tuple->data[i].data);
+    for (size_t i = 0; i < right_tuple->num_cols; ++i) {
+      result_tuple =
+          SetCol(result_tuple, right_tuple->data[i].column_name, right_tuple->data[i].data);
     }
 
     if (join->qual_condition != NULL) {
@@ -353,7 +355,7 @@ Tuple* GetResult(PlanNode* node) {
     Tuple* result_tpl = MakeTuple();
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
       Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
-      SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
+      result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
     }
     return result_tpl;
   }

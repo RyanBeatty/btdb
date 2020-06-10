@@ -23,16 +23,16 @@ void InitSystemTables() {
   CreateTable(&table_def);
 
   Tuple* t1 = MakeTuple();
-  SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
+  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
-  SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
+  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
   Tuple* t2 = MakeTuple();
-  SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
+  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
-  SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
+  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
 
   InsertTuple(0, t1);
   InsertTuple(0, t2);
@@ -44,10 +44,10 @@ void InitSystemTables() {
   CreateTable(&table_def2);
 
   Tuple* table2_t1 = MakeTuple();
-  SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
+  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
   InsertTuple(1, table2_t1);
   Tuple* table2_t2 = MakeTuple();
-  SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
+  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
   InsertTuple(1, table2_t2);
 }
 
@@ -105,19 +105,21 @@ Datum* GetCol(Tuple* tuple, const char* col_name) {
   return NULL;
 }
 
-void SetCol(Tuple* tuple, const char* col_name, Datum data) {
+Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
   Datum* old_data = GetCol(tuple, col_name);
   if (old_data == NULL) {
     TuplePair pair;
     pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));
     strncpy(pair.column_name, col_name, strlen(col_name));
     pair.data = data;
-    arrpush(tuple->data, pair);
+
     ++tuple->num_cols;
-    return;
+    tuple = realloc(tuple, sizeof(Tuple) + tuple->num_cols * sizeof(TuplePair));
+    tuple->data[tuple->num_cols - 1] = pair;
+    return tuple;
   }
   *old_data = data;
-  return;
+  return tuple;
 }
 
 Tuple* CopyTuple(Tuple* tuple) {
@@ -125,7 +127,7 @@ Tuple* CopyTuple(Tuple* tuple) {
   TuplePair pair;
   for (size_t i = 0; i < tuple->num_cols; ++i) {
     pair = tuple->data[i];
-    SetCol(new_tuple, pair.column_name, pair.data);
+    new_tuple = SetCol(new_tuple, pair.column_name, pair.data);
   }
   return new_tuple;
 }

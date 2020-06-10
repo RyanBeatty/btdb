@@ -34,12 +34,12 @@ typedef struct TuplePair {
 
 typedef struct Tuple {
   size_t num_cols;
-  TuplePair* data;
+  TuplePair data[];
 } Tuple;
 
 Tuple* MakeTuple();
 Datum* GetCol(Tuple*, const char*);
-void SetCol(Tuple*, const char*, Datum);
+Tuple* SetCol(Tuple*, const char*, Datum);
 Tuple* CopyTuple(Tuple*);
 
 typedef Tuple** Table;
