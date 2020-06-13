@@ -125,11 +125,10 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data, TableDef* table_de
 
 Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
   Tuple* new_tuple = MakeTuple(table_def);
-  TuplePair pair;
-  // TODO: change to iterate over table def.
-  for (size_t i = 0; i < tuple->num_cols; ++i) {
-    pair = tuple->data[i];
-    new_tuple = SetCol(new_tuple, pair.column_name, pair.data, table_def);
+  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    const char* col_name = table_def->tuple_desc[i].column_name;
+    Datum* col_data = GetCol(tuple, col_name, table_def);
+    new_tuple = SetCol(new_tuple, col_name, *col_data, table_def);
   }
   return new_tuple;
 }
