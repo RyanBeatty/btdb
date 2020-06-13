@@ -18,10 +18,12 @@
 typedef struct Result {
   const char** columns;
   Tuple** tuples;  // stb_arr
+  TableDef* table_def;
 } Result;
 
 Result ExecPlan(PlanNode* plan) {
   Result results;
+  results.table_def = plan->table_def;
   results.columns = NULL;
   for (size_t i = 0; i < arrlen(plan->target_list); ++i) {
     arrpush(results.columns, plan->target_list[i]->column_name);
@@ -46,7 +48,7 @@ void PrintResults(Result results) {
       Tuple* mtuple = results.tuples[i];
       assert(mtuple != NULL);
       for (size_t i = 0; i < arrlen(results.columns); ++i) {
-        Datum* data = GetCol(mtuple, results.columns[i]);
+        Datum* data = GetCol(mtuple, results.columns[i], results.table_def);
         if (data != NULL) {
           // TODO(ryan): This is some hacky bs to be able to print this as a string.
           // I'm going to need to do an overhaul of alot of this code in the future.

@@ -38,8 +38,8 @@ typedef struct Tuple {
 } Tuple;
 
 Tuple* MakeTuple(TableDef*);
-Datum* GetCol(Tuple*, const char*);
-Tuple* SetCol(Tuple*, const char*, Datum);
+Datum* GetCol(Tuple*, const char*, TableDef*);
+Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
 Tuple* CopyTuple(Tuple*, TableDef*);
 
 typedef Tuple** Table;

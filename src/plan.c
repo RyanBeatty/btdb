@@ -8,7 +8,7 @@
 #include "stb_ds.h"
 #include "utils.h"
 
-Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
+Datum EvalExpr(ParseNode* node, Tuple* cur_tuple, TableDef* table_def) {
   switch (node->type) {
     case NLITERAL: {
       NLiteral* literal = (NLiteral*)node;
@@ -39,7 +39,7 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      Datum* data = GetCol(cur_tuple, identifier->identifier);
+      Datum* data = GetCol(cur_tuple, identifier->identifier, table_def);
       assert(data != NULL);
       return *data;
     }
@@ -48,8 +48,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple) {
       assert(expr->lhs != NULL);
       assert(expr->rhs != NULL);
 
-      Datum lhs_value = EvalExpr(expr->lhs, cur_tuple);
-      Datum rhs_value = EvalExpr(expr->rhs, cur_tuple);
+      Datum lhs_value = EvalExpr(expr->lhs, cur_tuple, table_def);
+      Datum rhs_value = EvalExpr(expr->rhs, cur_tuple, table_def);
       // Theres probably a way I can add some info/state in the analyzing phase to avoid this
       // check here.
       if (lhs_value.type == T_NULL || rhs_value.type == T_NULL) {
@@ -84,7 +84,7 @@ Tuple* SequentialScan(PlanNode* node) {
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tpl2);
+      Datum result_val = EvalExpr(scan->where_clause, cur_tpl2, scan->plan.table_def);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -109,8 +109,8 @@ Tuple* InsertScan(PlanNode* node) {
     for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
       ColDesc col_desc = scan->plan.table_def->tuple_desc[j];
-      Datum data = EvalExpr(col_expr, NULL);
-      new_tuple = SetCol(new_tuple, col_desc.column_name, data);
+      Datum data = EvalExpr(col_expr, NULL, NULL);
+      new_tuple = SetCol(new_tuple, col_desc.column_name, data, scan->plan.table_def);
     }
     assert(new_tuple != NULL);
     InsertTuple(scan->plan.table_def->index, new_tuple);
@@ -132,7 +132,7 @@ Tuple* UpdateScan(PlanNode* node) {
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tpl);
+      Datum result_val = EvalExpr(scan->where_clause, cur_tpl, scan->plan.table_def);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -152,9 +152,9 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(col->type == NIDENTIFIER);
       assert(col->identifier != NULL);
 
-      Datum* data = GetCol(cur_tpl, col->identifier);
+      Datum* data = GetCol(cur_tpl, col->identifier, scan->plan.table_def);
       assert(data != NULL);
-      Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl);
+      Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl, scan->plan.table_def);
       assert(updated_value.type == data->type);
       *data = updated_value;
     }
@@ -177,7 +177,7 @@ Tuple* DeleteScan(PlanNode* node) {
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tpl);
+      Datum result_val = EvalExpr(scan->where_clause, cur_tpl, scan->plan.table_def);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -211,8 +211,8 @@ Tuple* SortScan(PlanNode* node) {
       for (size_t j = 0; j < i; ++j) {
         Tuple* cur_tuple = sort->plan.results[j];
 
-        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier);
-        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier);
+        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier, sort->plan.table_def);
+        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier, sort->plan.table_def);
         assert(left != NULL);
         assert(right != NULL);
         Datum result = sort->cmp_func(*left, *right);
@@ -271,18 +271,20 @@ Tuple* NestedLoopScan(PlanNode* node) {
             Tuple* result_tuple = MakeTuple(join->plan.table_def);
             for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
               const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
-              Datum* col_data = GetCol(join->cur_left_tuple, col_name);
+              Datum* col_data =
+                  GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
               assert(col_data != NULL);
-              result_tuple = SetCol(result_tuple, col_name, *col_data);
+              result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
             }
             // Fill in right tuple cols with nulls.
             const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
             for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
-              Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name);
+              Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name,
+                                join->plan.left->table_def);
               if (d == NULL) {
                 // add null to right tuple.
-                result_tuple =
-                    SetCol(result_tuple, tuple_desc[i].column_name, MakeDatum(T_NULL, NULL));
+                result_tuple = SetCol(result_tuple, tuple_desc[i].column_name,
+                                      MakeDatum(T_NULL, NULL), join->plan.table_def);
               }
             }
             return result_tuple;
@@ -303,19 +305,19 @@ Tuple* NestedLoopScan(PlanNode* node) {
     Tuple* result_tuple = MakeTuple(join->plan.table_def);
     for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
-      Datum* col_data = GetCol(join->cur_left_tuple, col_name);
+      Datum* col_data = GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
       assert(col_data != NULL);
-      result_tuple = SetCol(result_tuple, col_name, *col_data);
+      result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
     }
     for (size_t i = 0; i < arrlen(join->plan.right->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.right->table_def->tuple_desc[i].column_name;
-      Datum* col_data = GetCol(right_tuple, col_name);
+      Datum* col_data = GetCol(right_tuple, col_name, join->plan.right->table_def);
       assert(col_data != NULL);
-      result_tuple = SetCol(result_tuple, col_name, *col_data);
+      result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
     }
 
     if (join->qual_condition != NULL) {
-      Datum result_val = EvalExpr(join->qual_condition, result_tuple);
+      Datum result_val = EvalExpr(join->qual_condition, result_tuple, join->plan.table_def);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -342,7 +344,7 @@ Tuple* GetResult(PlanNode* node) {
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
-      Datum result_val = EvalExpr(scan->where_clause, cur_tuple);
+      Datum result_val = EvalExpr(scan->where_clause, cur_tuple, scan->plan.left->table_def);
       assert(result_val.type == T_BOOL);
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
@@ -360,8 +362,10 @@ Tuple* GetResult(PlanNode* node) {
     // Column projections.
     Tuple* result_tpl = MakeTuple(scan->plan.table_def);
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
-      Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
-      result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
+      Datum data =
+          EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple, scan->plan.left->table_def);
+      result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data,
+                          scan->plan.table_def);
     }
     return result_tpl;
   }
@@ -473,6 +477,7 @@ PlanNode* PlanQuery(Query* query) {
         sort->is_sorted = false;
 
         sort->plan.left = left_plan;
+        sort->plan.table_def = left_plan->table_def;
         left_plan = (PlanNode*)sort;
       }
       plan->left = left_plan;

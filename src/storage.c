@@ -32,16 +32,16 @@ void InitSystemTables() {
   CreateTable(&table_def);
 
   Tuple* t1 = MakeTuple(&table_def);
-  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
+  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")), &table_def);
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
-  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
+  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
 
   Tuple* t2 = MakeTuple(&table_def);
-  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
+  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")), &table_def);
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
-  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit));
+  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
 
   InsertTuple(0, t1);
   InsertTuple(0, t2);
@@ -53,10 +53,10 @@ void InitSystemTables() {
   CreateTable(&table_def2);
 
   Tuple* table2_t1 = MakeTuple(&table_def2);
-  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
+  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")), &table_def2);
   InsertTuple(1, table2_t1);
   Tuple* table2_t2 = MakeTuple(&table_def2);
-  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
+  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")), &table_def2);
   InsertTuple(1, table2_t2);
 }
 
@@ -103,10 +103,12 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 //   return;
 // }
 
-Datum* GetCol(Tuple* tuple, const char* col_name) {
-  size_t i = 0;
-  for (; i < tuple->num_cols; ++i) {
-    if (strcmp(tuple->data[i].column_name, col_name) == 0) {
+Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
+  assert(tuple != NULL);
+  assert(table_def != NULL);
+  assert(table_def->tuple_desc != NULL);
+  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
       return &tuple->data[i].data;
     }
   }
@@ -114,8 +116,8 @@ Datum* GetCol(Tuple* tuple, const char* col_name) {
   return NULL;
 }
 
-Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
-  Datum* old_data = GetCol(tuple, col_name);
+Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data, TableDef* table_def) {
+  Datum* old_data = GetCol(tuple, col_name, table_def);
   assert(old_data != NULL);
   *old_data = data;
   return tuple;
@@ -124,9 +126,10 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
 Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
   Tuple* new_tuple = MakeTuple(table_def);
   TuplePair pair;
+  // TODO: change to iterate over table def.
   for (size_t i = 0; i < tuple->num_cols; ++i) {
     pair = tuple->data[i];
-    new_tuple = SetCol(new_tuple, pair.column_name, pair.data);
+    new_tuple = SetCol(new_tuple, pair.column_name, pair.data, table_def);
   }
   return new_tuple;
 }
