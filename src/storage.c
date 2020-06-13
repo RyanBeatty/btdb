@@ -12,12 +12,10 @@ Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   size_t num_cols = arrlen(table_def->tuple_desc);
-  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(TuplePair));
+  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(Datum));
   t->num_cols = num_cols;
   for (size_t i = 0; i < t->num_cols; ++i) {
-    ColDesc col_desc = table_def->tuple_desc[i];
-    t->data[i].column_name = strdup(col_desc.column_name);
-    t->data[i].data.type = T_NULL;
+    t->data[i].type = T_NULL;
   }
   return t;
 }
@@ -109,7 +107,7 @@ Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(table_def->tuple_desc != NULL);
   for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
     if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
-      return &tuple->data[i].data;
+      return &tuple->data[i];
     }
   }
 

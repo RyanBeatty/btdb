@@ -27,14 +27,9 @@ extern TableDef* TableDefs;  // sbarr
 TableDef* FindTableDef(const char*);
 BType GetColType(TableDef*, const char*);
 
-typedef struct TuplePair {
-  char* column_name;
-  Datum data;
-} TuplePair;
-
 typedef struct Tuple {
   size_t num_cols;
-  TuplePair data[];
+  Datum data[];
 } Tuple;
 
 Tuple* MakeTuple(TableDef*);
