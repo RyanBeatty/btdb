@@ -116,20 +116,7 @@ Datum* GetCol(Tuple* tuple, const char* col_name) {
 
 Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
   Datum* old_data = GetCol(tuple, col_name);
-  if (old_data == NULL) {
-    Panic(col_name);
-    assert(false);
-    TuplePair pair;
-    pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));
-    strncpy(pair.column_name, col_name, strlen(col_name));
-    pair.data = data;
-
-    // revisit this.
-    ++tuple->num_cols;
-    tuple = realloc(tuple, sizeof(Tuple) + tuple->num_cols * sizeof(TuplePair));
-    tuple->data[tuple->num_cols - 1] = pair;
-    return tuple;
-  }
+  assert(old_data != NULL);
   *old_data = data;
   return tuple;
 }
