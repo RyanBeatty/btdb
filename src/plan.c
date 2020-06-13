@@ -104,7 +104,7 @@ Tuple* InsertScan(PlanNode* node) {
   assert(scan->cmd == CMD_INSERT);
   for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
     ParseNode** insert_tuple_expr = scan->insert_tuples[i];
-    Tuple* new_tuple = MakeTuple();
+    Tuple* new_tuple = MakeTuple(scan->plan.table_def);
     assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
     for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
@@ -158,7 +158,7 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(updated_value.type == data->type);
       *data = updated_value;
     }
-    return CopyTuple(cur_tpl);
+    return CopyTuple(cur_tpl, scan->plan.table_def);
   }
 
   return NULL;
@@ -268,7 +268,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
           // If we have not found any result for the cur left tuple, need to make sure we
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
-            Tuple* result_tuple = MakeTuple();
+            Tuple* result_tuple = MakeTuple(join->plan.table_def);
             for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
               const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
               Datum* col_data = GetCol(join->cur_left_tuple, col_name);
@@ -300,7 +300,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
     }
 
     // have both left and right, compute new result tuple.
-    Tuple* result_tuple = MakeTuple();
+    Tuple* result_tuple = MakeTuple(join->plan.table_def);
     for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
       Datum* col_data = GetCol(join->cur_left_tuple, col_name);
@@ -358,7 +358,7 @@ Tuple* GetResult(PlanNode* node) {
     }
 
     // Column projections.
-    Tuple* result_tpl = MakeTuple();
+    Tuple* result_tpl = MakeTuple(scan->plan.table_def);
     for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
       Datum data = EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple);
       result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data);
@@ -419,7 +419,7 @@ PlanNode* PlanQuery(Query* query) {
   ResultScan* result = calloc(1, sizeof(ResultScan));
   result->plan.type = N_PLAN_RESULT;
   result->plan.target_list = query->target_list;
-  result->plan.table_def = query->join_list[0];
+  result->plan.table_def = query->join_list[arrlen(query->join_list) - 1];
   result->plan.get_next_func = GetResult;
   result->where_clause = query->where_clause;
   PlanNode* plan = (PlanNode*)result;
