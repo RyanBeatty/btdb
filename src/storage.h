@@ -37,10 +37,10 @@ typedef struct Tuple {
   TuplePair data[];
 } Tuple;
 
-Tuple* MakeTuple();
+Tuple* MakeTuple(TableDef*);
 Datum* GetCol(Tuple*, const char*);
 Tuple* SetCol(Tuple*, const char*, Datum);
-Tuple* CopyTuple(Tuple*);
+Tuple* CopyTuple(Tuple*, TableDef*);
 
 typedef Tuple** Table;
 

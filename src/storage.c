@@ -8,8 +8,17 @@
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
 
-Tuple* MakeTuple() {
-  Tuple* t = calloc(1, sizeof(Tuple));
+Tuple* MakeTuple(TableDef* table_def) {
+  assert(table_def != NULL);
+  assert(table_def->tuple_desc != NULL);
+  size_t num_cols = arrlen(table_def->tuple_desc);
+  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(TuplePair));
+  t->num_cols = num_cols;
+  for (size_t i = 0; i < t->num_cols; ++i) {
+    ColDesc col_desc = table_def->tuple_desc[i];
+    t->data[i].column_name = strdup(col_desc.column_name);
+    t->data[i].data.type = T_NULL;
+  }
   return t;
 }
 
@@ -22,13 +31,13 @@ void InitSystemTables() {
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
 
-  Tuple* t1 = MakeTuple();
+  Tuple* t1 = MakeTuple(&table_def);
   t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")));
   bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = true;
   t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit));
 
-  Tuple* t2 = MakeTuple();
+  Tuple* t2 = MakeTuple(&table_def);
   t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")));
   bool_lit = (bool*)calloc(sizeof(bool), 1);
   *bool_lit = false;
@@ -43,10 +52,10 @@ void InitSystemTables() {
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
-  Tuple* table2_t1 = MakeTuple();
+  Tuple* table2_t1 = MakeTuple(&table_def2);
   table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")));
   InsertTuple(1, table2_t1);
-  Tuple* table2_t2 = MakeTuple();
+  Tuple* table2_t2 = MakeTuple(&table_def2);
   table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")));
   InsertTuple(1, table2_t2);
 }
@@ -108,11 +117,14 @@ Datum* GetCol(Tuple* tuple, const char* col_name) {
 Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
   Datum* old_data = GetCol(tuple, col_name);
   if (old_data == NULL) {
+    Panic(col_name);
+    assert(false);
     TuplePair pair;
     pair.column_name = (char*)calloc(sizeof(char), strlen(col_name));
     strncpy(pair.column_name, col_name, strlen(col_name));
     pair.data = data;
 
+    // revisit this.
     ++tuple->num_cols;
     tuple = realloc(tuple, sizeof(Tuple) + tuple->num_cols * sizeof(TuplePair));
     tuple->data[tuple->num_cols - 1] = pair;
@@ -122,8 +134,8 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data) {
   return tuple;
 }
 
-Tuple* CopyTuple(Tuple* tuple) {
-  Tuple* new_tuple = MakeTuple();
+Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
+  Tuple* new_tuple = MakeTuple(table_def);
   TuplePair pair;
   for (size_t i = 0; i < tuple->num_cols; ++i) {
     pair = tuple->data[i];
