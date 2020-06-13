@@ -55,13 +55,17 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   assert(target_list != NULL);
   uint64_t anon_cols = 0;  // Need to do this for naming col exprs because all columns must
                            // have unique names. This is stupid.
+  TableDef* output_table_def =
+      calloc(1, sizeof(TableDef));  // Need to build final output table def which includes
+                                    // projected columns and any anonymous columns.
   for (size_t i = 0; i < arrlen(target_list); ++i) {
     ParseNode* col_expr = target_list[i];
     assert(col_expr != NULL);
 
     // TODO(ryan): This and the below code do some redundant checking. Clean this up
     // eventually.
-    if (CheckType(col_expr, join_list) == T_UNKNOWN) {
+    BType col_type = CheckType(col_expr, join_list);
+    if (col_type == T_UNKNOWN) {
       return NULL;
     }
 
@@ -90,7 +94,14 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
       ++anon_cols;
     }
     arrpush(targets, ref);
+
+    ColDesc col_desc;
+    col_desc.column_name = strdup(ref->column_name);
+    col_desc.type = col_type;
+    arrpush(output_table_def->tuple_desc, col_desc);
   }
+
+  arrpush(join_list, output_table_def);
 
   if (select->where_clause != NULL) {
     if (CheckType(select->where_clause, join_list) != T_BOOL) {

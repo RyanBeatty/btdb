@@ -419,7 +419,7 @@ PlanNode* PlanQuery(Query* query) {
   ResultScan* result = calloc(1, sizeof(ResultScan));
   result->plan.type = N_PLAN_RESULT;
   result->plan.target_list = query->target_list;
-  result->plan.table_def = query->join_list[0];
+  result->plan.table_def = query->join_list[arrlen(query->join_list) - 1];
   result->plan.get_next_func = GetResult;
   result->where_clause = query->where_clause;
   PlanNode* plan = (PlanNode*)result;
