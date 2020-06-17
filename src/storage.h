@@ -37,11 +37,18 @@ typedef struct DataLoc {
 
 typedef struct Tuple {
   size_t length;
-  size_t data_offset;
   size_t num_cols;
-  DataLoc locs[];
+  byte null_bitmap[];
+  // DataLoc locs[];
   // Datum data[];
 } Tuple;
+
+#define GetDataLocs(tuple) \
+  (DataLoc*)((byte*)tuple + sizeof(Tuple) + tuple->num_cols * sizeof(byte))
+
+#define GetDataPtr(tuple)                                         \
+  (byte*)tuple + sizeof(Tuple) + tuple->num_cols * sizeof(byte) + \
+      tuple->num_cols * sizeof(DataLoc)
 
 Tuple* MakeTuple(TableDef*);
 size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);

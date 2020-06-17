@@ -152,12 +152,11 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(col->type == NIDENTIFIER);
       assert(col->identifier != NULL);
 
-      Datum* data = GetCol(cur_tpl, col->identifier, scan->plan.table_def);
-      assert(data != NULL);
       Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl, scan->plan.table_def);
-      assert(updated_value.type == data->type);
-      *data = updated_value;
+      cur_tpl = SetCol(cur_tpl, col->identifier, updated_value, scan->plan.table_def);
+      UpdateTuple(scan->plan.table_def->index, cur_tpl, scan->next_index - 1);
     }
+    // Why do I need this?
     return CopyTuple(cur_tpl, scan->plan.table_def);
   }
 
