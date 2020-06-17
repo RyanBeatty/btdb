@@ -23,3 +23,6 @@ separate type for null.
 * Next would be annotating binexpr nodes with the type of the expression.
 * Can convert the data field of Datum to uintptr_t.
 * Remove type field from Datum and convert from struct to typedef of uintptr_t. Type info should come from tupledesc or binexpr node.
+
+* Keep a heap tuple as a single contiguous block. When returning from page, just return pointer. When modifying, copy everything over to newly alloced
+  space. memcpy back to a place in page.

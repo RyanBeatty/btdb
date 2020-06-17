@@ -1,10 +1,11 @@
+#include "types.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "types.h"
 #include "utils.h"
 
 BType StringToType(const char* type_str) {
@@ -23,7 +24,33 @@ BType StringToType(const char* type_str) {
 }
 
 Datum MakeDatum(BType type, void* data) {
-  Datum datum = {type, data};
+  size_t length;
+  switch (type) {
+    case T_STRING: {
+      length = strlen((const char*)data) + 1;
+      break;
+    }
+    case T_INT: {
+      length = sizeof(int32_t);
+      break;
+    }
+    case T_BOOL: {
+      length = sizeof(bool);
+      break;
+    }
+    case T_NULL: {
+      length = 0;
+      break;
+    }
+    default: {
+      Panic("Unknown btype for datum!");
+      break;
+    }
+  }
+  Datum datum;
+  datum.type = type;
+  datum.length = length;
+  datum.data = data;
   return datum;
 }
 

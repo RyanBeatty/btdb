@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 typedef enum BType {
   T_UNKNOWN,
   T_STRING,
@@ -17,6 +19,7 @@ BType StringToType(const char*);
 
 typedef struct Datum {
   enum BType type;
+  size_t length;
   void* data;
 } Datum;
 
