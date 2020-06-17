@@ -12,10 +12,16 @@ Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   size_t num_cols = arrlen(table_def->tuple_desc);
-  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(Datum));
+  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(DataLoc) + num_cols * sizeof(byte));
+  t->length = sizeof(Tuple) + num_cols * sizeof(DataLoc) + num_cols * sizeof(byte);
   t->num_cols = num_cols;
+  t->data_offset = sizeof(Tuple) + num_cols * sizeof(DataLoc);
+  byte* data_ptr = (byte*)t + t->data_offset;
+  size_t cur_offset = 0;
   for (size_t i = 0; i < t->num_cols; ++i) {
-    t->data[i].type = T_NULL;
+    t->locs[i].offset = cur_offset;
+    t->locs[i].length = sizeof(byte);
+    cur_offset += sizeof(byte);
   }
   return t;
 }
@@ -100,25 +106,74 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 //   memcpy(mtuple->htuple, data, size);
 //   return;
 // }
+size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* is_missing) {
+  assert(tuple != NULL);
+  assert(table_def != NULL);
+  assert(table_def->tuple_desc != NULL);
+  assert(is_missing != NULL);
+  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
+      *is_missing = false;
+      return i;
+    }
+  }
+
+  *is_missing = true;
+  return 0;
+}
 
 Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(tuple != NULL);
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
-  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-    if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
-      return &tuple->data[i];
-    }
+
+  bool is_missing = false;
+  size_t i = GetColIdx(tuple, col_name, table_def, &is_missing);
+  if (is_missing) {
+    return NULL;
   }
 
-  return NULL;
+  DataLoc loc = tuple->locs[i];
+  byte* data = tuple->data_offset + loc.offset;
+  Datum* datum = calloc(1, sizeof(Datum));
+  datum->type = table_def->tuple_desc[i].type;
+  datum->length = loc.length;
+  datum->data = data;
+  return datum;
 }
 
-Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data, TableDef* table_def) {
-  Datum* old_data = GetCol(tuple, col_name, table_def);
-  assert(old_data != NULL);
-  *old_data = data;
-  return tuple;
+Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_def) {
+  bool is_missing = false;
+  size_t change_idx = GetColIdx(tuple, col_name, table_def, &is_missing);
+  assert(!is_missing);
+
+  size_t new_size = tuple->length + datum.length - tuple->locs[change_idx].length;
+  Tuple* new_tuple = calloc(1, new_size);
+  *new_tuple = *tuple;
+  new_tuple->length = new_size;
+
+  // TODO: Is this right? Don't have to alloc whole new thing if data is less than or equal to
+  // datum length;
+  byte* old_data_ptr = (byte*)tuple + tuple->data_offset;
+  byte* new_data_ptr = (byte*)new_tuple + new_tuple->data_offset;
+  size_t cur_offset = 0;
+  for (size_t i = 0; i < new_tuple->num_cols; ++i) {
+    if (i == change_idx) {
+      size_t length = datum.length;
+      new_tuple->locs[i].offset = cur_offset;
+      new_tuple->locs[i].length = length;
+      memcpy(new_data_ptr + cur_offset, datum.data, length);
+    } else {
+      size_t length = tuple->locs[i].length;
+      new_tuple->locs[i].offset = cur_offset;
+      new_tuple->locs[i].length = length;
+      memcpy(new_data_ptr + cur_offset, old_data_ptr + tuple->locs[i].offset, length);
+    }
+
+    cur_offset += new_tuple->locs[i].length;
+  }
+  // free(tuple);
+  return new_tuple;
 }
 
 Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {

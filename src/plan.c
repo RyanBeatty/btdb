@@ -77,7 +77,7 @@ Tuple* SequentialScan(PlanNode* node) {
   SeqScan* scan = (SeqScan*)node;
   for (;;) {
     Tuple* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl2 == NULL || cur_tpl2->data == NULL) {
+    if (cur_tpl2 == NULL) {
       return NULL;
     }
     ++scan->next_index;
@@ -125,7 +125,7 @@ Tuple* UpdateScan(PlanNode* node) {
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
     Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl == NULL || cur_tpl->data == NULL) {
+    if (cur_tpl == NULL) {
       return NULL;
     }
     ++scan->next_index;
@@ -171,7 +171,7 @@ Tuple* DeleteScan(PlanNode* node) {
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
     Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
-    if (cur_tpl == NULL || cur_tpl->data == NULL) {
+    if (cur_tpl == NULL) {
       return NULL;
     }
 
