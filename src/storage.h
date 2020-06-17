@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "types.h"
@@ -27,12 +28,30 @@ extern TableDef* TableDefs;  // sbarr
 TableDef* FindTableDef(const char*);
 BType GetColType(TableDef*, const char*);
 
+typedef unsigned char byte;
+
+typedef struct DataLoc {
+  size_t offset;
+  size_t length;
+} DataLoc;
+
 typedef struct Tuple {
+  size_t length;
   size_t num_cols;
-  Datum data[];
+  byte null_bitmap[];
+  // DataLoc locs[];
+  // Datum data[];
 } Tuple;
 
+#define GetDataLocs(tuple) \
+  (DataLoc*)((byte*)tuple + sizeof(Tuple) + tuple->num_cols * sizeof(byte))
+
+#define GetDataPtr(tuple)                                         \
+  (byte*)tuple + sizeof(Tuple) + tuple->num_cols * sizeof(byte) + \
+      tuple->num_cols * sizeof(DataLoc)
+
 Tuple* MakeTuple(TableDef*);
+size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);
 Datum* GetCol(Tuple*, const char*, TableDef*);
 Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
 Tuple* CopyTuple(Tuple*, TableDef*);

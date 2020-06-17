@@ -12,10 +12,21 @@ Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   size_t num_cols = arrlen(table_def->tuple_desc);
-  Tuple* t = calloc(1, sizeof(Tuple) + num_cols * sizeof(Datum));
+  size_t tuple_length = sizeof(Tuple) + num_cols * sizeof(byte) + num_cols * sizeof(DataLoc) +
+                        num_cols * sizeof(byte);
+  Tuple* t = calloc(1, tuple_length);
+  t->length = tuple_length;
   t->num_cols = num_cols;
   for (size_t i = 0; i < t->num_cols; ++i) {
-    t->data[i].type = T_NULL;
+    t->null_bitmap[i] |= 1;
+  }
+
+  DataLoc* data_locs = GetDataLocs(t);
+  size_t cur_offset = 0;
+  for (size_t i = 0; i < t->num_cols; ++i) {
+    data_locs[i].offset = cur_offset;
+    data_locs[i].length = sizeof(byte);
+    cur_offset += sizeof(byte);
   }
   return t;
 }
@@ -100,25 +111,87 @@ BType GetColType(TableDef* table_def, const char* col_name) {
 //   memcpy(mtuple->htuple, data, size);
 //   return;
 // }
+size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* is_missing) {
+  assert(tuple != NULL);
+  assert(table_def != NULL);
+  assert(table_def->tuple_desc != NULL);
+  assert(is_missing != NULL);
+  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
+      *is_missing = false;
+      return i;
+    }
+  }
+
+  *is_missing = true;
+  return 0;
+}
 
 Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(tuple != NULL);
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
-  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
-    if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
-      return &tuple->data[i];
-    }
+
+  bool is_missing = false;
+  size_t i = GetColIdx(tuple, col_name, table_def, &is_missing);
+  if (is_missing) {
+    return NULL;
   }
 
-  return NULL;
+  if (tuple->null_bitmap[i]) {
+    Datum* datum = calloc(1, sizeof(Datum));
+    datum->type = T_NULL;
+    return datum;
+  }
+
+  DataLoc* locs = GetDataLocs(tuple);
+  byte* data = GetDataPtr(tuple) + locs[i].offset;
+  Datum* datum = calloc(1, sizeof(Datum));
+  datum->type = table_def->tuple_desc[i].type;
+  datum->length = locs[i].length;
+  datum->data = data;
+  return datum;
 }
 
-Tuple* SetCol(Tuple* tuple, const char* col_name, Datum data, TableDef* table_def) {
-  Datum* old_data = GetCol(tuple, col_name, table_def);
-  assert(old_data != NULL);
-  *old_data = data;
-  return tuple;
+Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_def) {
+  bool is_missing = false;
+  size_t change_idx = GetColIdx(tuple, col_name, table_def, &is_missing);
+  assert(!is_missing);
+
+  DataLoc* old_locs = GetDataLocs(tuple);
+  byte* old_data_ptr = GetDataPtr(tuple);
+
+  size_t new_size = tuple->length + datum.length - old_locs[change_idx].length;
+  Tuple* new_tuple = calloc(1, new_size);
+  new_tuple->num_cols = tuple->num_cols;
+  new_tuple->length = new_size;
+  memcpy(new_tuple->null_bitmap, tuple->null_bitmap, new_tuple->num_cols * sizeof(byte));
+
+  DataLoc* new_locs = GetDataLocs(new_tuple);
+  byte* new_data_ptr = GetDataPtr(new_tuple);
+
+  new_tuple->null_bitmap[change_idx] = datum.type == T_NULL;
+
+  // TODO: Is this right? Don't have to alloc whole new thing if data is less than or equal to
+  // datum length;
+  size_t cur_offset = 0;
+  for (size_t i = 0; i < new_tuple->num_cols; ++i) {
+    if (i == change_idx) {
+      size_t length = datum.length;
+      new_locs[i].offset = cur_offset;
+      new_locs[i].length = length;
+      memcpy(new_data_ptr + cur_offset, datum.data, length);
+    } else {
+      size_t length = old_locs[i].length;
+      new_locs[i].offset = cur_offset;
+      new_locs[i].length = length;
+      memcpy(new_data_ptr + cur_offset, old_data_ptr + old_locs[i].offset, length);
+    }
+
+    cur_offset += new_locs[i].length;
+  }
+  // free(tuple);
+  return new_tuple;
 }
 
 Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
@@ -152,7 +225,8 @@ void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
 
   Tuple* old_tuple = GetTuple(table_index, index);
   assert(old_tuple != NULL);
-  *old_tuple = *tuple;
+  old_tuple = tuple;
+  Tables[table_index][index] = tuple;
   return;
 }
 
