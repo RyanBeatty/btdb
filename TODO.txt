@@ -26,3 +26,8 @@ separate type for null.
 
 * Keep a heap tuple as a single contiguous block. When returning from page, just return pointer. When modifying, copy everything over to newly alloced
   space. memcpy back to a place in page.
+
+
+
+
+Next Steps: Probably want to do a bit of code cleanup. Start thinking about making page representation. Maybe make a cursor abstraction.
