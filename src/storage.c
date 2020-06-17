@@ -223,9 +223,6 @@ void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
     return;
   }
 
-  Tuple* old_tuple = GetTuple(table_index, index);
-  assert(old_tuple != NULL);
-  old_tuple = tuple;
   Tables[table_index][index] = tuple;
   return;
 }
