@@ -39,9 +39,8 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple, TableDef* table_def) {
       // TODO(ryan): Not true in the future.
       NIdentifier* identifier = (NIdentifier*)node;
       assert(identifier->identifier != NULL);
-      Datum* data = GetCol(cur_tuple, identifier->identifier, table_def);
-      assert(data != NULL);
-      return *data;
+      Datum data = GetCol(cur_tuple, identifier->identifier, table_def);
+      return data;
     }
     case NBIN_EXPR: {
       NBinExpr* expr = (NBinExpr*)node;
@@ -210,11 +209,9 @@ Tuple* SortScan(PlanNode* node) {
       for (size_t j = 0; j < i; ++j) {
         Tuple* cur_tuple = sort->plan.results[j];
 
-        Datum* left = GetCol(insert_tuple, sort->sort_col->identifier, sort->plan.table_def);
-        Datum* right = GetCol(cur_tuple, sort->sort_col->identifier, sort->plan.table_def);
-        assert(left != NULL);
-        assert(right != NULL);
-        Datum result = sort->cmp_func(*left, *right);
+        Datum left = GetCol(insert_tuple, sort->sort_col->identifier, sort->plan.table_def);
+        Datum right = GetCol(cur_tuple, sort->sort_col->identifier, sort->plan.table_def);
+        Datum result = sort->cmp_func(left, right);
         if (*(bool*)result.data) {
           Tuple* swap = cur_tuple;
           sort->plan.results[j] = insert_tuple;
@@ -271,10 +268,9 @@ Tuple* NestedLoopScan(PlanNode* node) {
             // Right side columns are already null'ed, so fill in left side columns.
             for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
               const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
-              Datum* col_data =
+              Datum col_data =
                   GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
-              assert(col_data != NULL);
-              result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
+              result_tuple = SetCol(result_tuple, col_name, col_data, join->plan.table_def);
             }
             return result_tuple;
           } else {
@@ -294,15 +290,13 @@ Tuple* NestedLoopScan(PlanNode* node) {
     Tuple* result_tuple = MakeTuple(join->plan.table_def);
     for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
-      Datum* col_data = GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
-      assert(col_data != NULL);
-      result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
+      Datum col_data = GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
+      result_tuple = SetCol(result_tuple, col_name, col_data, join->plan.table_def);
     }
     for (size_t i = 0; i < arrlen(join->plan.right->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.right->table_def->tuple_desc[i].column_name;
-      Datum* col_data = GetCol(right_tuple, col_name, join->plan.right->table_def);
-      assert(col_data != NULL);
-      result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
+      Datum col_data = GetCol(right_tuple, col_name, join->plan.right->table_def);
+      result_tuple = SetCol(result_tuple, col_name, col_data, join->plan.table_def);
     }
 
     if (join->qual_condition != NULL) {

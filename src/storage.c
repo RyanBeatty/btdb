@@ -120,7 +120,7 @@ size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* 
   return 0;
 }
 
-Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
+Datum GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(tuple != NULL);
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
@@ -130,17 +130,13 @@ Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(!is_missing);
 
   if (tuple->null_bitmap[i]) {
-    Datum* datum = calloc(1, sizeof(Datum));
-    datum->type = T_NULL;
-    return datum;
+    return MakeDatum(T_NULL, NULL);
   }
 
   DataLoc* locs = GetDataLocs(tuple);
   byte* data = GetDataPtr(tuple) + locs[i].offset;
-  Datum* datum = calloc(1, sizeof(Datum));
-  datum->type = table_def->tuple_desc[i].type;
-  datum->length = locs[i].length;
-  datum->data = data;
+  Datum datum = MakeDatum(table_def->tuple_desc[i].type, data);
+  datum.length = locs[i].length;
   return datum;
 }
 
@@ -189,8 +185,8 @@ Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
   Tuple* new_tuple = MakeTuple(table_def);
   for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
     const char* col_name = table_def->tuple_desc[i].column_name;
-    Datum* col_data = GetCol(tuple, col_name, table_def);
-    new_tuple = SetCol(new_tuple, col_name, *col_data, table_def);
+    Datum col_data = GetCol(tuple, col_name, table_def);
+    new_tuple = SetCol(new_tuple, col_name, col_data, table_def);
   }
   return new_tuple;
 }

@@ -49,7 +49,7 @@ typedef struct Tuple {
 
 Tuple* MakeTuple(TableDef*);
 size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);
-Datum* GetCol(Tuple*, const char*, TableDef*);
+Datum GetCol(Tuple*, const char*, TableDef*);
 Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
 Tuple* CopyTuple(Tuple*, TableDef*);
 

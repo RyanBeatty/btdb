@@ -48,21 +48,19 @@ void PrintResults(Result results) {
       Tuple* mtuple = results.tuples[i];
       assert(mtuple != NULL);
       for (size_t i = 0; i < arrlen(results.columns); ++i) {
-        Datum* data = GetCol(mtuple, results.columns[i], results.table_def);
-        if (data != NULL) {
-          // TODO(ryan): This is some hacky bs to be able to print this as a string.
-          // I'm going to need to do an overhaul of alot of this code in the future.
-          if (data->type == T_STRING) {
-            printf("%s", (char*)data->data);
-          } else if (data->type == T_BOOL) {
-            printf("%s", (*((bool*)data->data) ? "true" : "false"));
-          } else if (data->type == T_INT) {
-            printf("%" PRId32, *((int32_t*)data->data));
-          } else if (data->type == T_NULL) {
-            printf("\t");
-          } else {
-            Panic("Only support printing strings, ints, or bools");
-          }
+        Datum data = GetCol(mtuple, results.columns[i], results.table_def);
+        // TODO(ryan): This is some hacky bs to be able to print this as a string.
+        // I'm going to need to do an overhaul of alot of this code in the future.
+        if (data.type == T_STRING) {
+          printf("%s", (char*)data.data);
+        } else if (data.type == T_BOOL) {
+          printf("%s", (*((bool*)data.data) ? "true" : "false"));
+        } else if (data.type == T_INT) {
+          printf("%" PRId32, *((int32_t*)data.data));
+        } else if (data.type == T_NULL) {
+          printf("\t");
+        } else {
+          Panic("Only support printing strings, ints, or bools");
         }
         printf("\t");
       }
