@@ -565,7 +565,8 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     // TODO: Hacky
     TableDef** defs = NULL;
     arrpush(defs, table_def);
-    if (col_type->type != CheckType(assign_expr->value_expr, defs)) {
+    BType value_expr_type = CheckType(assign_expr->value_expr, defs);
+    if (value_expr_type != col_type->type && value_expr_type != T_NULL) {
       return NULL;
     }
   }
