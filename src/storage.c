@@ -127,9 +127,7 @@ Datum* GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
 
   bool is_missing = false;
   size_t i = GetColIdx(tuple, col_name, table_def, &is_missing);
-  if (is_missing) {
-    return NULL;
-  }
+  assert(!is_missing);
 
   if (tuple->null_bitmap[i]) {
     Datum* datum = calloc(1, sizeof(Datum));

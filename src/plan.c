@@ -268,23 +268,13 @@ Tuple* NestedLoopScan(PlanNode* node) {
           // insert an entry in results.
           if (no_result_for_cur_left_tuple) {
             Tuple* result_tuple = MakeTuple(join->plan.table_def);
+            // Right side columns are already null'ed, so fill in left side columns.
             for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
               const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
               Datum* col_data =
                   GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
               assert(col_data != NULL);
               result_tuple = SetCol(result_tuple, col_name, *col_data, join->plan.table_def);
-            }
-            // Fill in right tuple cols with nulls.
-            const ColDesc* tuple_desc = join->plan.table_def->tuple_desc;
-            for (size_t i = 0; i < arrlen(tuple_desc); ++i) {
-              Datum* d = GetCol(join->cur_left_tuple, tuple_desc[i].column_name,
-                                join->plan.left->table_def);
-              if (d == NULL) {
-                // add null to right tuple.
-                result_tuple = SetCol(result_tuple, tuple_desc[i].column_name,
-                                      MakeDatum(T_NULL, NULL), join->plan.table_def);
-              }
             }
             return result_tuple;
           } else {
