@@ -9,6 +9,7 @@ extern "C" {
 #include <stddef.h>
 
 #include "types.h"
+#include "utils.h"
 
 typedef struct ColDesc {
   const char* column_name;
@@ -28,8 +29,6 @@ extern TableDef* TableDefs;  // sbarr
 TableDef* FindTableDef(const char*);
 BType GetColType(TableDef*, const char*);
 
-typedef unsigned char byte;
-
 typedef struct DataLoc {
   size_t offset;
   size_t length;
@@ -39,8 +38,6 @@ typedef struct Tuple {
   size_t length;
   size_t num_cols;
   byte null_bitmap[];
-  // DataLoc locs[];
-  // Datum data[];
 } Tuple;
 
 #define GetDataLocs(tuple) \

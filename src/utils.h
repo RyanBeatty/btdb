@@ -7,10 +7,11 @@
 extern "C" {
 #endif
 
+typedef unsigned char byte;
+
 void Panic(const char* msg);
 
 bool* BoolDup(bool*);
-
 
 #define BoolToStr(b) b ? "true" : "false"
 

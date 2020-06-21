@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "stb_ds.h"
+#include "utils.h"
 
 TableDef* TableDefs = NULL;
 Table* Tables = NULL;
@@ -103,14 +104,6 @@ BType GetColType(TableDef* table_def, const char* col_name) {
   return T_UNKNOWN;
 }
 
-// void WriteField(MemTuple* mtuple, byte* data, size_t size) {
-//   assert(mtuple != NULL);
-//   assert(mtuple->htuple != NULL);
-//   assert(data != NULL);
-//   assert(size < mtuple->size);
-//   memcpy(mtuple->htuple, data, size);
-//   return;
-// }
 size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* is_missing) {
   assert(tuple != NULL);
   assert(table_def != NULL);
