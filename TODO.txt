@@ -28,6 +28,20 @@ separate type for null.
   space. memcpy back to a place in page.
 
 
+---------------------------------------------------------------------------------------------------
+2020-07-11
 
+Alignment Issues?
+* Need to investigate if I have any alignment problems (most likely yes) in the tuple representation code
+* Maybe turn on -Wcast-align
 
-Next Steps: Probably want to do a bit of code cleanup. Start thinking about making page representation. Maybe make a cursor abstraction.
+Page Representation
+* Page will be pointer to the buffer. PageHeader will have ItemLoc list
+* After making functions for manipulating pages, need to switch tuples to be stored in pages. Unclear if having
+  Scanner abstraction implemented makes this easier or not
+
+Scanner abstraction
+* Probably want to encapsulate the interaction between the buffer/disk with the plan execution code
+* scanner should keep track of current page/tuple read. Be able to scan forward or inplace.
+* Unclear if scanner should also have functions to insert/update/delete tuples
+
