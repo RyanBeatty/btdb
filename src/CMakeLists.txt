@@ -20,7 +20,7 @@ add_executable(btdb
 target_link_libraries(btdb btdb_lib)
 target_compile_options(btdb
     PRIVATE
-    #-Werror
+    -Werror
     -Wall
     -Wextra
 )

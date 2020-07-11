@@ -67,6 +67,18 @@ void CreateTable(TableDef*);
 
 void InitSystemTables();
 
+// typedef unsigned char* Page;
+
+// typedef struct ItemLoc {
+//   uint16_t offset;
+//   uint16_t length;
+// } ItemLoc;
+
+// typedef struct PageHeader {
+//   uint16_t num_locs;
+//   ItemLoc item_locs[];
+// } PageHeader;
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,7 +25,7 @@ Result ExecPlan(PlanNode* plan) {
   Result results;
   results.table_def = plan->table_def;
   results.columns = NULL;
-  for (size_t i = 0; i < arrlen(plan->target_list); ++i) {
+  for (size_t i = 0; i < arrlenu(plan->target_list); ++i) {
     arrpush(results.columns, plan->target_list[i]->column_name);
   }
   results.tuples = NULL;
@@ -39,15 +39,15 @@ Result ExecPlan(PlanNode* plan) {
 
 void PrintResults(Result results) {
   if (results.columns != NULL) {
-    for (size_t i = 0; i < arrlen(results.columns); ++i) {
+    for (size_t i = 0; i < arrlenu(results.columns); ++i) {
       printf("    %s", results.columns[i]);
     }
     printf("\n");
     printf("===============\n");
-    for (size_t i = 0; i < arrlen(results.tuples); ++i) {
+    for (size_t i = 0; i < arrlenu(results.tuples); ++i) {
       Tuple* mtuple = results.tuples[i];
       assert(mtuple != NULL);
-      for (size_t i = 0; i < arrlen(results.columns); ++i) {
+      for (size_t i = 0; i < arrlenu(results.columns); ++i) {
         Datum data = GetCol(mtuple, results.columns[i], results.table_def);
         // TODO(ryan): This is some hacky bs to be able to print this as a string.
         // I'm going to need to do an overhaul of alot of this code in the future.
