@@ -7,11 +7,12 @@ import pytest
 PROMPT = b"btdb> "
 START_MSG = b"Starting btdb\n" + PROMPT
 SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
+BTDB_BIN_PATH = "./build/apps/btdb"
 
 
 def test_select():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -71,7 +72,7 @@ def test_select():
 
 def test_select_with_joins():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -157,7 +158,7 @@ def test_select_with_joins():
 
 def test_integer_support():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -222,7 +223,7 @@ def test_integer_support():
 
 def test_insert():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -293,7 +294,7 @@ def test_insert():
 
 def test_delete():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -338,7 +339,7 @@ def test_delete():
 
 def test_delete_everything():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -372,7 +373,7 @@ def test_delete_everything():
 
 def test_update():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -421,7 +422,7 @@ def test_update():
 
 def test_sort():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -472,7 +473,7 @@ def test_sort():
 
 def test_create_table():
     proc = subprocess.Popen(
-        ["./bin/btdb"],
+        [BTDB_BIN_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
