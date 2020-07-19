@@ -6,11 +6,12 @@
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
+// Comment to prevent autolinting
 #include "analyzer.h"
+#include "driver.h"
 #include "node.h"
 #include "plan.h"
-#include "sql/driver.h"
-#include "stb_ds.h"
 #include "storage.h"
 #include "types.h"
 #include "utils.h"
