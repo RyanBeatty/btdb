@@ -2,11 +2,9 @@
 
 // Only define once.
 #define STB_DS_IMPLEMENTATION
-#include "foo.h"
 #include "stb_ds.h"
-// #include "storage.h"
+// comment to prevent auto linting
 #include "driver.h"
-// #include "node.h"
 
 int main() {
   while (true) {

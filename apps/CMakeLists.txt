@@ -2,7 +2,10 @@
 add_executable(parse_sql parse_sql.c)
 target_link_libraries(parse_sql
     foo_lib
-    #btdb_sql_parser
-    #stb
+)
+
+add_executable(btdb btdb.c)
+target_link_libraries(btdb
+    foo_lib
 )
 

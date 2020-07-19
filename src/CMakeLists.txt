@@ -13,21 +13,17 @@ BISON_TARGET(btdb_parser
 )
 ADD_FLEX_BISON_DEPENDENCY(btdb_scanner btdb_parser)
 
-message("foo bar ${BISON_btdb_parser_OUTPUTS}")
 add_library(foo_lib
-    foo.c
     types.c
     storage.c
     utils.c
     node.c
+    plan.c
+    analyzer.c
 
     ${FLEX_btdb_scanner_OUTPUTS}
     ${BISON_btdb_parser_OUTPUTS}
     driver.c
-
-    #node.c
-    #analyzer.c
-    #plan.c
 )
 target_include_directories(foo_lib
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
