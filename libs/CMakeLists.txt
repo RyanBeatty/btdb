@@ -4,4 +4,4 @@ add_subdirectory(Unity)
 
 add_library(stb INTERFACE)
 # INTERFACE is because header-only lib. SYSTEM is to suppress warnings from -Wall
-target_include_directories(stb SYSTEM INTERFACE stb/)
+target_include_directories(stb INTERFACE stb)

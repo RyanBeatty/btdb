@@ -22,7 +22,7 @@
 
   #include "stb_ds.h"
   
-  #include "sql/driver.h"
+  #include "driver.h"
 
   extern int yylex(void);
   // Because we use %parse-param, the signature of yyerror changes.

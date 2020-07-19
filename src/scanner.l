@@ -4,8 +4,8 @@
   #include <assert.h>
   #include <stdio.h>
 
-  #include "sql/parser.h"
-  #include "sql/driver.h"
+  #include "parser.h"
+  #include "driver.h"
 //   #include "sql/context.hpp"
 
 #define YY_DECL int yylex(void)
