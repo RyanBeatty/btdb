@@ -101,11 +101,11 @@ Tuple* InsertScan(PlanNode* node) {
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_INSERT);
-  for (size_t i = 0; i < arrlen(scan->insert_tuples); ++i) {
+  for (size_t i = 0; i < arrlenu(scan->insert_tuples); ++i) {
     ParseNode** insert_tuple_expr = scan->insert_tuples[i];
     Tuple* new_tuple = MakeTuple(scan->plan.table_def);
-    assert(arrlen(scan->plan.table_def->tuple_desc) == arrlen(insert_tuple_expr));
-    for (size_t j = 0; j < arrlen(scan->plan.table_def->tuple_desc); ++j) {
+    assert(arrlenu(scan->plan.table_def->tuple_desc) == arrlenu(insert_tuple_expr));
+    for (size_t j = 0; j < arrlenu(scan->plan.table_def->tuple_desc); ++j) {
       ParseNode* col_expr = insert_tuple_expr[j];
       ColDesc col_desc = scan->plan.table_def->tuple_desc[j];
       Datum data = EvalExpr(col_expr, NULL, NULL);
@@ -140,7 +140,7 @@ Tuple* UpdateScan(PlanNode* node) {
       }
     }
 
-    for (size_t i = 0; i < arrlen(scan->assign_exprs); ++i) {
+    for (size_t i = 0; i < arrlenu(scan->assign_exprs); ++i) {
       NAssignExpr* assign_expr = scan->assign_exprs[i];
       assert(assign_expr != NULL);
       assert(assign_expr->type == NASSIGN_EXPR);
@@ -204,7 +204,7 @@ Tuple* SortScan(PlanNode* node) {
     }
 
     assert(sort->method == INSERTION_SORT);
-    for (size_t i = 0; i < arrlen(sort->plan.results); ++i) {
+    for (size_t i = 0; i < arrlenu(sort->plan.results); ++i) {
       Tuple* insert_tuple = sort->plan.results[i];
       for (size_t j = 0; j < i; ++j) {
         Tuple* cur_tuple = sort->plan.results[j];
@@ -224,7 +224,7 @@ Tuple* SortScan(PlanNode* node) {
     sort->is_sorted = true;
   }
 
-  if (sort->next_index >= arrlen(sort->plan.results)) {
+  if (sort->next_index >= arrlenu(sort->plan.results)) {
     return NULL;
   }
 
@@ -266,7 +266,7 @@ Tuple* NestedLoopScan(PlanNode* node) {
           if (no_result_for_cur_left_tuple) {
             Tuple* result_tuple = MakeTuple(join->plan.table_def);
             // Right side columns are already null'ed, so fill in left side columns.
-            for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
+            for (size_t i = 0; i < arrlenu(join->plan.left->table_def->tuple_desc); ++i) {
               const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
               Datum col_data =
                   GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
@@ -277,23 +277,21 @@ Tuple* NestedLoopScan(PlanNode* node) {
             continue;
           }
         }
-        case JOIN_OUTER: {
-          Panic("Outer join not implemented");
-        }
         default: {
           Panic("Unknown join method when nested looping");
+          return NULL;
         }
       }
     }
 
     // have both left and right, compute new result tuple.
     Tuple* result_tuple = MakeTuple(join->plan.table_def);
-    for (size_t i = 0; i < arrlen(join->plan.left->table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlenu(join->plan.left->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.left->table_def->tuple_desc[i].column_name;
       Datum col_data = GetCol(join->cur_left_tuple, col_name, join->plan.left->table_def);
       result_tuple = SetCol(result_tuple, col_name, col_data, join->plan.table_def);
     }
-    for (size_t i = 0; i < arrlen(join->plan.right->table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlenu(join->plan.right->table_def->tuple_desc); ++i) {
       const char* col_name = join->plan.right->table_def->tuple_desc[i].column_name;
       Datum col_data = GetCol(right_tuple, col_name, join->plan.right->table_def);
       result_tuple = SetCol(result_tuple, col_name, col_data, join->plan.table_def);
@@ -344,7 +342,7 @@ Tuple* GetResult(PlanNode* node) {
 
     // Column projections.
     Tuple* result_tpl = MakeTuple(scan->plan.table_def);
-    for (size_t i = 0; i < arrlen(scan->plan.target_list); ++i) {
+    for (size_t i = 0; i < arrlenu(scan->plan.target_list); ++i) {
       Datum data =
           EvalExpr(scan->plan.target_list[i]->col_expr, cur_tuple, scan->plan.left->table_def);
       result_tpl = SetCol(result_tpl, scan->plan.target_list[i]->column_name, data,
@@ -406,13 +404,13 @@ PlanNode* PlanQuery(Query* query) {
   ResultScan* result = calloc(1, sizeof(ResultScan));
   result->plan.type = N_PLAN_RESULT;
   result->plan.target_list = query->target_list;
-  result->plan.table_def = query->join_list[arrlen(query->join_list) - 1];
+  result->plan.table_def = query->join_list[arrlenu(query->join_list) - 1];
   result->plan.get_next_func = GetResult;
   result->where_clause = query->where_clause;
   PlanNode* plan = (PlanNode*)result;
   switch (query->cmd) {
     case CMD_SELECT: {
-      assert(arrlen(query->join_list) > 0);
+      assert(arrlenu(query->join_list) > 0);
 
       PlanNode* left_plan = PlanJoin(query, query->join_tree);
       assert(left_plan != NULL);
@@ -467,7 +465,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_INSERT: {
-      assert(arrlen(query->join_list) == 1);
+      assert(arrlenu(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = InsertScan;
@@ -482,7 +480,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_UPDATE: {
-      assert(arrlen(query->join_list) == 1);
+      assert(arrlenu(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = UpdateScan;
@@ -497,7 +495,7 @@ PlanNode* PlanQuery(Query* query) {
       return plan;
     }
     case CMD_DELETE: {
-      assert(arrlen(query->join_list) == 1);
+      assert(arrlenu(query->join_list) == 1);
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = DeleteScan;
@@ -533,7 +531,7 @@ void ExecuteUtilityStmt(Query* query) {
   table_def->name = table_def_name;
 
   ColDesc* tuple_desc = NULL;
-  for (size_t i = 0; i < arrlen(create->column_defs); ++i) {
+  for (size_t i = 0; i < arrlenu(create->column_defs); ++i) {
     NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
     NIdentifier* col_name = (NIdentifier*)column_def->col_name;
 

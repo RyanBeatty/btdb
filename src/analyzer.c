@@ -58,7 +58,7 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
   TableDef* output_table_def =
       calloc(1, sizeof(TableDef));  // Need to build final output table def which includes
                                     // projected columns and any anonymous columns.
-  for (size_t i = 0; i < arrlen(target_list); ++i) {
+  for (size_t i = 0; i < arrlenu(target_list); ++i) {
     ParseNode* col_expr = target_list[i];
     assert(col_expr != NULL);
 
@@ -74,9 +74,9 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     if (col_expr->type == NIDENTIFIER) {
       NIdentifier* col = (NIdentifier*)target_list[i];
       assert(col->identifier != NULL);
-      for (size_t j = 0; j < arrlen(join_list); ++j) {
+      for (size_t j = 0; j < arrlenu(join_list); ++j) {
         TableDef* table_def = join_list[j];
-        for (size_t k = 0; k < arrlen(table_def->tuple_desc); ++k) {
+        for (size_t k = 0; k < arrlenu(table_def->tuple_desc); ++k) {
           if (strcmp(table_def->tuple_desc[k].column_name, col->identifier) == 0) {
             ref->column_name = strdup(col->identifier);
             ref->join_list_index = j;
@@ -117,9 +117,9 @@ Query* AnalyzeSelectStmt(NSelectStmt* select) {
     assert(identifier->type == NIDENTIFIER);
     assert(identifier->identifier != NULL);
     bool found = false;
-    for (size_t i = 0; i < arrlen(join_list); ++i) {
+    for (size_t i = 0; i < arrlenu(join_list); ++i) {
       TableDef* table_def = join_list[i];
-      for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+      for (size_t j = 0; j < arrlenu(table_def->tuple_desc); ++j) {
         if (strcmp(table_def->tuple_desc[j].column_name, identifier->identifier) == 0) {
           found = true;
           break;
@@ -155,9 +155,9 @@ BType CheckType(ParseNode* node, TableDef** join_list) {
       assert(identifier->identifier != NULL);
 
       ColDesc* col_type = NULL;
-      for (size_t i = 0; i < arrlen(join_list); ++i) {
+      for (size_t i = 0; i < arrlenu(join_list); ++i) {
         TableDef* table_def = join_list[i];
-        for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+        for (size_t j = 0; j < arrlenu(table_def->tuple_desc); ++j) {
           if (strcmp(table_def->tuple_desc[j].column_name, identifier->identifier) == 0) {
             col_type = &table_def->tuple_desc[j];
             break;
@@ -373,12 +373,12 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list,
     // TODO(ryan): This code is super messy and breaks a bunch of abstraction barriers I
     // should really fix this at some point.
     ColDesc* tuple_desc = NULL;
-    for (size_t j = 0; j < arrlen(left_table_def->tuple_desc); ++j) {
+    for (size_t j = 0; j < arrlenu(left_table_def->tuple_desc); ++j) {
       ColDesc desc = {.column_name = left_table_def->tuple_desc[j].column_name,
                       left_table_def->tuple_desc[j].type};
       arrpush(tuple_desc, desc);
     }
-    for (size_t j = 0; j < arrlen(right_table_def->tuple_desc); ++j) {
+    for (size_t j = 0; j < arrlenu(right_table_def->tuple_desc); ++j) {
       ColDesc desc = {.column_name = right_table_def->tuple_desc[j].column_name,
                       right_table_def->tuple_desc[j].type};
       arrpush(tuple_desc, desc);
@@ -399,7 +399,7 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list,
       table_def->name = tablename;
     }
 
-    join->join_list_index = arrlen(join_list);
+    join->join_list_index = arrlenu(join_list);
     *last_table_def_index = join->join_list_index;
     arrpush(join_list, table_def);
 
@@ -419,7 +419,7 @@ TableDef** AnalyzeJoinList(ParseNode* node, TableDef** join_list,
     if (table_def == NULL) {
       return NULL;
     }
-    range_var->join_list_index = arrlen(join_list);
+    range_var->join_list_index = arrlenu(join_list);
     *last_table_def_index = range_var->join_list_index;
     arrpush(join_list, table_def);
     return join_list;
@@ -444,14 +444,13 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
   TargetRef** targets = NULL;
   ParseNode** target_list = insert->column_list;
   assert(target_list != NULL);
-  for (size_t i = 0; i < arrlen(target_list); ++i) {
+  for (size_t i = 0; i < arrlenu(target_list); ++i) {
     NIdentifier* col = (NIdentifier*)target_list[i];
     assert(col != NULL);
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    bool found = false;
     TargetRef* ref = NULL;
-    for (size_t j = 0; j < arrlen(table_def->tuple_desc); ++j) {
+    for (size_t j = 0; j < arrlenu(table_def->tuple_desc); ++j) {
       if (strcmp(table_def->tuple_desc[j].column_name, col->identifier) == 0) {
         ref = (TargetRef*)calloc(1, sizeof(TargetRef));
         ref->column_name = strdup(col->identifier);
@@ -467,18 +466,18 @@ Query* AnalyzeInsertStmt(NInsertStmt* insert) {
 
   ParseNode*** values_list = insert->values_list;
   assert(values_list != NULL);
-  for (size_t i = 0; i < arrlen(values_list); ++i) {
+  for (size_t i = 0; i < arrlenu(values_list); ++i) {
     ParseNode** value_items = values_list[i];
     assert(value_items != NULL);
 
-    if (arrlen(value_items) != arrlen(target_list)) {
+    if (arrlenu(value_items) != arrlenu(target_list)) {
       return NULL;
     }
 
     // TODO(ryan): Hacky. I think I should be passing NULL to CheckType anyways.
     TableDef** defs = NULL;
     arrpush(defs, table_def);
-    for (size_t j = 0; j < arrlen(value_items); ++j) {
+    for (size_t j = 0; j < arrlenu(value_items); ++j) {
       ParseNode* data = value_items[j];
       assert(data != NULL);
       BType type = CheckType(data, defs);
@@ -541,7 +540,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
 
   ParseNode** assign_expr_list = update->assign_expr_list;
   assert(update->assign_expr_list != NULL);
-  for (size_t i = 0; i < arrlen(assign_expr_list); ++i) {
+  for (size_t i = 0; i < arrlenu(assign_expr_list); ++i) {
     NAssignExpr* assign_expr = (NAssignExpr*)assign_expr_list[i];
     assert(assign_expr != NULL);
     assert(assign_expr->type == NASSIGN_EXPR);
@@ -552,7 +551,7 @@ Query* AnalyzeUpdateStmt(NUpdateStmt* update) {
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
     ColDesc* col_type = NULL;
-    for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+    for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
       if (strcmp(table_def->tuple_desc[i].column_name, col->identifier) == 0) {
         col_type = &table_def->tuple_desc[i];
         break;
@@ -601,7 +600,7 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
     return NULL;
   }
 
-  for (size_t i = 0; i < arrlen(create->column_defs); ++i) {
+  for (size_t i = 0; i < arrlenu(create->column_defs); ++i) {
     NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
     assert(column_def != NULL);
     assert(column_def->type == NCOLUMN_DEF);
@@ -622,9 +621,9 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
     assert(col_name->identifier != NULL);
 
     // NOTE(ryan): We assume that every table has unique column names for now.
-    for (size_t j = 0; j < arrlen(TableDefs); ++j) {
+    for (size_t j = 0; j < arrlenu(TableDefs); ++j) {
       TableDef table_def = TableDefs[j];
-      for (size_t k = 0; k < arrlen(table_def.tuple_desc); ++k) {
+      for (size_t k = 0; k < arrlenu(table_def.tuple_desc); ++k) {
         ColDesc col_desc = table_def.tuple_desc[k];
         if (strcmp(col_name->identifier, col_desc.column_name) == 0) {
           return NULL;
@@ -635,4 +634,5 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
 
   Query* query = MakeQuery(CMD_UTILITY);
   query->utility_stmt = (ParseNode*)create;
+  return query;
 }

@@ -12,7 +12,7 @@ Table* Tables = NULL;
 Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
-  size_t num_cols = arrlen(table_def->tuple_desc);
+  size_t num_cols = arrlenu(table_def->tuple_desc);
   size_t tuple_length = sizeof(Tuple) + num_cols * sizeof(byte) + num_cols * sizeof(DataLoc) +
                         num_cols * sizeof(byte);
   Tuple* t = calloc(1, tuple_length);
@@ -84,7 +84,7 @@ TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
 TableDef* FindTableDef(const char* table_name) {
   TableDef* table_def = NULL;
   size_t i = 0;
-  for (; i < arrlen(TableDefs); ++i) {
+  for (; i < arrlenu(TableDefs); ++i) {
     if (strcmp(TableDefs[i].name, table_name) == 0) {
       table_def = &TableDefs[i];
       break;
@@ -92,11 +92,11 @@ TableDef* FindTableDef(const char* table_name) {
   }
 
   // TODO(ryan): Just return from break and return null with no check here.
-  return i == arrlen(TableDefs) ? NULL : table_def;
+  return i == arrlenu(TableDefs) ? NULL : table_def;
 }
 
 BType GetColType(TableDef* table_def, const char* col_name) {
-  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
     if (strcmp(col_name, table_def->tuple_desc[i].column_name) == 0) {
       return table_def->tuple_desc[i].type;
     }
@@ -109,7 +109,7 @@ size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* 
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   assert(is_missing != NULL);
-  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
     if (strcmp(table_def->tuple_desc[i].column_name, col_name) == 0) {
       *is_missing = false;
       return i;
@@ -183,7 +183,7 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_d
 
 Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
   Tuple* new_tuple = MakeTuple(table_def);
-  for (size_t i = 0; i < arrlen(table_def->tuple_desc); ++i) {
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
     const char* col_name = table_def->tuple_desc[i].column_name;
     Datum col_data = GetCol(tuple, col_name, table_def);
     new_tuple = SetCol(new_tuple, col_name, col_data, table_def);
@@ -199,14 +199,14 @@ void InsertTuple(size_t index, Tuple* tuple) {
 Tuple* GetTuple(size_t table_index, size_t index) {
   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
   // arrdel() doesn't automatically clear the moved over spaces.
-  if (index >= arrlen(Tables[table_index])) {
+  if (index >= arrlenu(Tables[table_index])) {
     return NULL;
   }
   return Tables[table_index][index];
 }
 
 void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
-  if (index >= arrlen(Tables[table_index])) {
+  if (index >= arrlenu(Tables[table_index])) {
     return;
   }
 
@@ -221,7 +221,7 @@ void DeleteHeapTuple(size_t table_index, size_t index) {
 
 void CreateTable(TableDef* table_def) {
   assert(table_def != NULL);
-  table_def->index = arrlen(Tables);
+  table_def->index = arrlenu(Tables);
   arrpush(TableDefs, *table_def);
   arrpush(Tables, NULL);
 }

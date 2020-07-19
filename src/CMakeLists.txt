@@ -25,6 +25,7 @@ add_library(foo_lib
     ${BISON_btdb_parser_OUTPUTS}
     driver.c
 )
+
 # Add location for header files.
 target_include_directories(foo_lib
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -32,8 +33,16 @@ target_include_directories(foo_lib
     # in order to see header files.
     PUBLIC "${CMAKE_CURRENT_BINARY_DIR}"
 )
+
 # stb is used as a dependency, so link it.
 target_link_libraries(foo_lib stb)
+
+target_compile_options(foo_lib
+    PUBLIC
+    -Werror
+    -Wall
+    -Wextra
+)
 
 
 #[[target_link_libraries(btdb btdb_lib)

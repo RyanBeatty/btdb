@@ -42,7 +42,7 @@ void free_parse_node_list(ParseNode** list) {
   if (list == NULL) {
     return;
   }
-  for (size_t i = 0; i < arrlen(list); ++i) {
+  for (size_t i = 0; i < arrlenu(list); ++i) {
     free_parse_node(list[i]);
   }
   return;
@@ -50,7 +50,7 @@ void free_parse_node_list(ParseNode** list) {
 
 void print_parse_node_list(ParseNode** list, PrintContext* ctx) {
   assert(list != NULL);
-  for (size_t i = 0; i < arrlen(list); ++i) {
+  for (size_t i = 0; i < arrlenu(list); ++i) {
     assert(list[i] != NULL);
     print_parse_node(list[i], ctx);
   }
@@ -106,7 +106,7 @@ void free_parse_node(ParseNode* node) {
       assert(insert->values_list != NULL);
       free_parse_node(insert->range_var);
       free_parse_node_list(insert->column_list);
-      for (size_t i = 0; i < arrlen(insert->values_list); ++i) {
+      for (size_t i = 0; i < arrlenu(insert->values_list); ++i) {
         free_parse_node_list(insert->values_list[i]);
       }
       free(insert);
@@ -229,6 +229,7 @@ const char* bin_expr_op_to_string(BinExprOp op) {
     }
     default: {
       Panic("Unknown BinExpOp");
+      return NULL;
     }
   }
 }
@@ -249,6 +250,7 @@ const char* join_method_to_string(JoinMethod method) {
     }
     default: {
       Panic("Unknown Join Method");
+      return NULL;
     }
   }
 }
@@ -261,6 +263,7 @@ const char* sort_dir_to_string(SortDir dir) {
       return "DESC";
     default:
       Panic("Unknown SortDir");
+      return NULL;
   }
 }
 
@@ -326,7 +329,7 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       print_parse_node_list(insert->column_list, ctx);
       EndObject(ctx);
       PrintObject(ctx, "values_list");
-      for (size_t i = 0; i < arrlen(insert->values_list); ++i) {
+      for (size_t i = 0; i < arrlenu(insert->values_list); ++i) {
         print_parse_node_list(insert->values_list[i], ctx);
       }
       EndObject(ctx);
