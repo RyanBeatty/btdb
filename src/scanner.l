@@ -118,6 +118,7 @@ void yyerror(Parser* parser, const char* msg) {
 Parser* InitParser(char* sql) {
     Parser* parser = calloc(1, sizeof(Parser));
     parser->buffer_state = yy_scan_string(sql);
+    return parser;
 }
 
 void FreeParser(Parser* parser) {
@@ -125,12 +126,3 @@ void FreeParser(Parser* parser) {
     yy_delete_buffer(parser->buffer_state);
     free(parser);
 }
-
-// void ParserContext::BeginScan(std::string sql) {
-//   buffer_state = yy_scan_string(sql.c_str());
-// }
-
-// void ParserContext::EndScan() {
-//   yy_delete_buffer(buffer_state);
-// }
-
