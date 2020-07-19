@@ -8,7 +8,7 @@ project(btdb VERSION 0.1.0)
 
 set (CMAKE_CXX_STANDARD 17)
 
-
+add_subdirectory(cmake)
 add_subdirectory(src)
 add_subdirectory(libs)
 add_subdirectory(apps)
