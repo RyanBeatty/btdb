@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "types.h"
 #include "utils.h"
@@ -67,17 +68,26 @@ void CreateTable(TableDef*);
 
 void InitSystemTables();
 
-// typedef unsigned char* Page;
+#define PAGE_SIZE 8192
 
-// typedef struct ItemLoc {
-//   uint16_t offset;
-//   uint16_t length;
-// } ItemLoc;
+typedef unsigned char* Page;
 
-// typedef struct PageHeader {
-//   uint16_t num_locs;
-//   ItemLoc item_locs[];
-// } PageHeader;
+typedef struct ItemLoc {
+  uint16_t offset;
+  uint16_t length;
+} ItemLoc;
+
+typedef struct PageHeader {
+  uint16_t free_lower_offset;
+  uint16_t free_upper_offset;
+  uint16_t num_locs;
+  ItemLoc item_locs[];
+} PageHeader;
+
+#define GetPageHeader(page) (PageHeader*)page
+
+void InitPage(Page page);
+void AddItem(Page page, unsigned char* item, size_t size);
 
 #ifdef __cplusplus
 }

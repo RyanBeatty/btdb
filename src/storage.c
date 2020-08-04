@@ -225,3 +225,33 @@ void CreateTable(TableDef* table_def) {
   arrpush(TableDefs, *table_def);
   arrpush(Tables, NULL);
 }
+
+void InitPage(Page page) {
+  assert(page != NULL);
+  memset(page, 0, PAGE_SIZE);
+  PageHeader* header = GetPageHeader(page);
+  header->free_lower_offset = sizeof(PageHeader);  // Is this off by one?
+  header->free_upper_offset = PAGE_SIZE - 1;
+  header->num_locs = 0;
+}
+
+void AddItem(Page page, unsigned char* item, size_t size) {
+  assert(page != NULL);
+  assert(item != NULL);
+  assert(size < PAGE_SIZE);
+  PageHeader* header = GetPageHeader(page);
+
+  // Should be a safe cast because we assume item fits on a page.
+  uint16_t length = (uint16_t)size;
+  uint16_t offset = header->free_upper_offset - length + 1;
+  ItemLoc loc;
+  loc.offset = offset;
+  loc.length = length;
+
+  memmove(page + header->free_lower_offset, &loc, sizeof(loc));
+  memmove(page + offset, item, length);
+
+  header->free_lower_offset += sizeof(ItemLoc);
+  header->free_upper_offset = offset - 1;
+  return;
+}
