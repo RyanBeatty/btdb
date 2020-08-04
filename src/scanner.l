@@ -10,8 +10,15 @@
 
 #define YY_DECL int yylex(void)
 
+// This is a super hack to avoid lint errors/warnings in flex specific code from preventing build.
+// This enables a directive to ignore a certain warning. This code goes at the top of the generated
+// scanner file, so put this here to be sure it will come before the offending generated code.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
 void yyerror(Parser* parser, const char* msg) {
-  fprintf(stderr, "%s\n", msg);
+    assert(parser != NULL); // to quell warnings.
+    fprintf(stderr, "%s\n", msg);
 }
 
 %}
@@ -114,6 +121,10 @@ void yyerror(Parser* parser, const char* msg) {
 "\n" {}
 <<EOF>> return TOK_EOF;
 %%
+
+// Continuation of super hack from top of file. We know this code will appear at the end of the generated scanner
+// file, so undo the warning ignore command.
+#pragma GCC diagnostic pop
 
 Parser* InitParser(char* sql) {
     Parser* parser = calloc(1, sizeof(Parser));
