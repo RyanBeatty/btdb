@@ -226,7 +226,7 @@ void CreateTable(TableDef* table_def) {
   arrpush(Tables, NULL);
 }
 
-void InitPage(Page page) {
+void PageInit(Page page) {
   assert(page != NULL);
   memset(page, 0, PAGE_SIZE);
   PageHeader* header = GetPageHeader(page);
@@ -235,7 +235,7 @@ void InitPage(Page page) {
   header->num_locs = 0;
 }
 
-void AddItem(Page page, unsigned char* item, size_t size) {
+void PageAddItem(Page page, unsigned char* item, size_t size) {
   assert(page != NULL);
   assert(item != NULL);
   assert(size < PAGE_SIZE);
