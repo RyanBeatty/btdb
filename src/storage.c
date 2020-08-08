@@ -247,11 +247,29 @@ void PageAddItem(Page page, unsigned char* item, size_t size) {
   ItemLoc loc;
   loc.offset = offset;
   loc.length = length;
-
-  memmove(page + header->free_lower_offset, &loc, sizeof(loc));
+  header->item_locs[header->num_locs] = loc;
+  ++header->num_locs;
   memmove(page + offset, item, length);
 
   header->free_lower_offset += sizeof(ItemLoc);
   header->free_upper_offset = offset - 1;
   return;
+}
+
+unsigned char* PageGetItem(Page page, size_t item_id) {
+  assert(page != NULL);
+
+  PageHeader* header = GetPageHeader(page);
+  assert(item_id < header->num_locs);
+  ItemLoc loc = header->item_locs[item_id];
+  return page + loc.offset;
+}
+
+uint16_t PageGetItemSize(Page page, size_t item_id) {
+  assert(page != NULL);
+
+  PageHeader* header = GetPageHeader(page);
+  assert(item_id < header->num_locs);
+  ItemLoc loc = header->item_locs[item_id];
+  return loc.length;
 }

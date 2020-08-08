@@ -86,8 +86,10 @@ typedef struct PageHeader {
 
 #define GetPageHeader(page) (PageHeader*)page
 
-void PageInit(Page page);
-void PageAddItem(Page page, unsigned char* item, size_t size);
+void PageInit(Page);
+void PageAddItem(Page, unsigned char*, size_t);
+unsigned char* PageGetItem(Page, size_t);
+uint16_t PageGetItemSize(Page, size_t);
 
 #ifdef __cplusplus
 }
