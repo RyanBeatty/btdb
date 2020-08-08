@@ -91,6 +91,18 @@ void PageAddItem(Page, unsigned char*, size_t);
 unsigned char* PageGetItem(Page, size_t);
 uint16_t PageGetItemSize(Page, size_t);
 
+typedef struct Cursor {
+  size_t table_index;
+  size_t tuple_index;
+} Cursor;
+
+void CursorInit(Cursor*, TableDef*);
+Tuple* CursorSeekNext(Cursor*);
+Tuple* CursorPeek(Cursor*);
+void CursorInsertTuple(Cursor*, Tuple*);
+void CursorDeleteCurrent(Cursor*);
+void CursorUpdateCurrent(Cursor*, Tuple*);
+
 #ifdef __cplusplus
 }
 #endif

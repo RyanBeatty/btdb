@@ -273,3 +273,56 @@ uint16_t PageGetItemSize(Page page, size_t item_id) {
   ItemLoc loc = header->item_locs[item_id];
   return loc.length;
 }
+
+void CursorInit(Cursor* cursor, TableDef* table_def) {
+  assert(cursor != NULL);
+  assert(table_def != NULL);
+  cursor->table_index = table_def->index;
+  cursor->tuple_index = 0;
+}
+
+Tuple* CursorSeekNext(Cursor* cursor) {
+  assert(cursor != NULL);
+
+  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
+  // arrdel() doesn't automatically clear the moved over spaces.
+  if (cursor->tuple_index >= arrlenu(Tables[cursor->table_index])) {
+    return NULL;
+  }
+  return Tables[cursor->table_index][cursor->tuple_index++];
+}
+
+Tuple* CursorPeek(Cursor* cursor) {
+  assert(cursor != NULL);
+
+  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
+  // arrdel() doesn't automatically clear the moved over spaces.
+  if (cursor->tuple_index >= arrlenu(Tables[cursor->table_index])) {
+    return NULL;
+  }
+  return Tables[cursor->table_index][cursor->tuple_index];
+}
+
+void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
+  assert(cursor != NULL);
+  assert(tuple != NULL);
+  arrpush(Tables[cursor->table_index], tuple);
+  return;
+}
+
+void CursorDeleteCurrent(Cursor* cursor) {
+  assert(cursor != NULL);
+  assert(Tables[cursor->table_index] != NULL);
+  arrdel(Tables[cursor->table_index], cursor->tuple_index);
+}
+
+void CursorUpdateCurrent(Cursor* cursor, Tuple* tuple) {
+  assert(cursor != NULL);
+  assert(tuple != NULL);
+  if (cursor->tuple_index >= arrlenu(Tables[cursor->table_index])) {
+    return;
+  }
+
+  Tables[cursor->table_index][cursor->tuple_index] = tuple;
+  return;
+}
