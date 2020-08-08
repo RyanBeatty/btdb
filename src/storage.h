@@ -58,12 +58,6 @@ typedef Tuple** Table;
 
 extern Table* Tables;  // sbarr
 
-void InsertTuple(size_t, Tuple*);
-// TODO: This appears to be unused.
-void UpdateTuple(size_t, Tuple*, size_t);
-Tuple* GetTuple(size_t, size_t);
-void DeleteHeapTuple(size_t, size_t);
-
 void CreateTable(TableDef*);
 
 void InitSystemTables();

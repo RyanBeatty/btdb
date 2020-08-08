@@ -53,8 +53,10 @@ void InitSystemTables() {
   *bool_lit = false;
   t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
 
-  InsertTuple(0, t1);
-  InsertTuple(0, t2);
+  Cursor cursor;
+  CursorInit(&cursor, &table_def);
+  CursorInsertTuple(&cursor, t1);
+  CursorInsertTuple(&cursor, t2);
 
   ColDesc* table2_tuple_desc = NULL;
   ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
@@ -62,12 +64,14 @@ void InitSystemTables() {
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
+  CursorInit(&cursor, &table_def2);
+
   Tuple* table2_t1 = MakeTuple(&table_def2);
   table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")), &table_def2);
-  InsertTuple(1, table2_t1);
+  CursorInsertTuple(&cursor, table2_t1);
   Tuple* table2_t2 = MakeTuple(&table_def2);
   table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")), &table_def2);
-  InsertTuple(1, table2_t2);
+  CursorInsertTuple(&cursor, table2_t2);
 }
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
@@ -189,34 +193,6 @@ Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
     new_tuple = SetCol(new_tuple, col_name, col_data, table_def);
   }
   return new_tuple;
-}
-
-void InsertTuple(size_t index, Tuple* tuple) {
-  arrpush(Tables[index], tuple);
-  return;
-}
-
-Tuple* GetTuple(size_t table_index, size_t index) {
-  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
-  // arrdel() doesn't automatically clear the moved over spaces.
-  if (index >= arrlenu(Tables[table_index])) {
-    return NULL;
-  }
-  return Tables[table_index][index];
-}
-
-void UpdateTuple(size_t table_index, Tuple* tuple, size_t index) {
-  if (index >= arrlenu(Tables[table_index])) {
-    return;
-  }
-
-  Tables[table_index][index] = tuple;
-  return;
-}
-
-void DeleteHeapTuple(size_t table_index, size_t index) {
-  assert(Tables[table_index] != NULL);
-  arrdel(Tables[table_index], index);
 }
 
 void CreateTable(TableDef* table_def) {

@@ -67,7 +67,6 @@ void SequentialScanInit(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
-  scan->next_index = 0;
   CursorInit(&scan->cursor, scan->plan.table_def);
 }
 
