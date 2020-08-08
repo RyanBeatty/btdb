@@ -68,6 +68,7 @@ void SequentialScanInit(PlanNode* node) {
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   scan->next_index = 0;
+  CursorInit(&scan->cursor, scan->plan.table_def);
 }
 
 Tuple* SequentialScan(PlanNode* node) {
@@ -75,11 +76,10 @@ Tuple* SequentialScan(PlanNode* node) {
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   for (;;) {
-    Tuple* cur_tpl2 = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl2 = CursorSeekNext(&scan->cursor);
     if (cur_tpl2 == NULL) {
       return NULL;
     }
-    ++scan->next_index;
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
@@ -112,7 +112,7 @@ Tuple* InsertScan(PlanNode* node) {
       new_tuple = SetCol(new_tuple, col_desc.column_name, data, scan->plan.table_def);
     }
     assert(new_tuple != NULL);
-    InsertTuple(scan->plan.table_def->index, new_tuple);
+    CursorInsertTuple(&scan->cursor, new_tuple);
   }
   return NULL;
 }
@@ -123,11 +123,10 @@ Tuple* UpdateScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl = CursorSeekNext(&scan->cursor);
     if (cur_tpl == NULL) {
       return NULL;
     }
-    ++scan->next_index;
 
     // Evaluate predicate if any.
     if (scan->where_clause != NULL) {
@@ -153,7 +152,7 @@ Tuple* UpdateScan(PlanNode* node) {
 
       Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl, scan->plan.table_def);
       cur_tpl = SetCol(cur_tpl, col->identifier, updated_value, scan->plan.table_def);
-      UpdateTuple(scan->plan.table_def->index, cur_tpl, scan->next_index - 1);
+      CursorUpdatePrev(&scan->cursor, cur_tpl);
     }
     // Why do I need this?
     return CopyTuple(cur_tpl, scan->plan.table_def);
@@ -168,7 +167,7 @@ Tuple* DeleteScan(PlanNode* node) {
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_DELETE);
   for (;;) {
-    Tuple* cur_tpl = GetTuple(scan->plan.table_def->index, scan->next_index);
+    Tuple* cur_tpl = CursorSeekNext(&scan->cursor);
     if (cur_tpl == NULL) {
       return NULL;
     }
@@ -180,12 +179,11 @@ Tuple* DeleteScan(PlanNode* node) {
       assert(result_val.data != NULL);
       bool* result = (bool*)result_val.data;
       if (!*result) {
-        ++scan->next_index;
         continue;
       }
     }
 
-    DeleteHeapTuple(scan->plan.table_def->index, scan->next_index);
+    CursorDeletePrev(&scan->cursor);
   }
 
   return NULL;
@@ -390,6 +388,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
       scan->plan.get_next_func = SequentialScan;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->join_list[range_var->join_list_index];
+      CursorInit(&scan->cursor, scan->plan.table_def);
       return (PlanNode*)scan;
     }
     default: {
@@ -475,6 +474,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->insert_tuples = query->values;
+      CursorInit(&scan->cursor, scan->plan.table_def);
 
       plan->left = (PlanNode*)scan;
       return plan;
@@ -490,6 +490,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
       scan->assign_exprs = query->assign_expr_list;
+      CursorInit(&scan->cursor, scan->plan.table_def);
 
       plan->left = (PlanNode*)scan;
       return plan;
@@ -504,6 +505,7 @@ PlanNode* PlanQuery(Query* query) {
       scan->cmd = CMD_DELETE;
       scan->table_name = query->table_name;
       scan->where_clause = query->where_clause;
+      CursorInit(&scan->cursor, scan->plan.table_def);
 
       plan->left = (PlanNode*)scan;
       return plan;

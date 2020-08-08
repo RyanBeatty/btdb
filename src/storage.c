@@ -310,19 +310,21 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   return;
 }
 
-void CursorDeleteCurrent(Cursor* cursor) {
+void CursorDeletePrev(Cursor* cursor) {
   assert(cursor != NULL);
   assert(Tables[cursor->table_index] != NULL);
+  cursor->tuple_index--;
   arrdel(Tables[cursor->table_index], cursor->tuple_index);
 }
 
-void CursorUpdateCurrent(Cursor* cursor, Tuple* tuple) {
+void CursorUpdatePrev(Cursor* cursor, Tuple* tuple) {
   assert(cursor != NULL);
+  assert(cursor->tuple_index != 0);
   assert(tuple != NULL);
-  if (cursor->tuple_index >= arrlenu(Tables[cursor->table_index])) {
+  if (cursor->tuple_index - 1 >= arrlenu(Tables[cursor->table_index])) {
     return;
   }
 
-  Tables[cursor->table_index][cursor->tuple_index] = tuple;
+  Tables[cursor->table_index][cursor->tuple_index - 1] = tuple;
   return;
 }

@@ -28,6 +28,7 @@ typedef struct SeqScan {
   PlanNode plan;
   const char* table_name;
   size_t next_index;
+  Cursor cursor;
   ParseNode* where_clause;
 } SeqScan;
 
@@ -36,6 +37,7 @@ typedef struct ModifyScan {
   CmdType cmd;
   const char* table_name;
   size_t next_index;
+  Cursor cursor;
   ParseNode* where_clause;
   ParseNode*** insert_tuples;  // 2d stb_arr.
   NAssignExpr** assign_exprs;

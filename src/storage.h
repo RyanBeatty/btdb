@@ -100,8 +100,8 @@ void CursorInit(Cursor*, TableDef*);
 Tuple* CursorSeekNext(Cursor*);
 Tuple* CursorPeek(Cursor*);
 void CursorInsertTuple(Cursor*, Tuple*);
-void CursorDeleteCurrent(Cursor*);
-void CursorUpdateCurrent(Cursor*, Tuple*);
+void CursorDeletePrev(Cursor*);
+void CursorUpdatePrev(Cursor*, Tuple*);
 
 #ifdef __cplusplus
 }
