@@ -211,8 +211,13 @@ void PageInit(Page page) {
   header->num_locs = 0;
 }
 
-// TODO: Make sure we don't overflow page.
-void PageAddItem(Page page, unsigned char* item, size_t size) {
+uint16_t PageGetFreeStart(Page page) {
+  assert(page != NULL);
+  PageHeader* header = GetPageHeader(page);
+  return sizeof(header) + sizeof(ItemLoc) * header->num_locs;
+}
+
+bool PageAddItem(Page page, unsigned char* item, size_t size) {
   assert(page != NULL);
   assert(item != NULL);
   assert(size < PAGE_SIZE);
@@ -220,6 +225,10 @@ void PageAddItem(Page page, unsigned char* item, size_t size) {
 
   // Should be a safe cast because we assume item fits on a page.
   uint16_t length = (uint16_t)size;
+  if (PageGetFreeStart(page) - header->free_upper_offset <= 0) {
+    return false;
+  }
+
   uint16_t offset = header->free_upper_offset - length + 1;
   ItemLoc loc;
   loc.offset = offset;
@@ -230,7 +239,7 @@ void PageAddItem(Page page, unsigned char* item, size_t size) {
 
   header->free_lower_offset += sizeof(ItemLoc);
   header->free_upper_offset = offset - 1;
-  return;
+  return true;
 }
 
 unsigned char* PageGetItem(Page page, size_t item_id) {
@@ -266,7 +275,7 @@ void PageDeleteItem(Page page, size_t item_id) {
 
 void PageUpdateItem(Page page, size_t item_id, unsigned char* new_data, size_t size) {
   PageDeleteItem(page, item_id);
-  PageAddItem(page, new_data, size);
+  assert(PageAddItem(page, new_data, size));
 }
 
 void CursorInit(Cursor* cursor, TableDef* table_def) {
