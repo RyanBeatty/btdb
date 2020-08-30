@@ -211,6 +211,7 @@ void PageInit(Page page) {
   header->num_locs = 0;
 }
 
+// TODO: Make sure we don't overflow page.
 void PageAddItem(Page page, unsigned char* item, size_t size) {
   assert(page != NULL);
   assert(item != NULL);
@@ -248,6 +249,24 @@ uint16_t PageGetItemSize(Page page, size_t item_id) {
   assert(item_id < header->num_locs);
   ItemLoc loc = header->item_locs[item_id];
   return loc.length;
+}
+
+void PageDeleteItem(Page page, size_t item_id) {
+  assert(page != NULL);
+
+  PageHeader* header = GetPageHeader(page);
+  assert(item_id < header->num_locs);
+  // For now just remove from item loc list. Don't try to reclaim space in the page.
+  for (size_t i = item_id + 1; i < header->num_locs; ++i) {
+    header->item_locs[i - 1] = header->item_locs[i];
+  }
+  --header->num_locs;
+  return;
+}
+
+void PageUpdateItem(Page page, size_t item_id, unsigned char* new_data, size_t size) {
+  PageDeleteItem(page, item_id);
+  PageAddItem(page, new_data, size);
 }
 
 void CursorInit(Cursor* cursor, TableDef* table_def) {
