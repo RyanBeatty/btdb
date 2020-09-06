@@ -405,8 +405,8 @@ def test_update():
         btdb> ===============
         btdb>     bar    baz
         ===============
-        b\ttrue\t
         a\tfalse\t
+        b\ttrue\t
         btdb> ===============
         btdb>     a
         ===============

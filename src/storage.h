@@ -35,8 +35,15 @@ typedef struct DataLoc {
   size_t length;
 } DataLoc;
 
+typedef struct TupleId {
+  uint16_t page_num;
+  uint16_t loc_num;
+} TupleId;
+
 typedef struct Tuple {
   size_t length;
+  TupleId self_tid;  // Points to either item loc for this tuple or (in the case of updates)
+                     // item loc for 'next' tuple.
   size_t num_cols;
   byte null_bitmap[];
 } Tuple;
@@ -47,6 +54,8 @@ typedef struct Tuple {
 #define GetDataPtr(tuple)                                         \
   (byte*)tuple + sizeof(Tuple) + tuple->num_cols * sizeof(byte) + \
       tuple->num_cols * sizeof(DataLoc)
+
+#define TupleGetSize(tuple) tuple->length
 
 Tuple* MakeTuple(TableDef*);
 size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);
@@ -78,7 +87,8 @@ typedef struct PageHeader {
   ItemLoc item_locs[];
 } PageHeader;
 
-#define GetPageHeader(page) (PageHeader*)page
+#define GetPageHeader(page) ((PageHeader*)page)
+#define GetPageNextLocNum(ptr) GetPageHeader(ptr)->num_locs
 
 void PageInit(Page);
 uint16_t PageGetFreeStart(Page);
@@ -90,6 +100,7 @@ void PageUpdateItem(Page, size_t, unsigned char*, size_t);
 
 typedef struct Cursor {
   size_t table_index;
+  size_t page_index;
   size_t tuple_index;
 } Cursor;
 
@@ -97,8 +108,8 @@ void CursorInit(Cursor*, TableDef*);
 Tuple* CursorSeekNext(Cursor*);
 Tuple* CursorPeek(Cursor*);
 void CursorInsertTuple(Cursor*, Tuple*);
-void CursorDeletePrev(Cursor*);
-void CursorUpdatePrev(Cursor*, Tuple*);
+void CursorDeleteTupleById(Cursor*, TupleId);
+void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
 
 #ifdef __cplusplus
 }

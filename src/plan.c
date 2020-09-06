@@ -121,10 +121,11 @@ Tuple* UpdateScan(PlanNode* node) {
   assert(node->type == N_PLAN_MODIFY_SCAN);
   ModifyScan* scan = (ModifyScan*)node;
   assert(scan->cmd == CMD_UPDATE);
+  Tuple** updated_tuples = NULL;
   for (;;) {
     Tuple* cur_tpl = CursorSeekNext(&scan->cursor);
     if (cur_tpl == NULL) {
-      return NULL;
+      break;
     }
 
     // Evaluate predicate if any.
@@ -138,6 +139,7 @@ Tuple* UpdateScan(PlanNode* node) {
       }
     }
 
+    Tuple* updated_tuple = CopyTuple(cur_tpl, scan->plan.table_def);
     for (size_t i = 0; i < arrlenu(scan->assign_exprs); ++i) {
       NAssignExpr* assign_expr = scan->assign_exprs[i];
       assert(assign_expr != NULL);
@@ -149,12 +151,17 @@ Tuple* UpdateScan(PlanNode* node) {
       assert(col->type == NIDENTIFIER);
       assert(col->identifier != NULL);
 
+      // Eval on cur_tpl to prevent seeing own updates.
       Datum updated_value = EvalExpr(assign_expr->value_expr, cur_tpl, scan->plan.table_def);
-      cur_tpl = SetCol(cur_tpl, col->identifier, updated_value, scan->plan.table_def);
-      CursorUpdatePrev(&scan->cursor, cur_tpl);
+      updated_tuple =
+          SetCol(updated_tuple, col->identifier, updated_value, scan->plan.table_def);
     }
-    // Why do I need this?
-    return CopyTuple(cur_tpl, scan->plan.table_def);
+    arrpush(updated_tuples, updated_tuple);
+  }
+
+  for (size_t i = 0; i < arrlenu(updated_tuples); ++i) {
+    Tuple* updated_tuple = updated_tuples[i];
+    CursorUpdateTupleById(&scan->cursor, updated_tuple, updated_tuple->self_tid);
   }
 
   return NULL;
@@ -182,7 +189,7 @@ Tuple* DeleteScan(PlanNode* node) {
       }
     }
 
-    CursorDeletePrev(&scan->cursor);
+    CursorDeleteTupleById(&scan->cursor, cur_tpl->self_tid);
   }
 
   return NULL;
