@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 #include "stb_ds.h"
 #include "utils.h"
@@ -155,9 +154,10 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_d
   byte* old_data_ptr = GetDataPtr(tuple);
 
   size_t new_size = tuple->length + datum.length - old_locs[change_idx].length;
-  Tuple* new_tuple = calloc(1, new_size);
+  Tuple* new_tuple = calloc(new_size, sizeof(unsigned char));
   new_tuple->num_cols = tuple->num_cols;
   new_tuple->length = new_size;
+  new_tuple->self_tid = tuple->self_tid;
   memcpy(new_tuple->null_bitmap, tuple->null_bitmap, new_tuple->num_cols * sizeof(byte));
 
   DataLoc* new_locs = GetDataLocs(new_tuple);
@@ -187,13 +187,9 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_d
   return new_tuple;
 }
 
-Tuple* CopyTuple(Tuple* tuple, TableDef* table_def) {
-  Tuple* new_tuple = MakeTuple(table_def);
-  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
-    const char* col_name = table_def->tuple_desc[i].column_name;
-    Datum col_data = GetCol(tuple, col_name, table_def);
-    new_tuple = SetCol(new_tuple, col_name, col_data, table_def);
-  }
+Tuple* CopyTuple(Tuple* tuple) {
+  Tuple* new_tuple = (Tuple*)calloc(tuple->length, sizeof(unsigned char));
+  new_tuple = memcpy(new_tuple, tuple, tuple->length);
   return new_tuple;
 }
 
@@ -237,6 +233,7 @@ bool PageAddItem(Page page, unsigned char* item, size_t size) {
   ItemLoc loc;
   loc.offset = offset;
   loc.length = length;
+  loc.dead = false;
   header->item_locs[header->num_locs] = loc;
   ++header->num_locs;
   memmove(page + offset, item, length);
@@ -271,17 +268,10 @@ void PageDeleteItem(Page page, size_t item_id) {
 
   PageHeader* header = GetPageHeader(page);
   assert(item_id < header->num_locs);
-  // For now just remove from item loc list. Don't try to reclaim space in the page.
-  for (size_t i = item_id + 1; i < header->num_locs; ++i) {
-    header->item_locs[i - 1] = header->item_locs[i];
-  }
-  --header->num_locs;
+  // Mark item loc for the tuple as being dead without removing it. We need to be careful when
+  // removing item locs so that we update all tuple's tid reference.
+  header->item_locs[item_id].dead = true;
   return;
-}
-
-void PageUpdateItem(Page page, size_t item_id, unsigned char* new_data, size_t size) {
-  PageDeleteItem(page, item_id);
-  assert(PageAddItem(page, new_data, size));
 }
 
 void CursorInit(Cursor* cursor, TableDef* table_def) {
@@ -295,33 +285,47 @@ void CursorInit(Cursor* cursor, TableDef* table_def) {
 Tuple* CursorSeekNext(Cursor* cursor) {
   assert(cursor != NULL);
 
-  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
-  // arrdel() doesn't automatically clear the moved over spaces.
-  if (cursor->page_index >= arrlenu(TablePages[cursor->table_index])) {
-    return NULL;
-  }
-  Page page =
-      PageGetItem(TablePages[cursor->table_index][cursor->page_index], cursor->tuple_index);
-  if (page == NULL) {
-    ++cursor->page_index;
-    cursor->tuple_index = 0;
-  } else {
+  for (; cursor->page_index < arrlenu(TablePages[cursor->table_index]);) {
+    if (cursor->tuple_index >=
+        PageGetNumLocs(TablePages[cursor->table_index][cursor->page_index])) {
+      ++cursor->page_index;
+      cursor->tuple_index = 0;
+      continue;
+    }
+    ItemLoc loc = PageGetItemLoc(TablePages[cursor->table_index][cursor->page_index],
+                                 cursor->tuple_index);
+    if (loc.dead) {
+      ++cursor->tuple_index;
+      continue;
+    }
+
+    unsigned char* tuple =
+        PageGetItem(TablePages[cursor->table_index][cursor->page_index], cursor->tuple_index);
+    assert(tuple != NULL);
     ++cursor->tuple_index;
+    // if (tuple == NULL) {
+    //   ++cursor->page_index;
+    //   cursor->tuple_index = 0;
+    // } else {
+    //   ++cursor->tuple_index;
+    // }
+    return (Tuple*)tuple;
   }
-  return (Tuple*)page;
+
+  return NULL;
 }
 
-Tuple* CursorPeek(Cursor* cursor) {
-  assert(cursor != NULL);
+// Tuple* CursorPeek(Cursor* cursor) {
+//   assert(cursor != NULL);
 
-  // NOTE: Need to do this check or else I could run off the end of the dynamic array.
-  // arrdel() doesn't automatically clear the moved over spaces.
-  if (cursor->page_index >= arrlenu(TablePages[cursor->table_index])) {
-    return NULL;
-  }
-  return (Tuple*)PageGetItem(TablePages[cursor->table_index][cursor->page_index],
-                             cursor->tuple_index);
-}
+//   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
+//   // arrdel() doesn't automatically clear the moved over spaces.
+//   if (cursor->page_index >= arrlenu(TablePages[cursor->table_index])) {
+//     return NULL;
+//   }
+//   return (Tuple*)PageGetItem(TablePages[cursor->table_index][cursor->page_index],
+//                              cursor->tuple_index);
+// }
 
 void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   assert(cursor != NULL);
@@ -351,7 +355,6 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
 
   Page page = TablePages[cursor->table_index][tid.page_num];
   PageHeader* header = GetPageHeader(page);
-  printf("%d %d\n", tid.loc_num, header->num_locs);
   assert(tid.loc_num < header->num_locs);
   PageDeleteItem(page, tid.loc_num);
   return;
@@ -360,7 +363,7 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
 void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(cursor != NULL);
   assert(updated_tuple != NULL);
-  assert(tid.loc_num < arrlenu(TablePages[cursor->table_index]));
+  assert(tid.page_num < arrlenu(TablePages[cursor->table_index]));
 
   Page page = TablePages[cursor->table_index][tid.page_num];
   PageHeader* header = GetPageHeader(page);

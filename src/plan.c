@@ -139,7 +139,7 @@ Tuple* UpdateScan(PlanNode* node) {
       }
     }
 
-    Tuple* updated_tuple = CopyTuple(cur_tpl, scan->plan.table_def);
+    Tuple* updated_tuple = CopyTuple(cur_tpl);
     for (size_t i = 0; i < arrlenu(scan->assign_exprs); ++i) {
       NAssignExpr* assign_expr = scan->assign_exprs[i];
       assert(assign_expr != NULL);

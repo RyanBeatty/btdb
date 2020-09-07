@@ -61,7 +61,7 @@ Tuple* MakeTuple(TableDef*);
 size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);
 Datum GetCol(Tuple*, const char*, TableDef*);
 Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
-Tuple* CopyTuple(Tuple*, TableDef*);
+Tuple* CopyTuple(Tuple*);
 
 typedef Tuple** Table;
 
@@ -78,6 +78,8 @@ typedef unsigned char* Page;
 typedef struct ItemLoc {
   uint16_t offset;
   uint16_t length;
+  // TODO: Make bitmap
+  bool dead;
 } ItemLoc;
 
 typedef struct PageHeader {
@@ -89,6 +91,8 @@ typedef struct PageHeader {
 
 #define GetPageHeader(page) ((PageHeader*)page)
 #define GetPageNextLocNum(ptr) GetPageHeader(ptr)->num_locs
+#define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
+#define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
 
 void PageInit(Page);
 uint16_t PageGetFreeStart(Page);
@@ -96,7 +100,6 @@ bool PageAddItem(Page, unsigned char*, size_t);
 unsigned char* PageGetItem(Page, size_t);
 uint16_t PageGetItemSize(Page, size_t);
 void PageDeleteItem(Page, size_t);
-void PageUpdateItem(Page, size_t, unsigned char*, size_t);
 
 typedef struct Cursor {
   size_t table_index;
@@ -106,7 +109,7 @@ typedef struct Cursor {
 
 void CursorInit(Cursor*, TableDef*);
 Tuple* CursorSeekNext(Cursor*);
-Tuple* CursorPeek(Cursor*);
+// Tuple* CursorPeek(Cursor*);
 void CursorInsertTuple(Cursor*, Tuple*);
 void CursorDeleteTupleById(Cursor*, TupleId);
 void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
