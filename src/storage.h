@@ -65,8 +65,6 @@ Tuple* CopyTuple(Tuple*);
 
 typedef Tuple** Table;
 
-extern Table* Tables;  // sbarr
-
 void CreateTable(TableDef*);
 
 void InitSystemTables();

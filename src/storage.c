@@ -7,7 +7,6 @@
 #include "utils.h"
 
 TableDef* TableDefs = NULL;
-Table* Tables = NULL;
 Page** TablePages = NULL;  // 2d stb array.
 
 Tuple* MakeTuple(TableDef* table_def) {
@@ -195,9 +194,8 @@ Tuple* CopyTuple(Tuple* tuple) {
 
 void CreateTable(TableDef* table_def) {
   assert(table_def != NULL);
-  table_def->index = arrlenu(Tables);
+  table_def->index = arrlenu(TableDefs);
   arrpush(TableDefs, *table_def);
-  arrpush(Tables, NULL);
   arrpush(TablePages, NULL);
 }
 
