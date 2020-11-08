@@ -292,6 +292,42 @@ def test_insert():
     proc.kill()
 
 
+def test_large_insert():
+    proc = subprocess.Popen(
+        [BTDB_BIN_PATH],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    
+    expected_output = ["Starting btdb"]
+    for _ in range(3000):
+        proc.stdin.write(b"insert into foo (bar, baz) values ('hello world', true);\n")
+        expected_output.append("btdb>     bar    baz")
+        expected_output.append("===============")
+    proc.stdin.write(b"select bar, baz from foo;")
+    expected_output.append("btdb>     bar    baz")
+    expected_output.append("===============")
+    # These rows are already pre populated.
+    expected_output.append("hello\ttrue\t")
+    expected_output.append("world\tfalse\t")
+    for _ in range(3000):
+        expected_output.append("hello world\ttrue\t")
+    expected_output.append("btdb> Shutting down btdb\n")
+    try:
+        output, err = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    print(bytes("\n".join(expected_output), encoding='utf-8'))
+    assert not err
+    assert output == bytes("\n".join(expected_output), encoding="utf8")
+
+    proc.kill()
+
+
 def test_delete():
     proc = subprocess.Popen(
         [BTDB_BIN_PATH],
