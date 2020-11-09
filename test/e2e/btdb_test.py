@@ -96,20 +96,25 @@ def test_select_with_joins():
         stderr=subprocess.PIPE,
     )
 
-    proc.stdin.write(b"select bar, baz, a from foo, b;\n")
-    proc.stdin.write(b"select bar, a from foo, b;\n")
-    proc.stdin.write(b"select bar, baz, a from foo, b where a = 'cab';\n")
-    proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
-    proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
-    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
-    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
-    proc.stdin.write(b"insert into b (a) values ('hello');\n")
-    proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
-    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
-    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        select bar, baz, a from foo, b;
+        select bar, a from foo, b;
+        select bar, baz, a from foo, b where a = 'cab';
+        select bar, baz, a from foo, b order by a;
+        select bar, baz, a from foo join b on a = bar;
+        select bar, baz, a from foo left join b on a = bar;
+        select bar, baz, a from foo right join b on a = bar;
+        insert into b (a) values ('hello');
+        select bar, baz, a from foo join b on a = bar;
+        select bar, baz, a from foo left join b on a = bar;
+        select bar, baz, a from foo right join b on a = bar;
+        """),
+        encoding='utf-8'
+    )
 
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -326,7 +331,6 @@ def test_large_insert():
         proc.communicate()
         assert False
 
-    # print(bytes("\n".join(expected_output), encoding="utf-8"))
     assert not err
     assert output == bytes("\n".join(expected_output), encoding="utf8")
 
