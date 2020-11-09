@@ -10,8 +10,8 @@ PROMPT = b"btdb> "
 START_MSG = b"Starting btdb\n" + PROMPT
 SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
 BTDB_BIN_PATH = "./build/apps/btdb"
-DEBUG = os.getenv('DEBUG', None) is not None
-TIMEOUT= None if DEBUG else 2
+DEBUG = os.getenv("DEBUG", None) is not None
+TIMEOUT = None if DEBUG else 2
 
 
 def _start_btdb_process():
@@ -20,6 +20,7 @@ def _start_btdb_process():
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        bufsize=0,
     )
 
     if DEBUG:
@@ -31,15 +32,19 @@ def _start_btdb_process():
 def test_select():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"select bar from foo;\n")
-    proc.stdin.write(b"select bar, baz from foo where baz = true;\n")
-    proc.stdin.write(b"select bar, baz from foo where bar = 'world';\n")
-    proc.stdin.write(b"select bar, baz from foo where bar = 'foo';\n")
-    proc.stdin.write(b"select a from b;\n")
-    proc.stdin.write(b"select a, true, 'hello' from b;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        select bar, baz from foo;
+        select bar from foo;
+        select bar, baz from foo where baz = true;
+        select bar, baz from foo where bar = 'world';
+        select bar, baz from foo where bar = 'foo';
+        select a from b;
+        select a, true, 'hello' from b;
+        """
+    ), encoding='utf-8')
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -83,91 +88,92 @@ def test_select():
     proc.kill()
 
 
-# def test_select_with_joins():
-#     proc = subprocess.Popen(
-#         [BTDB_BIN_PATH],
-#         stdin=subprocess.PIPE,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#     )
+def test_select_with_joins():
+    proc = subprocess.Popen(
+        [BTDB_BIN_PATH],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
-#     proc.stdin.write(b"select bar, baz, a from foo, b;\n")
-#     proc.stdin.write(b"select bar, a from foo, b;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo, b where a = 'cab';\n")
-#     proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
-#     proc.stdin.write(b"insert into b (a) values ('hello');\n")
-#     proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
-#     proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo, b;\n")
+    proc.stdin.write(b"select bar, a from foo, b;\n")
+    proc.stdin.write(b"select bar, baz, a from foo, b where a = 'cab';\n")
+    proc.stdin.write(b"select bar, baz, a from foo, b order by a;\n")
+    proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
+    proc.stdin.write(b"insert into b (a) values ('hello');\n")
+    proc.stdin.write(b"select bar, baz, a from foo join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo left join b on a = bar;\n")
+    proc.stdin.write(b"select bar, baz, a from foo right join b on a = bar;\n")
 
-#     try:
-#         output, err = proc.communicate(timeout=TIMEOUT)
-#     except subprocess.TimeoutExpired:
-#         proc.kill()
-#         proc.communicate()
-#         assert False
+    try:
+        output, err = proc.communicate(timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
 
-#     assert not err
-#     assert output == bytes(
-#         textwrap.dedent(
-#             f"""\
-#         Starting btdb
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\tasdf\t
-#         hello\ttrue\tcab\t
-#         world\tfalse\tasdf\t
-#         world\tfalse\tcab\t
-#         btdb>     bar    a
-#         ===============
-#         hello\tasdf\t
-#         hello\tcab\t
-#         world\tasdf\t
-#         world\tcab\t
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\tcab\t
-#         world\tfalse\tcab\t
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\tasdf\t
-#         world\tfalse\tasdf\t
-#         hello\ttrue\tcab\t
-#         world\tfalse\tcab\t
-#         btdb>     bar    baz    a
-#         ===============
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\t\t\t
-#         world\tfalse\t\t\t
-#         btdb>     bar    baz    a
-#         ===============
-#         \t\t\t\tasdf\t
-#         \t\t\t\tcab\t
-#         btdb>     a
-#         ===============
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\thello\t
-#         btdb>     bar    baz    a
-#         ===============
-#         hello\ttrue\thello\t
-#         world\tfalse\t\t\t
-#         btdb>     bar    baz    a
-#         ===============
-#         \t\t\t\tasdf\t
-#         \t\t\t\tcab\t
-#         hello\ttrue\thello\t
-#         btdb> Shutting down btdb
-#         """
-#         ),
-#         encoding="utf8",
-#     )
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tasdf\t
+        hello\ttrue\tcab\t
+        world\tfalse\tasdf\t
+        world\tfalse\tcab\t
+        btdb>     bar    a
+        ===============
+        hello\tasdf\t
+        hello\tcab\t
+        world\tasdf\t
+        world\tcab\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tcab\t
+        world\tfalse\tcab\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\tasdf\t
+        world\tfalse\tasdf\t
+        hello\ttrue\tcab\t
+        world\tfalse\tcab\t
+        btdb>     bar    baz    a
+        ===============
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\t\t\t
+        world\tfalse\t\t\t
+        btdb>     bar    baz    a
+        ===============
+        \t\t\t\tasdf\t
+        \t\t\t\tcab\t
+        btdb>     a
+        ===============
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\thello\t
+        btdb>     bar    baz    a
+        ===============
+        hello\ttrue\thello\t
+        world\tfalse\t\t\t
+        btdb>     bar    baz    a
+        ===============
+        \t\t\t\tasdf\t
+        \t\t\t\tcab\t
+        hello\ttrue\thello\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
 
-#     proc.kill()
+    proc.kill()
+
 
 def test_integer_support():
     proc = _start_btdb_process()
@@ -298,28 +304,29 @@ def test_insert():
 def test_large_insert():
     proc = _start_btdb_process()
 
+    input_cmds = []
     expected_output = ["Starting btdb"]
-    for _ in range(3000):
-        proc.stdin.write(b"insert into foo (bar, baz) values ('hello world', true);\n")
+    for _ in range(5000):
+        input_cmds.append("insert into foo (bar, baz) values ('hello world', true);\n")
         expected_output.append("btdb>     bar    baz")
         expected_output.append("===============")
-    proc.stdin.write(b"select bar, baz from foo;")
+    input_cmds.append("select bar, baz from foo;")
     expected_output.append("btdb>     bar    baz")
     expected_output.append("===============")
     # These rows are already pre populated.
     expected_output.append("hello\ttrue\t")
     expected_output.append("world\tfalse\t")
-    for _ in range(3000):
+    for _ in range(5000):
         expected_output.append("hello world\ttrue\t")
     expected_output.append("btdb> Shutting down btdb\n")
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=bytes(''.join(input_cmds), encoding='utf-8'), timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
         assert False
 
-    print(bytes("\n".join(expected_output), encoding='utf-8'))
+    # print(bytes("\n".join(expected_output), encoding="utf-8"))
     assert not err
     assert output == bytes("\n".join(expected_output), encoding="utf8")
 
@@ -439,6 +446,7 @@ def test_update():
 
     proc.kill()
 
+
 def test_sort():
     proc = _start_btdb_process()
 
@@ -489,7 +497,9 @@ def test_create_table():
     proc = _start_btdb_process()
 
     proc.stdin.write(b"create table baz (id text, boq bool);\n")
-    proc.stdin.write(b"insert into baz (id, boq) values ('hello', true), ('world', false);\n")
+    proc.stdin.write(
+        b"insert into baz (id, boq) values ('hello', true), ('world', false);\n"
+    )
     proc.stdin.write(b"select id, boq from baz;\n")
     try:
         output, err = proc.communicate(timeout=TIMEOUT)
