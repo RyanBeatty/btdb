@@ -32,8 +32,9 @@ def _start_btdb_process():
 def test_select():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         select bar, baz from foo;
         select bar from foo;
         select bar, baz from foo where baz = true;
@@ -42,7 +43,9 @@ def test_select():
         select a from b;
         select a, true, 'hello' from b;
         """
-    ), encoding='utf-8')
+        ),
+        encoding="utf-8",
+    )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
@@ -96,8 +99,9 @@ def test_select_with_joins():
         stderr=subprocess.PIPE,
     )
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         select bar, baz, a from foo, b;
         select bar, a from foo, b;
         select bar, baz, a from foo, b where a = 'cab';
@@ -109,8 +113,9 @@ def test_select_with_joins():
         select bar, baz, a from foo join b on a = bar;
         select bar, baz, a from foo left join b on a = bar;
         select bar, baz, a from foo right join b on a = bar;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
 
     try:
@@ -183,16 +188,18 @@ def test_select_with_joins():
 def test_integer_support():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         create table baz (foo int);
         insert into baz (foo) values (1), (23), (-5), (0), (-0);
         select foo from baz;
         select foo from baz where foo > -1;
         select foo from baz order by foo;
         select foo + 1 from baz;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -248,8 +255,9 @@ def test_integer_support():
 def test_insert():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         insert into foo (bar, baz) values ('a', false), ('b', true);
         select bar, baz from foo;
         insert into b (a) values ('c');
@@ -258,8 +266,9 @@ def test_insert():
         select bar, baz from foo;
         insert into foo (bar, baz) values ('e', null);
         select bar, baz from foo;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -335,7 +344,9 @@ def test_large_insert():
         expected_output.append("hello world\ttrue\t")
     expected_output.append("btdb> Shutting down btdb\n")
     try:
-        output, err = proc.communicate(input=bytes(''.join(input_cmds), encoding='utf-8'), timeout=TIMEOUT)
+        output, err = proc.communicate(
+            input=bytes("".join(input_cmds), encoding="utf-8"), timeout=TIMEOUT
+        )
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -350,16 +361,18 @@ def test_large_insert():
 def test_delete():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         delete from foo where baz = true;
         select bar, baz from foo;
         delete from foo where bar = 'world';
         select bar, baz from foo;
         delete from b;
         select a from b;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -395,12 +408,14 @@ def test_delete():
 def test_delete_everything():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         delete from foo;
         select bar, baz from foo;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -429,16 +444,18 @@ def test_delete_everything():
 def test_update():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         update foo set bar = 'a';
         select bar, baz from foo;
         update foo set bar = 'b' where baz = true;
         select bar, baz from foo;
         update b set a = 'updated';
         select a from b;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -479,15 +496,17 @@ def test_update():
 def test_sort():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         select bar, baz from foo order by bar;
         select bar, baz from foo order by bar desc;
         select bar, baz from foo order by baz;
         select bar, baz from foo order by baz desc;
         select bar, baz from foo order by foo;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
@@ -530,13 +549,15 @@ def test_sort():
 def test_create_table():
     proc = _start_btdb_process()
 
-    input_cmds = bytes(textwrap.dedent(
-        """\
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
         create table baz (id text, boq bool);
         insert into baz (id, boq) values ('hello', true), ('world', false);
         select id, boq from baz;
-        """),
-        encoding='utf-8'
+        """
+        ),
+        encoding="utf-8",
     )
     try:
         output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
