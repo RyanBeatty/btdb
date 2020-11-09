@@ -10,8 +10,8 @@ PROMPT = b"btdb> "
 START_MSG = b"Starting btdb\n" + PROMPT
 SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
 BTDB_BIN_PATH = "./build/apps/btdb"
-TIMEOUT= None if os.getenv('TIMEOUT', 2) == 0 else 2
 DEBUG = os.getenv('DEBUG', None) is not None
+TIMEOUT= None if DEBUG else 2
 
 
 def _start_btdb_process():
