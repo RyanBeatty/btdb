@@ -183,14 +183,19 @@ def test_select_with_joins():
 def test_integer_support():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"create table baz (foo int);\n")
-    proc.stdin.write(b"insert into baz (foo) values (1), (23), (-5), (0), (-0);\n")
-    proc.stdin.write(b"select foo from baz;\n")
-    proc.stdin.write(b"select foo from baz where foo > -1;\n")
-    proc.stdin.write(b"select foo from baz order by foo;\n")
-    proc.stdin.write(b"select foo + 1 from baz;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        create table baz (foo int);
+        insert into baz (foo) values (1), (23), (-5), (0), (-0);
+        select foo from baz;
+        select foo from baz where foo > -1;
+        select foo from baz order by foo;
+        select foo + 1 from baz;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -243,16 +248,21 @@ def test_integer_support():
 def test_insert():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"insert into foo (bar, baz) values ('a', false), ('b', true);\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"insert into b (a) values ('c');\n")
-    proc.stdin.write(b"select a from b;\n")
-    proc.stdin.write(b"insert into foo (bar, baz) values ('d', true and false);\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"insert into foo (bar, baz) values ('e', null);\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        insert into foo (bar, baz) values ('a', false), ('b', true);
+        select bar, baz from foo;
+        insert into b (a) values ('c');
+        select a from b;
+        insert into foo (bar, baz) values ('d', true and false);
+        select bar, baz from foo;
+        insert into foo (bar, baz) values ('e', null);
+        select bar, baz from foo;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -340,14 +350,19 @@ def test_large_insert():
 def test_delete():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"delete from foo where baz = true;\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"delete from foo where bar = 'world';\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"delete from b;\n")
-    proc.stdin.write(b"select a from b;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        delete from foo where baz = true;
+        select bar, baz from foo;
+        delete from foo where bar = 'world';
+        select bar, baz from foo;
+        delete from b;
+        select a from b;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -380,10 +395,15 @@ def test_delete():
 def test_delete_everything():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"delete from foo;\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        delete from foo;
+        select bar, baz from foo;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -409,14 +429,19 @@ def test_delete_everything():
 def test_update():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"update foo set bar = 'a';\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"update foo set bar = 'b' where baz = true;\n")
-    proc.stdin.write(b"select bar, baz from foo;\n")
-    proc.stdin.write(b"update b set a = 'updated';\n")
-    proc.stdin.write(b"select a from b;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        update foo set bar = 'a';
+        select bar, baz from foo;
+        update foo set bar = 'b' where baz = true;
+        select bar, baz from foo;
+        update b set a = 'updated';
+        select a from b;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -454,13 +479,18 @@ def test_update():
 def test_sort():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"select bar, baz from foo order by bar;\n")
-    proc.stdin.write(b"select bar, baz from foo order by bar desc;\n")
-    proc.stdin.write(b"select bar, baz from foo order by baz;\n")
-    proc.stdin.write(b"select bar, baz from foo order by baz desc;\n")
-    proc.stdin.write(b"select bar, baz from foo order by foo;\n")
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        select bar, baz from foo order by bar;
+        select bar, baz from foo order by bar desc;
+        select bar, baz from foo order by baz;
+        select bar, baz from foo order by baz desc;
+        select bar, baz from foo order by foo;
+        """),
+        encoding='utf-8'
+    )
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -500,13 +530,16 @@ def test_sort():
 def test_create_table():
     proc = _start_btdb_process()
 
-    proc.stdin.write(b"create table baz (id text, boq bool);\n")
-    proc.stdin.write(
-        b"insert into baz (id, boq) values ('hello', true), ('world', false);\n"
+    input_cmds = bytes(textwrap.dedent(
+        """\
+        create table baz (id text, boq bool);
+        insert into baz (id, boq) values ('hello', true), ('world', false);
+        select id, boq from baz;
+        """),
+        encoding='utf-8'
     )
-    proc.stdin.write(b"select id, boq from baz;\n")
     try:
-        output, err = proc.communicate(timeout=TIMEOUT)
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
