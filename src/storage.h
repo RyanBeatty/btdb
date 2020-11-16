@@ -112,6 +112,26 @@ void CursorInsertTuple(Cursor*, Tuple*);
 void CursorDeleteTupleById(Cursor*, TupleId);
 void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
 
+////////////////////////////////////////////////////
+// API for Storage Manager
+////////////////////////////////////////////////////
+Page ReadPage(uint64_t, char*, uint64_t);
+void WritePage(uint64_t, char*, uint64_t, Page);
+
+typedef struct RelStorageManager {
+  int fd;
+  uint64_t rel_id;
+  char* rel_name;  // Only really used for file naming.
+} RelStorageManager;
+
+RelStorageManager* SMS;  // stb-array.
+
+RelStorageManager* SMOpen(uint64_t, char*);
+void SMCreate(RelStorageManager*);
+void SMClose(RelStorageManager*);
+void SMRead(RelStorageManager*, uint64_t, byte* buffer);
+void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
+
 #ifdef __cplusplus
 }
 #endif

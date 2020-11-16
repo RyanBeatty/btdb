@@ -1,13 +1,16 @@
 #include "storage.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "stb_ds.h"
 #include "utils.h"
 
 TableDef* TableDefs = NULL;
 Page** TablePages = NULL;  // 2d stb array.
+RelStorageManager* SMS = NULL;
 
 Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
@@ -385,4 +388,92 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   PageInit(cur_page);
   assert(PageAddItem(cur_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
   arrpush(TablePages[cursor->table_index], cur_page);
+}
+
+Page ReadPage(uint64_t rel_id, char* rel_name, uint64_t page_id) {
+  assert(rel_name != NULL);
+  Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+  assert(page != NULL);
+  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  assert(sm != NULL);
+  SMRead(sm, page_id, page);
+  return page;
+}
+
+void WritePage(uint64_t rel_id, char* rel_name, uint64_t page_id, Page page) {
+  assert(rel_name != NULL);
+  assert(page != NULL);
+  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  assert(sm != NULL);
+  SMWrite(sm, page_id, page);
+}
+
+RelStorageManager* SMOpen(uint64_t rel_id, char* rel_name) {
+  for (uint64_t i = 0; i < arrlenu(SMS); ++i) {
+    if (SMS[i].rel_id == rel_id) {
+      return &SMS[i];
+    }
+  }
+
+  // Don't actually open any files.
+  arrpush(SMS, ((RelStorageManager){.fd = -1, .rel_id = 0, .rel_name = strdup(rel_name)}));
+  return &SMS[arrlenu(SMS) - 1];
+}
+
+void SMCreate(RelStorageManager* sm) {
+  assert(sm != NULL);
+  assert(sm->rel_name != NULL);
+  assert(sm->fd == -1);
+  char* rel_path = strcat("data_dir/", sm->rel_name);
+  int fd = open(rel_path, O_RDWR | O_CREAT | O_EXCL);
+  assert(fd != -1);
+  sm->fd = fd;
+  return;
+}
+
+void SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
+  assert(sm != NULL);
+  assert(sm->rel_name != NULL);
+  assert(buffer != NULL);
+
+  if (sm->fd == -1) {
+    char* rel_path = strcat("data_dir/", sm->rel_name);
+    int fd = open(rel_path, O_RDWR);
+    assert(fd != -1);
+    sm->fd = fd;
+  }
+
+  // NOTE: maybe need to worry about overflow issues at some point?
+  off_t seek_pos = page_id * PAGE_SIZE;
+  int result = lseek(sm->fd, seek_pos, SEEK_SET);
+  assert(result == seek_pos);
+
+  result = read(sm->fd, buffer, PAGE_SIZE);
+  assert(result == PAGE_SIZE);
+  return;
+}
+
+void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
+  assert(sm != NULL);
+  assert(sm->rel_name != NULL);
+  assert(buffer != NULL);
+
+  if (sm->fd == -1) {
+    char* rel_path = strcat("data_dir/", sm->rel_name);
+    int fd = open(rel_path, O_RDWR);
+    assert(fd != -1);
+    sm->fd = fd;
+  }
+
+  // NOTE: maybe need to worry about overflow issues at some point?
+  off_t seek_pos = page_id * PAGE_SIZE;
+  int result = lseek(sm->fd, seek_pos, SEEK_SET);
+  assert(result == seek_pos);
+
+  result = write(sm->fd, buffer, PAGE_SIZE);
+  assert(result == PAGE_SIZE);
+  // Make sure stuff gets to disk (On Linux at least)!
+  result = fsync(sm->fd);
+  assert(result == 0);
+  return;
 }
