@@ -9,7 +9,7 @@ import pytest
 PROMPT = b"btdb> "
 START_MSG = b"Starting btdb\n" + PROMPT
 SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
-BTDB_BIN_PATH = "./build/apps/btdb"
+BTDB_BIN_PATH = "./start.sh"
 DEBUG = os.getenv("DEBUG", None) is not None
 TIMEOUT = None if DEBUG else 2
 

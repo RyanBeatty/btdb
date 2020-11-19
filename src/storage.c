@@ -200,6 +200,9 @@ void CreateTable(TableDef* table_def) {
   table_def->index = arrlenu(TableDefs);
   arrpush(TableDefs, *table_def);
   arrpush(TablePages, NULL);
+  RelStorageManager* sm = SMOpen(table_def->index, table_def->name);
+  assert(sm != NULL);
+  SMCreate(sm);
 }
 
 void PageInit(Page page) {
@@ -415,7 +418,7 @@ void WritePage(uint64_t rel_id, char* rel_name, uint64_t page_id, Page page) {
   // SMWrite(sm, page_id, page);
 }
 
-RelStorageManager* SMOpen(uint64_t rel_id, char* rel_name) {
+RelStorageManager* SMOpen(uint64_t rel_id, const char* rel_name) {
   for (uint64_t i = 0; i < arrlenu(SMS); ++i) {
     if (SMS[i].rel_id == rel_id) {
       return &SMS[i];
@@ -431,7 +434,9 @@ void SMCreate(RelStorageManager* sm) {
   assert(sm != NULL);
   assert(sm->rel_name != NULL);
   assert(sm->fd == -1);
-  char* rel_path = strcat("data_dir/", sm->rel_name);
+  char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
+  rel_path = strcat(rel_path, "data_dir/");
+  rel_path = strcat(rel_path, sm->rel_name);
   int fd = open(rel_path, O_RDWR | O_CREAT | O_EXCL);
   assert(fd != -1);
   sm->fd = fd;
@@ -444,7 +449,9 @@ void SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   assert(buffer != NULL);
 
   if (sm->fd == -1) {
-    char* rel_path = strcat("data_dir/", sm->rel_name);
+    char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
+    rel_path = strcat(rel_path, "data_dir/");
+    rel_path = strcat(rel_path, sm->rel_name);
     int fd = open(rel_path, O_RDWR);
     assert(fd != -1);
     sm->fd = fd;
@@ -466,7 +473,9 @@ void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   assert(buffer != NULL);
 
   if (sm->fd == -1) {
-    char* rel_path = strcat("data_dir/", sm->rel_name);
+    char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
+    rel_path = strcat(rel_path, "data_dir/");
+    rel_path = strcat(rel_path, sm->rel_name);
     int fd = open(rel_path, O_RDWR);
     assert(fd != -1);
     sm->fd = fd;

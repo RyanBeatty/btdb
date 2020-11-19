@@ -121,12 +121,12 @@ void WritePage(uint64_t, char*, uint64_t, Page);
 typedef struct RelStorageManager {
   int fd;
   uint64_t rel_id;
-  char* rel_name;  // Only really used for file naming.
+  const char* rel_name;  // Only really used for file naming.
 } RelStorageManager;
 
 RelStorageManager* SMS;  // stb-array.
 
-RelStorageManager* SMOpen(uint64_t, char*);
+RelStorageManager* SMOpen(uint64_t, const char*);
 void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
 void SMRead(RelStorageManager*, uint64_t, byte* buffer);
