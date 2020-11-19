@@ -373,7 +373,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   PageDeleteItem(page, tid.loc_num);
 
   for (size_t page_index = tid.page_num; page_index < arrlenu(TablePages[cursor->table_index]);
-       ++cursor->page_index) {
+       ++page_index) {
     Page cur_page = TablePages[cursor->table_index][page_index];
     uint16_t next_loc = GetPageNextLocNum(cur_page);
     TupleId tuple_id = {.page_num = page_index, .loc_num = next_loc};
