@@ -103,6 +103,7 @@ typedef struct Cursor {
   size_t table_index;
   size_t page_index;
   size_t tuple_index;
+  const char* rel_name;
 } Cursor;
 
 void CursorInit(Cursor*, TableDef*);
@@ -115,8 +116,8 @@ void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
 ////////////////////////////////////////////////////
 // API for Storage Manager
 ////////////////////////////////////////////////////
-Page ReadPage(uint64_t, char*, uint64_t);
-void WritePage(uint64_t, char*, uint64_t, Page);
+Page ReadPage(uint64_t, const char*, uint64_t);
+void WritePage(uint64_t, const char*, uint64_t, Page);
 
 typedef struct RelStorageManager {
   int fd;
