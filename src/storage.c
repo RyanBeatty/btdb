@@ -286,22 +286,20 @@ void CursorInit(Cursor* cursor, TableDef* table_def) {
 Tuple* CursorSeekNext(Cursor* cursor) {
   assert(cursor != NULL);
 
-  for (; cursor->page_index < arrlenu(TablePages[cursor->table_index]);) {
-    if (cursor->tuple_index >=
-        PageGetNumLocs(TablePages[cursor->table_index][cursor->page_index])) {
+  for (Page cur_page = ReadPage(cursor->table_index, NULL, cursor->page_index);
+       cur_page != NULL; cur_page = ReadPage(cursor->table_index, NULL, cursor->page_index)) {
+    if (cursor->tuple_index >= PageGetNumLocs(cur_page)) {
       ++cursor->page_index;
       cursor->tuple_index = 0;
       continue;
     }
-    ItemLoc loc = PageGetItemLoc(TablePages[cursor->table_index][cursor->page_index],
-                                 cursor->tuple_index);
+    ItemLoc loc = PageGetItemLoc(cur_page, cursor->tuple_index);
     if (loc.dead) {
       ++cursor->tuple_index;
       continue;
     }
 
-    unsigned char* tuple =
-        PageGetItem(TablePages[cursor->table_index][cursor->page_index], cursor->tuple_index);
+    unsigned char* tuple = PageGetItem(cur_page, cursor->tuple_index);
     assert(tuple != NULL);
     ++cursor->tuple_index;
     // if (tuple == NULL) {
@@ -332,8 +330,9 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   assert(cursor != NULL);
   assert(tuple != NULL);
   Page cur_page = NULL;
-  for (; cursor->page_index < arrlenu(TablePages[cursor->table_index]); ++cursor->page_index) {
-    cur_page = TablePages[cursor->table_index][cursor->page_index];
+  for (cur_page = ReadPage(cursor->table_index, NULL, cursor->page_index); cur_page != NULL;
+       ++cursor->page_index,
+      cur_page = ReadPage(cursor->table_index, NULL, cursor->page_index)) {
     uint16_t next_loc = GetPageNextLocNum(cur_page);
     TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = next_loc};
     tuple->self_tid = tuple_id;
@@ -352,9 +351,10 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
 
 void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
   assert(cursor != NULL);
-  assert(tid.page_num < arrlenu(TablePages[cursor->table_index]));
 
-  Page page = TablePages[cursor->table_index][tid.page_num];
+  Page page = ReadPage(cursor->table_index, NULL, tid.page_num);
+  assert(page != NULL);
+
   PageHeader* header = GetPageHeader(page);
   assert(tid.loc_num < header->num_locs);
   PageDeleteItem(page, tid.loc_num);
@@ -364,17 +364,18 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
 void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(cursor != NULL);
   assert(updated_tuple != NULL);
-  assert(tid.page_num < arrlenu(TablePages[cursor->table_index]));
+  // assert(tid.page_num < arrlenu(TablePages[cursor->table_index]));
 
-  Page page = TablePages[cursor->table_index][tid.page_num];
+  Page page = ReadPage(cursor->table_index, NULL, tid.page_num);
   PageHeader* header = GetPageHeader(page);
   assert(tid.loc_num < header->num_locs);
 
   PageDeleteItem(page, tid.loc_num);
 
-  for (size_t page_index = tid.page_num; page_index < arrlenu(TablePages[cursor->table_index]);
-       ++page_index) {
-    Page cur_page = TablePages[cursor->table_index][page_index];
+  size_t page_index = tid.page_num;
+  Page cur_page = ReadPage(cursor->table_index, NULL, page_index);
+  for (; cur_page != NULL;
+       ++page_index, cur_page = ReadPage(cursor->table_index, NULL, page_index)) {
     uint16_t next_loc = GetPageNextLocNum(cur_page);
     TupleId tuple_id = {.page_num = page_index, .loc_num = next_loc};
     updated_tuple->self_tid = tuple_id;
@@ -382,22 +383,26 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
       return;
     }
   }
-  TupleId tuple_id = {.page_num = arrlenu(TablePages[cursor->table_index]), .loc_num = 0};
+  TupleId tuple_id = {.page_num = page_index, .loc_num = 0};
   updated_tuple->self_tid = tuple_id;
-  Page cur_page = (Page)calloc(8192, sizeof(unsigned char));
-  PageInit(cur_page);
-  assert(PageAddItem(cur_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
-  arrpush(TablePages[cursor->table_index], cur_page);
+  Page new_page = (Page)calloc(8192, sizeof(unsigned char));
+  PageInit(new_page);
+  assert(PageAddItem(new_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
+  arrpush(TablePages[cursor->table_index], new_page);
 }
 
 Page ReadPage(uint64_t rel_id, char* rel_name, uint64_t page_id) {
-  assert(rel_name != NULL);
-  Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  assert(page != NULL);
-  RelStorageManager* sm = SMOpen(rel_id, rel_name);
-  assert(sm != NULL);
-  SMRead(sm, page_id, page);
-  return page;
+  assert(rel_name == NULL);
+  if (page_id >= arrlenu(TablePages[rel_id])) {
+    return NULL;
+  }
+  return TablePages[rel_id][page_id];
+  // Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+  // assert(page != NULL);
+  // RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  // assert(sm != NULL);
+  // SMRead(sm, page_id, page);
+  // return page;
 }
 
 void WritePage(uint64_t rel_id, char* rel_name, uint64_t page_id, Page page) {
