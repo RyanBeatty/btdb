@@ -345,7 +345,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   cur_page = (Page)calloc(8192, sizeof(unsigned char));
   PageInit(cur_page);
   assert(PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple)));
-  arrpush(TablePages[cursor->table_index], cur_page);
+  WritePage(cursor->table_index, NULL, cursor->page_index, cur_page);
   return;
 }
 
@@ -388,7 +388,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   Page new_page = (Page)calloc(8192, sizeof(unsigned char));
   PageInit(new_page);
   assert(PageAddItem(new_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
-  arrpush(TablePages[cursor->table_index], new_page);
+  WritePage(cursor->table_index, NULL, page_index, new_page);
 }
 
 Page ReadPage(uint64_t rel_id, char* rel_name, uint64_t page_id) {
@@ -406,11 +406,13 @@ Page ReadPage(uint64_t rel_id, char* rel_name, uint64_t page_id) {
 }
 
 void WritePage(uint64_t rel_id, char* rel_name, uint64_t page_id, Page page) {
-  assert(rel_name != NULL);
-  assert(page != NULL);
-  RelStorageManager* sm = SMOpen(rel_id, rel_name);
-  assert(sm != NULL);
-  SMWrite(sm, page_id, page);
+  assert(rel_name == NULL);
+  assert(page_id != 100000);
+  arrpush(TablePages[rel_id], page);
+  // assert(page != NULL);
+  // RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  // assert(sm != NULL);
+  // SMWrite(sm, page_id, page);
 }
 
 RelStorageManager* SMOpen(uint64_t rel_id, char* rel_name) {
