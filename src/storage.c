@@ -307,29 +307,11 @@ Tuple* CursorSeekNext(Cursor* cursor) {
     unsigned char* tuple = PageGetItem(cur_page, cursor->tuple_index);
     assert(tuple != NULL);
     ++cursor->tuple_index;
-    // if (tuple == NULL) {
-    //   ++cursor->page_index;
-    //   cursor->tuple_index = 0;
-    // } else {
-    //   ++cursor->tuple_index;
-    // }
     return (Tuple*)tuple;
   }
 
   return NULL;
 }
-
-// Tuple* CursorPeek(Cursor* cursor) {
-//   assert(cursor != NULL);
-
-//   // NOTE: Need to do this check or else I could run off the end of the dynamic array.
-//   // arrdel() doesn't automatically clear the moved over spaces.
-//   if (cursor->page_index >= arrlenu(TablePages[cursor->table_index])) {
-//     return NULL;
-//   }
-//   return (Tuple*)PageGetItem(TablePages[cursor->table_index][cursor->page_index],
-//                              cursor->tuple_index);
-// }
 
 void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   assert(cursor != NULL);
