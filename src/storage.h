@@ -130,7 +130,7 @@ RelStorageManager* SMS;  // stb-array.
 RelStorageManager* SMOpen(uint64_t, const char*);
 void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
-void SMRead(RelStorageManager*, uint64_t, byte* buffer);
+int SMRead(RelStorageManager*, uint64_t, byte* buffer);
 void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
 
 #ifdef __cplusplus

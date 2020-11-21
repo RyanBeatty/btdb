@@ -342,6 +342,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
     TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = next_loc};
     tuple->self_tid = tuple_id;
     if (PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple))) {
+      WritePage(cursor->table_index, cursor->rel_name, cursor->page_index, cur_page);
       return;
     }
   }
@@ -363,6 +364,7 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
   PageHeader* header = GetPageHeader(page);
   assert(tid.loc_num < header->num_locs);
   PageDeleteItem(page, tid.loc_num);
+  WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
   return;
 }
 
@@ -376,6 +378,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(tid.loc_num < header->num_locs);
 
   PageDeleteItem(page, tid.loc_num);
+  WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
 
   size_t page_index = tid.page_num;
   Page cur_page = ReadPage(cursor->table_index, cursor->rel_name, page_index);
@@ -385,6 +388,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
     TupleId tuple_id = {.page_num = page_index, .loc_num = next_loc};
     updated_tuple->self_tid = tuple_id;
     if (PageAddItem(cur_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple))) {
+      WritePage(cursor->table_index, cursor->rel_name, page_index, cur_page);
       return;
     }
   }
@@ -398,26 +402,30 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
 
 Page ReadPage(uint64_t rel_id, const char* rel_name, uint64_t page_id) {
   assert(rel_name != NULL);
-  if (page_id >= arrlenu(TablePages[rel_id])) {
+  // if (page_id >= arrlenu(TablePages[rel_id])) {
+  //   return NULL;
+  // }
+  // return TablePages[rel_id][page_id];
+  Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+  assert(page != NULL);
+  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  assert(sm != NULL);
+  int result = SMRead(sm, page_id, page);
+  if (result == 0) {
     return NULL;
   }
-  return TablePages[rel_id][page_id];
-  // Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  // assert(page != NULL);
-  // RelStorageManager* sm = SMOpen(rel_id, rel_name);
-  // assert(sm != NULL);
-  // SMRead(sm, page_id, page);
-  // return page;
+  assert(result == PAGE_SIZE);
+  return page;
 }
 
 void WritePage(uint64_t rel_id, const char* rel_name, uint64_t page_id, Page page) {
   assert(rel_name != NULL);
-  assert(page_id != 100000);
-  arrpush(TablePages[rel_id], page);
+  // assert(page_id != 100000);
+  // arrpush(TablePages[rel_id], page);
   // assert(page != NULL);
-  // RelStorageManager* sm = SMOpen(rel_id, rel_name);
-  // assert(sm != NULL);
-  // SMWrite(sm, page_id, page);
+  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  assert(sm != NULL);
+  SMWrite(sm, page_id, page);
 }
 
 RelStorageManager* SMOpen(uint64_t rel_id, const char* rel_name) {
@@ -439,13 +447,20 @@ void SMCreate(RelStorageManager* sm) {
   char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
   rel_path = strcat(rel_path, "data_dir/");
   rel_path = strcat(rel_path, sm->rel_name);
-  int fd = open(rel_path, O_RDWR | O_CREAT | O_EXCL);
+  int fd = open(rel_path, O_RDWR | O_CREAT | O_EXCL, S_IRWXU);
   assert(fd != -1);
   sm->fd = fd;
+
+  // Write first page so that there is something in the file. I think this will prevent issues
+  // where we try to read the first page from an empty table.
+  Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+  PageInit(page);
+  assert(page != NULL);
+  SMWrite(sm, 0, page);
   return;
 }
 
-void SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
+int SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   assert(sm != NULL);
   assert(sm->rel_name != NULL);
   assert(buffer != NULL);
@@ -464,9 +479,7 @@ void SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   int result = lseek(sm->fd, seek_pos, SEEK_SET);
   assert(result == seek_pos);
 
-  result = read(sm->fd, buffer, PAGE_SIZE);
-  assert(result == PAGE_SIZE);
-  return;
+  return read(sm->fd, buffer, PAGE_SIZE);
 }
 
 void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {

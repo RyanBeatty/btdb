@@ -330,7 +330,7 @@ def test_large_insert():
 
     input_cmds = []
     expected_output = ["Starting btdb"]
-    for _ in range(5000):
+    for _ in range(800):
         input_cmds.append("insert into foo (bar, baz) values ('hello world', true);\n")
         expected_output.append("btdb>     bar    baz")
         expected_output.append("===============")
@@ -340,7 +340,7 @@ def test_large_insert():
     # These rows are already pre populated.
     expected_output.append("hello\ttrue\t")
     expected_output.append("world\tfalse\t")
-    for _ in range(5000):
+    for _ in range(800):
         expected_output.append("hello world\ttrue\t")
     expected_output.append("btdb> Shutting down btdb\n")
     try:
