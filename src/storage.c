@@ -402,10 +402,6 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
 
 Page ReadPage(uint64_t rel_id, const char* rel_name, uint64_t page_id) {
   assert(rel_name != NULL);
-  // if (page_id >= arrlenu(TablePages[rel_id])) {
-  //   return NULL;
-  // }
-  // return TablePages[rel_id][page_id];
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   assert(page != NULL);
   RelStorageManager* sm = SMOpen(rel_id, rel_name);
@@ -420,9 +416,6 @@ Page ReadPage(uint64_t rel_id, const char* rel_name, uint64_t page_id) {
 
 void WritePage(uint64_t rel_id, const char* rel_name, uint64_t page_id, Page page) {
   assert(rel_name != NULL);
-  // assert(page_id != 100000);
-  // arrpush(TablePages[rel_id], page);
-  // assert(page != NULL);
   RelStorageManager* sm = SMOpen(rel_id, rel_name);
   assert(sm != NULL);
   SMWrite(sm, page_id, page);
