@@ -528,30 +528,37 @@ void ExecuteUtilityStmt(Query* query) {
   assert(query != NULL);
   assert(query->cmd == CMD_UTILITY);
   assert(query->utility_stmt != NULL);
-  assert(query->utility_stmt->type == NCREATE_TABLE);
 
-  TableDef* table_def = (TableDef*)calloc(1, sizeof(TableDef));
+  switch (query->utility_stmt->type) {
+    case NCREATE_TABLE: {
+      TableDef* table_def = (TableDef*)calloc(1, sizeof(TableDef));
 
-  NCreateTable* create = (NCreateTable*)query->utility_stmt;
-  NIdentifier* table_name = (NIdentifier*)create->table_name;
-  char* table_def_name = (char*)calloc(strlen(table_name->identifier) + 1, sizeof(char));
-  strcpy(table_def_name, table_name->identifier);
-  table_def->name = table_def_name;
+      NCreateTable* create = (NCreateTable*)query->utility_stmt;
+      NIdentifier* table_name = (NIdentifier*)create->table_name;
+      char* table_def_name = (char*)calloc(strlen(table_name->identifier) + 1, sizeof(char));
+      strcpy(table_def_name, table_name->identifier);
+      table_def->name = table_def_name;
 
-  ColDesc* tuple_desc = NULL;
-  for (size_t i = 0; i < arrlenu(create->column_defs); ++i) {
-    NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
-    NIdentifier* col_name = (NIdentifier*)column_def->col_name;
+      ColDesc* tuple_desc = NULL;
+      for (size_t i = 0; i < arrlenu(create->column_defs); ++i) {
+        NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
+        NIdentifier* col_name = (NIdentifier*)column_def->col_name;
 
-    ColDesc col_desc;
-    char* column_name = (char*)calloc(strlen(col_name->identifier) + 1, sizeof(char));
-    strcpy(column_name, col_name->identifier);
-    col_desc.column_name = column_name;
-    col_desc.type = column_def->col_type_id;
-    arrpush(tuple_desc, col_desc);
+        ColDesc col_desc;
+        char* column_name = (char*)calloc(strlen(col_name->identifier) + 1, sizeof(char));
+        strcpy(column_name, col_name->identifier);
+        col_desc.column_name = column_name;
+        col_desc.type = column_def->col_type_id;
+        arrpush(tuple_desc, col_desc);
+      }
+
+      table_def->tuple_desc = tuple_desc;
+      CreateTable(table_def);
+      return;
+    }
+    default: {
+      Panic("Unknown Utility Statement Type");
+      return;
+    }
   }
-
-  table_def->tuple_desc = tuple_desc;
-  CreateTable(table_def);
-  return;
 }

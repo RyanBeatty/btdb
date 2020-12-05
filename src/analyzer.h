@@ -45,6 +45,7 @@ Query* AnalyzeInsertStmt(NInsertStmt*);
 Query* AnalyzeDeleteStmt(NDeleteStmt*);
 Query* AnalyzeUpdateStmt(NUpdateStmt*);
 Query* AnalyzeCreateTableStmt(NCreateTable*);
+Query* AnalyzeCreateIndexStmt(NCreateIndex*);
 void AnalyzeFromClause(Query*, ParseNode**);
 BType CheckType(ParseNode*, TableDef**);
 TableDef** AnalyzeJoinList(ParseNode*, TableDef**, size_t*);
