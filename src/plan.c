@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "analyzer.h"
 #include "stb_ds.h"
@@ -554,6 +555,14 @@ void ExecuteUtilityStmt(Query* query) {
 
       table_def->tuple_desc = tuple_desc;
       CreateTable(table_def);
+      return;
+    }
+    case NCREATE_INDEX: {
+      printf("Create Index Not Implemented!\n");
+      // TODO: Create some sort of Index insert Node, then do the following
+      // * Seq scan node on the table
+      // * Sort scan on the results
+      // * Insert tuples into the btree.
       return;
     }
     default: {

@@ -642,7 +642,7 @@ Query* AnalyzeCreateTableStmt(NCreateTable* create) {
 
 Query* AnalyzeCreateIndexStmt(NCreateIndex* create) {
   assert(create != NULL);
-  assert(create->type == NCREATE_TABLE);
+  assert(create->type == NCREATE_INDEX);
 
   NIdentifier* table_name = (NIdentifier*)create->table_name;
   assert(table_name != NULL);
@@ -654,38 +654,6 @@ Query* AnalyzeCreateIndexStmt(NCreateIndex* create) {
   if (table_def == NULL) {
     return NULL;
   }
-
-  // for (size_t i = 0; i < arrlenu(create->column_defs); ++i) {
-  //   NColumnDef* column_def = (NColumnDef*)create->column_defs[i];
-  //   assert(column_def != NULL);
-  //   assert(column_def->type == NCOLUMN_DEF);
-
-  //   NIdentifier* col_type = (NIdentifier*)column_def->col_type;
-  //   assert(col_type != NULL);
-  //   assert(col_type->type == NIDENTIFIER);
-  //   assert(col_type->identifier != NULL);
-  //   BType col_type_resolved = StringToType(col_type->identifier);
-  //   if (col_type_resolved == T_UNKNOWN) {
-  //     return NULL;
-  //   }
-  //   column_def->col_type_id = col_type_resolved;
-
-  //   NIdentifier* col_name = (NIdentifier*)column_def->col_name;
-  //   assert(col_name != NULL);
-  //   assert(col_name->type == NIDENTIFIER);
-  //   assert(col_name->identifier != NULL);
-
-  //   // NOTE(ryan): We assume that every table has unique column names for now.
-  //   for (size_t j = 0; j < arrlenu(TableDefs); ++j) {
-  //     TableDef table_def = TableDefs[j];
-  //     for (size_t k = 0; k < arrlenu(table_def.tuple_desc); ++k) {
-  //       ColDesc col_desc = table_def.tuple_desc[k];
-  //       if (strcmp(col_name->identifier, col_desc.column_name) == 0) {
-  //         return NULL;
-  //       }
-  //     }
-  //   }
-  // }
 
   // Validate target list contains valid references to columns.
   ParseNode** column_list = create->column_list;
