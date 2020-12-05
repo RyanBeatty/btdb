@@ -158,6 +158,15 @@ void free_parse_node(ParseNode* node) {
       free(create_table);
       break;
     }
+    case NCREATE_INDEX: {
+      NCreateIndex* create_index = (NCreateIndex*)node;
+      assert(create_index->table_name != NULL);
+      assert(create_index->column_list != NULL);
+      free_parse_node(create_index->table_name);
+      free_parse_node_list(create_index->column_list);
+      free(create_index);
+      break;
+    }
     case NCOLUMN_DEF: {
       NColumnDef* column_def = (NColumnDef*)node;
       assert(column_def->col_name != NULL);
@@ -405,6 +414,20 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       EndObject(ctx);
       PrintObject(ctx, "column_defs");
       print_parse_node_list(create_table->column_defs, ctx);
+      EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NCREATE_INDEX: {
+      NCreateIndex* create_index = (NCreateIndex*)node;
+      assert(create_index->table_name != NULL);
+      assert(create_index->column_list != NULL);
+      PrintObject(ctx, "NCreateIndex");
+      PrintObject(ctx, "table_name");
+      print_parse_node(create_index->table_name, ctx);
+      EndObject(ctx);
+      PrintObject(ctx, "column_list");
+      print_parse_node_list(create_index->column_list, ctx);
       EndObject(ctx);
       EndObject(ctx);
       break;

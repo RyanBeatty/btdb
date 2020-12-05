@@ -37,6 +37,7 @@ typedef enum ParseNodeType {
   NLITERAL,
   NRANGEVAR,
   NJOIN,
+  NCREATE_INDEX,
 } ParseNodeType;
 
 typedef enum SortDir { SORT_ASC, SORT_DESC } SortDir;
@@ -145,6 +146,13 @@ typedef struct NColumnDef {
   ParseNode* col_type;
   BType col_type_id;
 } NColumnDef;
+
+typedef struct NCreateIndex {
+  ParseNodeType type;
+
+  ParseNode* table_name;
+  ParseNode** column_list;
+} NCreateIndex;
 
 typedef struct NLiteral {
   ParseNodeType type;

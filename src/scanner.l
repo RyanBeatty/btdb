@@ -33,6 +33,8 @@ void yyerror(Parser* parser, const char* msg) {
 "CREATE" return TOK_CREATE;
 "table" return TOK_TABLE;
 "TABLE" return TOK_TABLE;
+"index" return TOK_INDEX;
+"INDEX" return TOK_INDEX;
 "select" return TOK_SELECT;
 "SELECT" return TOK_SELECT;
 "INSERT" return TOK_INSERT;
