@@ -205,12 +205,12 @@ void CreateTable(TableDef* table_def) {
   SMCreate(sm);
 }
 
-void PageInit(Page page) {
+void PageInit(Page page, uint16_t reserve_size) {
   assert(page != NULL);
   memset(page, 0, PAGE_SIZE);
   PageHeader* header = GetPageHeader(page);
   header->free_lower_offset = sizeof(PageHeader);  // Is this off by one?
-  header->free_upper_offset = PAGE_SIZE - 1;
+  header->free_upper_offset = PAGE_SIZE - reserve_size - 1;
   header->num_locs = 0;
 }
 
@@ -331,7 +331,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = 0};
   tuple->self_tid = tuple_id;
   cur_page = (Page)calloc(8192, sizeof(unsigned char));
-  PageInit(cur_page);
+  PageInit(cur_page, 0);
   assert(PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple)));
   WritePage(cursor->table_index, cursor->rel_name, cursor->page_index, cur_page);
   return;
@@ -377,7 +377,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   TupleId tuple_id = {.page_num = page_index, .loc_num = 0};
   updated_tuple->self_tid = tuple_id;
   Page new_page = (Page)calloc(8192, sizeof(unsigned char));
-  PageInit(new_page);
+  PageInit(new_page, 0);
   assert(PageAddItem(new_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
   WritePage(cursor->table_index, cursor->rel_name, page_index, new_page);
 }
@@ -429,7 +429,7 @@ void SMCreate(RelStorageManager* sm) {
   // Write first page so that there is something in the file. I think this will prevent issues
   // where we try to read the first page from an empty table.
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  PageInit(page);
+  PageInit(page, 0);
   assert(page != NULL);
   SMWrite(sm, 0, page);
   return;

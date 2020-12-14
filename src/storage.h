@@ -92,7 +92,7 @@ typedef struct PageHeader {
 #define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
 
-void PageInit(Page);
+void PageInit(Page, uint16_t);
 uint16_t PageGetFreeStart(Page);
 bool PageAddItem(Page, unsigned char*, size_t);
 unsigned char* PageGetItem(Page, size_t);
