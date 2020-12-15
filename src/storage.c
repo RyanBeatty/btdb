@@ -209,8 +209,9 @@ void PageInit(Page page, uint16_t reserve_size) {
   assert(page != NULL);
   memset(page, 0, PAGE_SIZE);
   PageHeader* header = GetPageHeader(page);
+  header->special_pointer_offset = PAGE_SIZE - reserve_size;
   header->free_lower_offset = sizeof(PageHeader);  // Is this off by one?
-  header->free_upper_offset = PAGE_SIZE - reserve_size - 1;
+  header->free_upper_offset = header->special_pointer_offset - 1;
   header->num_locs = 0;
 }
 

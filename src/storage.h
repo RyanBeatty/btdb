@@ -83,6 +83,7 @@ typedef struct ItemLoc {
 typedef struct PageHeader {
   uint16_t free_lower_offset;
   uint16_t free_upper_offset;
+  uint16_t special_pointer_offset;
   uint16_t num_locs;
   ItemLoc item_locs[];
 } PageHeader;
@@ -91,6 +92,7 @@ typedef struct PageHeader {
 #define GetPageNextLocNum(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
+#define PageGetSpecial(ptr) (ptr + GetPageheader(ptr)->special_pointer_offset)
 
 void PageInit(Page, uint16_t);
 uint16_t PageGetFreeStart(Page);
@@ -132,6 +134,14 @@ void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
 int SMRead(RelStorageManager*, uint64_t, byte* buffer);
 void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
+
+////////////////////////////////////////////////////
+// B-Tree Index Code
+////////////////////////////////////////////////////
+
+// typedef struct BPageHeader {
+//   uint64_t right_page_id;
+// } BPageHeader;
 
 #ifdef __cplusplus
 }
