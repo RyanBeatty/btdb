@@ -139,9 +139,11 @@ void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
 // B-Tree Index Code
 ////////////////////////////////////////////////////
 
-// typedef struct BPageHeader {
-//   uint64_t right_page_id;
-// } BPageHeader;
+typedef struct BTreeMetaPageHeader {
+  uint64_t root_page_id;
+} BTreeMetaPageheader;
+
+void BTreeMetaPageInit(Page);
 
 #ifdef __cplusplus
 }
