@@ -16,7 +16,7 @@ RelStorageManager* SMS = NULL;
 // for all other tables.
 static TableDef RelCatalogTableDef = {.name = "reltabledef", .tuple_desc = NULL, .index = 0};
 
-Tuple* MakeTuple(TableDef* table_def) {
+Tuple* MakeTuple(const TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   size_t num_cols = arrlenu(table_def->tuple_desc);
@@ -43,6 +43,7 @@ void InitSystemTables() {
   // Initialize the table def for system catalog that holds table def info.
   ColDesc* reltabledef_col_desc = NULL;
   arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "name", .type = T_STRING}));
+  arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "index", .type = T_INT}));
   arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "columns", .type = T_STRING}));
   RelCatalogTableDef.tuple_desc = reltabledef_col_desc;
   CreateTable(&RelCatalogTableDef);
@@ -119,8 +120,39 @@ BType GetColType(TableDef* table_def, const char* col_name) {
   return T_UNKNOWN;
 }
 
-size_t GetColIdx(Tuple* tuple, const char* col_name, TableDef* table_def, bool* is_missing) {
-  assert(tuple != NULL);
+Tuple* SerializeTableDef(const TableDef* table_def) {
+  size_t columns_str_len = 0;
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
+    ColDesc* desc = &table_def->tuple_desc[i];
+    columns_str_len +=
+        strlen(desc->column_name) + strlen(TypeToString(desc->type)) + strlen(",");
+  }
+  // Account for ',' between elements. Its one less than number of coldesc elements because
+  // there is no trailing ','.
+  columns_str_len += arrlenu(table_def->tuple_desc) - 1;
+  char* columns_str = calloc(columns_str_len + 1, sizeof(char));
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
+    ColDesc* desc = &table_def->tuple_desc[i];
+    columns_str = strcat(columns_str, TypeToString(desc->type));
+    columns_str = strcat(columns_str, ",");
+    columns_str = strcat(columns_str, desc->column_name);
+    if (i < arrlenu(table_def->tuple_desc) - 1) {
+      columns_str = strcat(columns_str, ",");
+    }
+  }
+
+  int32_t* int_lit = (int32_t*)calloc(1, sizeof(int32_t));
+  *int_lit = (int32_t)table_def->index;
+
+  Tuple* tuple = MakeTuple(&RelCatalogTableDef);
+  tuple =
+      SetCol(tuple, "name", MakeDatum(T_STRING, strdup(table_def->name)), &RelCatalogTableDef);
+  tuple = SetCol(tuple, "index", MakeDatum(T_INT, int_lit), &RelCatalogTableDef);
+  tuple = SetCol(tuple, "columns", MakeDatum(T_STRING, columns_str), &RelCatalogTableDef);
+  return tuple;
+}
+
+size_t GetColIdx(const TableDef* table_def, const char* col_name, bool* is_missing) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
   assert(is_missing != NULL);
@@ -141,7 +173,7 @@ Datum GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   assert(table_def->tuple_desc != NULL);
 
   bool is_missing = false;
-  size_t i = GetColIdx(tuple, col_name, table_def, &is_missing);
+  size_t i = GetColIdx(table_def, col_name, &is_missing);
   assert(!is_missing);
 
   if (tuple->null_bitmap[i]) {
@@ -157,7 +189,7 @@ Datum GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
 
 Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_def) {
   bool is_missing = false;
-  size_t change_idx = GetColIdx(tuple, col_name, table_def, &is_missing);
+  size_t change_idx = GetColIdx(table_def, col_name, &is_missing);
   assert(!is_missing);
 
   DataLoc* old_locs = GetDataLocs(tuple);
@@ -211,6 +243,11 @@ void CreateTable(TableDef* table_def) {
   RelStorageManager* sm = SMOpen(table_def->index, table_def->name);
   assert(sm != NULL);
   SMCreate(sm);
+  // Make sure we add the table def to the system catalog.
+  Tuple* table_def_tuple = SerializeTableDef(table_def);
+  Cursor cursor;
+  CursorInit(&cursor, &RelCatalogTableDef);
+  CursorInsertTuple(&cursor, table_def_tuple);
 }
 
 void PageInit(Page page, uint16_t reserve_size) {
@@ -352,8 +389,7 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
   Page page = ReadPage(cursor->table_index, cursor->rel_name, tid.page_num);
   assert(page != NULL);
 
-  PageHeader* header = GetPageHeader(page);
-  assert(tid.loc_num < header->num_locs);
+  assert(tid.loc_num < GetPageHeader(page)->num_locs);
   PageDeleteItem(page, tid.loc_num);
   WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
   return;
@@ -362,11 +398,9 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
 void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(cursor != NULL);
   assert(updated_tuple != NULL);
-  // assert(tid.page_num < arrlenu(TablePages[cursor->table_index]));
 
   Page page = ReadPage(cursor->table_index, cursor->rel_name, tid.page_num);
-  PageHeader* header = GetPageHeader(page);
-  assert(tid.loc_num < header->num_locs);
+  assert(tid.loc_num < GetPageHeader(page)->num_locs);
 
   PageDeleteItem(page, tid.loc_num);
   WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
@@ -462,7 +496,9 @@ int SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   // NOTE: maybe need to worry about overflow issues at some point?
   off_t seek_pos = page_id * PAGE_SIZE;
   int result = lseek(sm->fd, seek_pos, SEEK_SET);
-  assert(result == seek_pos);
+  if (result != seek_pos) {
+    Panic("lseek result != seek_pos");
+  }
 
   return read(sm->fd, buffer, PAGE_SIZE);
 }
@@ -484,7 +520,9 @@ void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   // NOTE: maybe need to worry about overflow issues at some point?
   off_t seek_pos = page_id * PAGE_SIZE;
   int result = lseek(sm->fd, seek_pos, SEEK_SET);
-  assert(result == seek_pos);
+  if (result != seek_pos) {
+    Panic("lseek result != seek_pos");
+  }
 
   result = write(sm->fd, buffer, PAGE_SIZE);
   assert(result == PAGE_SIZE);

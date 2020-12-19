@@ -17,7 +17,10 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 
 void yyerror(Parser* parser, const char* msg) {
-    assert(parser != NULL); // to quell warnings.
+    // Silence compiler warnings in release mode.
+    if (parser != NULL) {
+        fprintf(stderr, "parser is null\n");
+    }
     fprintf(stderr, "%s\n", msg);
 }
 

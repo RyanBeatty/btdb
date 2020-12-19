@@ -57,14 +57,15 @@ typedef struct Tuple {
 
 #define TupleGetSize(tuple) tuple->length
 
-Tuple* MakeTuple(TableDef*);
-size_t GetColIdx(Tuple*, const char*, TableDef*, bool*);
+Tuple* MakeTuple(const TableDef*);
+size_t GetColIdx(const TableDef*, const char*, bool*);
 Datum GetCol(Tuple*, const char*, TableDef*);
 Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
 Tuple* CopyTuple(Tuple*);
 
 typedef Tuple** Table;
 
+Tuple* SerializeTableDef(const TableDef*);
 void CreateTable(TableDef*);
 
 void InitSystemTables();

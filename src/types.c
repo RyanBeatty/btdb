@@ -23,6 +23,25 @@ BType StringToType(const char* type_str) {
   }
 }
 
+const char* TypeToString(BType type) {
+  static const char* strs[] = {"text", "bool", "int"};
+  switch (type) {
+    case T_STRING: {
+      return strs[0];
+    }
+    case T_BOOL: {
+      return strs[1];
+    }
+    case T_INT: {
+      return strs[2];
+    }
+    default: {
+      Panic("Cannot convert type UNKNOWN to string");
+      return NULL;
+    }
+  }
+}
+
 Datum MakeDatum(BType type, void* data) {
   size_t length;
   switch (type) {
