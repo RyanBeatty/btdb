@@ -152,6 +152,29 @@ Tuple* SerializeTableDef(const TableDef* table_def) {
   return tuple;
 }
 
+TableDef* DeserializeTableDef(Tuple* table_def_tuple) {
+  TableDef* table_def = (TableDef*)calloc(1, sizeof(TableDef));
+  table_def->name = strdup(GetCol(table_def_tuple, "name", &RelCatalogTableDef).data);
+  int32_t* index_ptr = (int32_t*)GetCol(table_def_tuple, "index", &RelCatalogTableDef).data;
+  table_def->index = (size_t)(*index_ptr);
+  // Columns are serialized as a string of
+  // "col1_type_str,col1_name,...,coln_type_str,coln_name".
+  char* save_ptr = NULL;
+  char* tok =
+      strtok_r(GetCol(table_def_tuple, "columns", &RelCatalogTableDef).data, ",", &save_ptr);
+  assert(tok != NULL);
+  while (tok != NULL) {
+    char* type_str = tok;
+    assert(type_str != NULL);
+    tok = strtok_r(NULL, ",", &save_ptr);
+    char* col_name = tok;
+    arrpush(table_def->tuple_desc,
+            ((ColDesc){.column_name = strdup(col_name), .type = StringToType(type_str)}));
+    tok = strtok_r(NULL, ",", &save_ptr);
+  }
+  return table_def;
+}
+
 size_t GetColIdx(const TableDef* table_def, const char* col_name, bool* is_missing) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);

@@ -66,6 +66,7 @@ Tuple* CopyTuple(Tuple*);
 typedef Tuple** Table;
 
 Tuple* SerializeTableDef(const TableDef*);
+TableDef* DeserializeTableDef(Tuple*);
 void CreateTable(TableDef*);
 
 void InitSystemTables();
