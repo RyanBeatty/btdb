@@ -14,7 +14,7 @@ RelStorageManager* SMS = NULL;
 
 // A hardcoded table definition for the system catalog table that contains table definitions
 // for all other tables.
-static TableDef RelTableDef = {.name = "reltabledef", .tuple_desc = NULL, .index = 0};
+static TableDef RelCatalogTableDef = {.name = "reltabledef", .tuple_desc = NULL, .index = 0};
 
 Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
@@ -42,18 +42,14 @@ Tuple* MakeTuple(TableDef* table_def) {
 void InitSystemTables() {
   // Initialize the table def for system catalog that holds table def info.
   ColDesc* reltabledef_col_desc = NULL;
-  ColDesc name_col = {.column_name = "name", .type = T_STRING};
-  ColDesc columns_col = {.column_name = "columns", .type = T_STRING};
-  arrpush(reltabledef_col_desc, name_col);
-  arrpush(reltabledef_col_desc, columns_col);
-  RelTableDef.tuple_desc = reltabledef_col_desc;
-  CreateTable(&RelTableDef);
+  arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "name", .type = T_STRING}));
+  arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "columns", .type = T_STRING}));
+  RelCatalogTableDef.tuple_desc = reltabledef_col_desc;
+  CreateTable(&RelCatalogTableDef);
 
   ColDesc* tuple_desc = NULL;
-  ColDesc col1 = {.column_name = "bar", .type = T_STRING};
-  ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
-  arrpush(tuple_desc, col1);
-  arrpush(tuple_desc, col2);
+  arrpush(tuple_desc, ((ColDesc){.column_name = "bar", .type = T_STRING}));
+  arrpush(tuple_desc, ((ColDesc){.column_name = "baz", .type = T_BOOL}));
   TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
   CreateTable(&table_def);
 
@@ -75,8 +71,7 @@ void InitSystemTables() {
   CursorInsertTuple(&cursor, t2);
 
   ColDesc* table2_tuple_desc = NULL;
-  ColDesc table2_col1 = {.column_name = "a", .type = T_STRING};
-  arrpush(table2_tuple_desc, table2_col1);
+  arrpush(table2_tuple_desc, ((ColDesc){.column_name = "a", .type = T_STRING}));
   TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
   CreateTable(&table_def2);
 
