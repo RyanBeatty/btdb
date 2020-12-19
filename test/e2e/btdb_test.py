@@ -9,6 +9,9 @@ import pytest
 PROMPT = b"btdb> "
 START_MSG = b"Starting btdb\n" + PROMPT
 SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
+# TODO: Using this script to start the db each time breaks debug mode. gdb can't load the symbol
+# table because of the other commands I think. As a short term fix, you can change this statement 
+# to ./build/apps/btdb to get around this.
 BTDB_BIN_PATH = "./start.sh"
 DEBUG = os.getenv("DEBUG", None) is not None
 TIMEOUT = None if DEBUG else 2

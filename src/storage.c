@@ -12,6 +12,10 @@ TableDef* TableDefs = NULL;
 Page** TablePages = NULL;  // 2d stb array.
 RelStorageManager* SMS = NULL;
 
+// A hardcoded table definition for the system catalog table that contains table definitions
+// for all other tables.
+static TableDef RelTableDef = {.name = "reltabledef", .tuple_desc = NULL, .index = 0};
+
 Tuple* MakeTuple(TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
@@ -36,6 +40,15 @@ Tuple* MakeTuple(TableDef* table_def) {
 }
 
 void InitSystemTables() {
+  // Initialize the table def for system catalog that holds table def info.
+  ColDesc* reltabledef_col_desc = NULL;
+  ColDesc name_col = {.column_name = "name", .type = T_STRING};
+  ColDesc columns_col = {.column_name = "columns", .type = T_STRING};
+  arrpush(reltabledef_col_desc, name_col);
+  arrpush(reltabledef_col_desc, columns_col);
+  RelTableDef.tuple_desc = reltabledef_col_desc;
+  CreateTable(&RelTableDef);
+
   ColDesc* tuple_desc = NULL;
   ColDesc col1 = {.column_name = "bar", .type = T_STRING};
   ColDesc col2 = {.column_name = "baz", .type = T_BOOL};
@@ -412,7 +425,8 @@ RelStorageManager* SMOpen(uint64_t rel_id, const char* rel_name) {
   }
 
   // Don't actually open any files.
-  arrpush(SMS, ((RelStorageManager){.fd = -1, .rel_id = 0, .rel_name = strdup(rel_name)}));
+  arrpush(SMS,
+          ((RelStorageManager){.fd = -1, .rel_id = rel_id, .rel_name = strdup(rel_name)}));
   return &SMS[arrlenu(SMS) - 1];
 }
 

@@ -43,6 +43,8 @@ Datum MakeDatum(BType type, void* data) {
       break;
     }
     default: {
+      // Suppress compiler warning.
+      length = 0;
       Panic("Unknown btype for datum!");
       break;
     }
