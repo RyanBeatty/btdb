@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "stb_ds.h"
@@ -46,44 +47,65 @@ void InitSystemTables() {
   arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "index", .type = T_INT}));
   arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "columns", .type = T_STRING}));
   RelCatalogTableDef.tuple_desc = reltabledef_col_desc;
-  CreateTable(&RelCatalogTableDef);
 
-  ColDesc* tuple_desc = NULL;
-  arrpush(tuple_desc, ((ColDesc){.column_name = "bar", .type = T_STRING}));
-  arrpush(tuple_desc, ((ColDesc){.column_name = "baz", .type = T_BOOL}));
-  TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
-  CreateTable(&table_def);
+  FILE* file = fopen("data_dir/reltabledef", "r");
+  // If system catalog doesn't already exist, create it along with other default tables.
+  if (file == NULL) {
+    // Save system catalog to disk.
+    CreateTable(&RelCatalogTableDef);
 
-  Tuple* t1 = MakeTuple(&table_def);
-  t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")), &table_def);
-  bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
-  *bool_lit = true;
-  t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
+    ColDesc* tuple_desc = NULL;
+    arrpush(tuple_desc, ((ColDesc){.column_name = "bar", .type = T_STRING}));
+    arrpush(tuple_desc, ((ColDesc){.column_name = "baz", .type = T_BOOL}));
+    TableDef table_def = {.name = "foo", .tuple_desc = tuple_desc};
+    CreateTable(&table_def);
 
-  Tuple* t2 = MakeTuple(&table_def);
-  t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")), &table_def);
-  bool_lit = (bool*)calloc(sizeof(bool), 1);
-  *bool_lit = false;
-  t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
+    Tuple* t1 = MakeTuple(&table_def);
+    t1 = SetCol(t1, "bar", MakeDatum(T_STRING, strdup("hello")), &table_def);
+    bool* bool_lit = (bool*)calloc(sizeof(bool), 1);
+    *bool_lit = true;
+    t1 = SetCol(t1, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
 
-  Cursor cursor;
-  CursorInit(&cursor, &table_def);
-  CursorInsertTuple(&cursor, t1);
-  CursorInsertTuple(&cursor, t2);
+    Tuple* t2 = MakeTuple(&table_def);
+    t2 = SetCol(t2, "bar", MakeDatum(T_STRING, strdup("world")), &table_def);
+    bool_lit = (bool*)calloc(sizeof(bool), 1);
+    *bool_lit = false;
+    t2 = SetCol(t2, "baz", MakeDatum(T_BOOL, bool_lit), &table_def);
 
-  ColDesc* table2_tuple_desc = NULL;
-  arrpush(table2_tuple_desc, ((ColDesc){.column_name = "a", .type = T_STRING}));
-  TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
-  CreateTable(&table_def2);
+    Cursor cursor;
+    CursorInit(&cursor, &table_def);
+    CursorInsertTuple(&cursor, t1);
+    CursorInsertTuple(&cursor, t2);
 
-  CursorInit(&cursor, &table_def2);
+    ColDesc* table2_tuple_desc = NULL;
+    arrpush(table2_tuple_desc, ((ColDesc){.column_name = "a", .type = T_STRING}));
+    TableDef table_def2 = {.name = "b", .tuple_desc = table2_tuple_desc};
+    CreateTable(&table_def2);
 
-  Tuple* table2_t1 = MakeTuple(&table_def2);
-  table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")), &table_def2);
-  CursorInsertTuple(&cursor, table2_t1);
-  Tuple* table2_t2 = MakeTuple(&table_def2);
-  table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")), &table_def2);
-  CursorInsertTuple(&cursor, table2_t2);
+    CursorInit(&cursor, &table_def2);
+
+    Tuple* table2_t1 = MakeTuple(&table_def2);
+    table2_t1 = SetCol(table2_t1, "a", MakeDatum(T_STRING, strdup("asdf")), &table_def2);
+    CursorInsertTuple(&cursor, table2_t1);
+    Tuple* table2_t2 = MakeTuple(&table_def2);
+    table2_t2 = SetCol(table2_t2, "a", MakeDatum(T_STRING, strdup("cab")), &table_def2);
+    CursorInsertTuple(&cursor, table2_t2);
+  } else {
+    // Else, assume system catalog tables + default tables already exist.
+    fclose(file);
+
+    Cursor cursor;
+    CursorInit(&cursor, &RelCatalogTableDef);
+
+    // Materialize table defs into memory. A lot of code assumes that all table defs are
+    // already materialized. Additionally, we assume that the relcatalog table stores table
+    // defs in sorted index/creation order.
+    Tuple* tuple = CursorSeekNext(&cursor);
+    while (tuple != NULL) {
+      arrpush(TableDefs, *DeserializeTableDef(tuple));
+      tuple = CursorSeekNext(&cursor);
+    }
+  }
 }
 
 TableDef* MakeTableDef(const char* name, ColDesc* tuple_desc, size_t index) {
