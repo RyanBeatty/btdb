@@ -17,9 +17,12 @@ DEBUG = os.getenv("DEBUG", None) is not None
 TIMEOUT = None if DEBUG else 2
 
 
-def _start_btdb_process():
+def _start_btdb_process(clean_start=True):
+    start_cmd = [BTDB_BIN_PATH]
+    if clean_start:
+        start_cmd.append('clean')
     proc = subprocess.Popen(
-        [BTDB_BIN_PATH],
+        start_cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -587,4 +590,124 @@ def test_create_table():
         encoding="utf8",
     )
 
+    proc.kill()
+
+def test_create_table_durable():
+    """
+    Clean start, create table + insert, shutdown, restart.
+    """
+    # Clean start. Create table insert some rows.
+    proc = _start_btdb_process()
+
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
+        create table baz (x text, y bool, z int);
+        insert into baz (x, y, z) values ('hello', true, 1), ('world', false, 2);
+        select x, y, z from baz;
+        """
+        ),
+        encoding="utf-8",
+    )
+    try:
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> UTILITY DONE
+        btdb>     x    y    z
+        ===============
+        btdb>     x    y    z
+        ===============
+        hello\ttrue\t1\t
+        world\tfalse\t2\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+    proc.kill()
+
+    # Select rows from table we created last start. Create a new table and insert rows into that new table.
+    proc = _start_btdb_process(clean_start=False)
+
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
+        select x, y, z from baz;
+        create table zed (v text);
+        insert into zed (v) values ('zed'), ('dead');
+        select v from zed where v = 'dead';
+        """
+        ),
+        encoding="utf-8",
+    )
+    try:
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb>     x    y    z
+        ===============
+        hello\ttrue\t1\t
+        world\tfalse\t2\t
+        btdb> UTILITY DONE
+        btdb>     v
+        ===============
+        btdb>     v
+        ===============
+        dead\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+    proc.kill()
+
+    # Read the rows from the table we created last start.
+    proc = _start_btdb_process(clean_start=False)
+
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
+        select v from zed;
+        """
+        ),
+        encoding="utf-8",
+    )
+    try:
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb>     v
+        ===============
+        zed\t
+        dead\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
     proc.kill()

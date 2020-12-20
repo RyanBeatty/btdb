@@ -1,5 +1,8 @@
 #!/bin/bash
 
-rm -rf data_dir
-mkdir data_dir
+if [[ $1 == "clean" ]]
+then
+    rm -rf data_dir
+fi
+mkdir -p data_dir
 ./build/apps/btdb
