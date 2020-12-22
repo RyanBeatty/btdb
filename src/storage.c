@@ -593,3 +593,40 @@ void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
 //////////////////////////////////////////////////////
 // B-Tree Index Code.
 //////////////////////////////////////////////////////
+
+Tuple* SerializeIndexDef(const IndexDef* index_def) {
+  // Kind of dumb, but we store the col_idxs array serialized as a character string of numbers
+  // separated by ",".
+  char* col_idxs_str = NULL;
+  size_t col_idxs_str_size = 1;
+  for (size_t i = 0; i < arrlenu(index_def->col_idxs); ++i) {
+    char str[256];
+    int err = sprintf(str, "%zu", index_def->col_idxs[i]);
+    if (err < 0) {
+      Panic("Failed to convert size_t to str");
+    }
+    col_idxs_str_size += strlen(str);
+    col_idxs_str = realloc(col_idxs_str, col_idxs_str_size);
+    col_idxs_str = strcat(col_idxs_str, str);
+    if (i < arrlenu(index_def->col_idxs) - 1) {
+      col_idxs_str_size += strlen(",");
+      col_idxs_str = realloc(col_idxs_str, col_idxs_str_size);
+      col_idxs_str = strcat(col_idxs_str, ",");
+    }
+  }
+
+  int32_t* index_id = (int32_t*)calloc(1, sizeof(int32_t));
+  *index_id = (int32_t)index_def->index_id;
+
+  int32_t* table_def_idx = (int32_t*)calloc(1, sizeof(int32_t));
+  *table_def_idx = (int32_t)index_def->table_def_idx;
+
+  Tuple* tuple = MakeTuple(&IndexCatalogTableDef);
+  tuple = SetCol(tuple, "index_id", MakeDatum(T_INT, index_id), &IndexCatalogTableDef);
+  tuple = SetCol(tuple, "index_name", MakeDatum(T_STRING, strdup(index_def->index_name)),
+                 &IndexCatalogTableDef);
+  tuple = SetCol(tuple, "col_idxs", MakeDatum(T_STRING, col_idxs_str), &IndexCatalogTableDef);
+  tuple =
+      SetCol(tuple, "table_def_idx", MakeDatum(T_INT, table_def_idx), &IndexCatalogTableDef);
+  return tuple;
+}

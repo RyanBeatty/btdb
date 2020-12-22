@@ -149,6 +149,9 @@ typedef struct IndexDef {
   size_t table_def_idx;
 } IndexDef;
 
+Tuple* SerializeIndexDef(const IndexDef*);
+IndexDef* DeserializeIndexDef(Tuple*);
+
 void CreateBTreeIndex(TableDef*, size_t*);
 
 typedef struct BTreeMetaPageHeader {
