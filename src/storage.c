@@ -17,6 +17,10 @@ RelStorageManager* SMS = NULL;
 // for all other tables.
 static TableDef RelCatalogTableDef = {.name = "reltabledef", .tuple_desc = NULL, .index = 0};
 
+// A hardcoded table def for the system catalog that stores index definitions.
+static TableDef IndexCatalogTableDef = {
+    .name = "indexcatalogtabledef", .tuple_desc = NULL, .index = 0};
+
 Tuple* MakeTuple(const TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
@@ -48,11 +52,20 @@ void InitSystemTables() {
   arrpush(reltabledef_col_desc, ((ColDesc){.column_name = "columns", .type = T_STRING}));
   RelCatalogTableDef.tuple_desc = reltabledef_col_desc;
 
+  // Initialize tuple desc for the system catalog that stores index definitions.
+  ColDesc* indexcatalog_col_desc = NULL;
+  arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "index_id", .type = T_INT}));
+  arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "index_name", .type = T_STRING}));
+  arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "col_idxs", .type = T_STRING}));
+  arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "table_def_idx", .type = T_INT}));
+  IndexCatalogTableDef.tuple_desc = indexcatalog_col_desc;
+
   FILE* file = fopen("data_dir/reltabledef", "r");
   // If system catalog doesn't already exist, create it along with other default tables.
   if (file == NULL) {
-    // Save system catalog to disk.
+    // Save system catalogs to disk.
     CreateTable(&RelCatalogTableDef);
+    CreateTable(&IndexCatalogTableDef);
 
     ColDesc* tuple_desc = NULL;
     arrpush(tuple_desc, ((ColDesc){.column_name = "bar", .type = T_STRING}));
@@ -252,8 +265,8 @@ Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_d
 
   new_tuple->null_bitmap[change_idx] = datum.type == T_NULL;
 
-  // TODO: Is this right? Don't have to alloc whole new thing if data is less than or equal to
-  // datum length;
+  // TODO: Is this right? Don't have to alloc whole new thing if data is less than or equal
+  // to datum length;
   size_t cur_offset = 0;
   for (size_t i = 0; i < new_tuple->num_cols; ++i) {
     if (i == change_idx) {
@@ -363,8 +376,8 @@ void PageDeleteItem(Page page, size_t item_id) {
 
   PageHeader* header = GetPageHeader(page);
   assert(item_id < header->num_locs);
-  // Mark item loc for the tuple as being dead without removing it. We need to be careful when
-  // removing item locs so that we update all tuple's tid reference.
+  // Mark item loc for the tuple as being dead without removing it. We need to be careful
+  // when removing item locs so that we update all tuple's tid reference.
   header->item_locs[item_id].dead = true;
   return;
 }
@@ -515,8 +528,8 @@ void SMCreate(RelStorageManager* sm) {
   assert(fd != -1);
   sm->fd = fd;
 
-  // Write first page so that there is something in the file. I think this will prevent issues
-  // where we try to read the first page from an empty table.
+  // Write first page so that there is something in the file. I think this will prevent
+  // issues where we try to read the first page from an empty table.
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   PageInit(page, 0);
   assert(page != NULL);

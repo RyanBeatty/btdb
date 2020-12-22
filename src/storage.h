@@ -141,6 +141,16 @@ void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
 // B-Tree Index Code
 ////////////////////////////////////////////////////
 
+// Description of an index defined on a table.
+typedef struct IndexDef {
+  size_t index_id;
+  char* index_name;
+  size_t* col_idxs;
+  size_t table_def_idx;
+} IndexDef;
+
+void CreateBTreeIndex(TableDef*, size_t*);
+
 typedef struct BTreeMetaPageHeader {
   uint64_t root_page_id;
 } BTreeMetaPageheader;
