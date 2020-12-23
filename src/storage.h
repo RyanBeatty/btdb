@@ -120,8 +120,10 @@ void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
 ////////////////////////////////////////////////////
 // API for Storage Manager
 ////////////////////////////////////////////////////
-Page ReadPage(uint64_t, const char*, uint64_t);
-void WritePage(uint64_t, const char*, uint64_t, Page);
+typedef uint64_t PageId;
+
+Page ReadPage(uint64_t, const char*, PageId);
+void WritePage(uint64_t, const char*, PageId, Page);
 
 typedef struct RelStorageManager {
   int fd;
@@ -134,8 +136,8 @@ RelStorageManager* SMS;  // stb-array.
 RelStorageManager* SMOpen(uint64_t, const char*);
 void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
-int SMRead(RelStorageManager*, uint64_t, byte* buffer);
-void SMWrite(RelStorageManager*, uint64_t, byte* buffer);
+int SMRead(RelStorageManager*, PageId, byte* buffer);
+void SMWrite(RelStorageManager*, PageId, byte* buffer);
 
 ////////////////////////////////////////////////////
 // B-Tree Index Code

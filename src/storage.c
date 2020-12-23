@@ -502,7 +502,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   WritePage(cursor->table_index, cursor->rel_name, page_index, new_page);
 }
 
-Page ReadPage(uint64_t rel_id, const char* rel_name, uint64_t page_id) {
+Page ReadPage(uint64_t rel_id, const char* rel_name, PageId page_id) {
   assert(rel_name != NULL);
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   assert(page != NULL);
@@ -516,7 +516,7 @@ Page ReadPage(uint64_t rel_id, const char* rel_name, uint64_t page_id) {
   return page;
 }
 
-void WritePage(uint64_t rel_id, const char* rel_name, uint64_t page_id, Page page) {
+void WritePage(uint64_t rel_id, const char* rel_name, PageId page_id, Page page) {
   assert(rel_name != NULL);
   RelStorageManager* sm = SMOpen(rel_id, rel_name);
   assert(sm != NULL);
@@ -556,7 +556,7 @@ void SMCreate(RelStorageManager* sm) {
   return;
 }
 
-int SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
+int SMRead(RelStorageManager* sm, PageId page_id, byte* buffer) {
   assert(sm != NULL);
   assert(sm->rel_name != NULL);
   assert(buffer != NULL);
@@ -580,7 +580,7 @@ int SMRead(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
   return read(sm->fd, buffer, PAGE_SIZE);
 }
 
-void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
+void SMWrite(RelStorageManager* sm, PageId page_id, byte* buffer) {
   assert(sm != NULL);
   assert(sm->rel_name != NULL);
   assert(buffer != NULL);
