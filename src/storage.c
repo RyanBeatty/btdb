@@ -121,6 +121,22 @@ void InitSystemTables() {
       arrpush(TableDefs, *DeserializeTableDef(tuple));
       tuple = CursorSeekNext(&cursor);
     }
+
+    // BIG ASSUMPTION/NOTE: We assume that the table def for the index def system catalog is
+    // stored as the second table def entry. Ideally we do a search to find the exact index,
+    // but we are being lazy here for now.
+    IndexCatalogTableDef = TableDefs[1];
+
+    CursorInit(&cursor, &IndexCatalogTableDef);
+
+    // Materialize index definitions into memory.
+    tuple = CursorSeekNext(&cursor);
+    while (tuple != NULL) {
+      IndexDef index_def;
+      DeserializeIndexDef(tuple, &index_def);
+      arrpush(IndexDefs, index_def);
+      tuple = CursorSeekNext(&cursor);
+    }
   }
 }
 
@@ -607,8 +623,8 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   index_name = realloc(index_name, index_name_size);
   index_name = strcat(index_name, table_def->name);
   index_name = strcat(index_name, "_");
-  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
-    ColDesc desc = table_def->tuple_desc[i];
+  for (size_t i = 0; i < arrlenu(col_idxs); ++i) {
+    ColDesc desc = table_def->tuple_desc[col_idxs[i]];
     index_name_size += strlen(desc.column_name) + strlen("_");
     index_name = realloc(index_name, index_name_size);
     index_name = strcat(index_name, desc.column_name);
@@ -623,6 +639,13 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
                         .col_idxs = col_idxs,
                         .table_def_idx = table_def->index};
   arrpush(IndexDefs, index_def);
+
+  Tuple* tuple = SerializeIndexDef(&index_def);
+  assert(tuple != NULL);
+
+  Cursor cursor;
+  CursorInit(&cursor, &IndexCatalogTableDef);
+  CursorInsertTuple(&cursor, tuple);
 }
 
 Tuple* SerializeIndexDef(const IndexDef* index_def) {
@@ -660,4 +683,30 @@ Tuple* SerializeIndexDef(const IndexDef* index_def) {
   tuple =
       SetCol(tuple, "table_def_idx", MakeDatum(T_INT, table_def_idx), &IndexCatalogTableDef);
   return tuple;
+}
+
+void DeserializeIndexDef(Tuple* tuple, IndexDef* index_def) {
+  size_t* col_idxs = NULL;
+  char* save_ptr = NULL;
+  char* tok = strtok_r(GetCol(tuple, "col_idxs", &IndexCatalogTableDef).data, ",", &save_ptr);
+  assert(tok != NULL);
+  while (tok != NULL) {
+    size_t col_idx;
+    int result = sscanf("%zu", tok, &col_idx);
+    if (result == EOF) {
+      Panic("Failed to convert str to size_t");
+    }
+    arrpush(col_idxs, col_idx);
+    tok = strtok_r(NULL, ",", &save_ptr);
+  }
+
+  int32_t* index_id_ptr = (int32_t*)GetCol(tuple, "index_id", &IndexCatalogTableDef).data;
+  int32_t* table_def_idx_ptr =
+      (int32_t*)GetCol(tuple, "table_def_idx", &IndexCatalogTableDef).data;
+
+  index_def->index_id = (size_t)(*index_id_ptr);
+  index_def->index_name = strdup(GetCol(tuple, "index_name", &IndexCatalogTableDef).data);
+  index_def->col_idxs = col_idxs;
+  index_def->table_def_idx = (size_t)(*table_def_idx_ptr);
+  return;
 }

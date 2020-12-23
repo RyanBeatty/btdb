@@ -150,7 +150,7 @@ typedef struct IndexDef {
 } IndexDef;
 
 Tuple* SerializeIndexDef(const IndexDef*);
-IndexDef* DeserializeIndexDef(Tuple*);
+void DeserializeIndexDef(Tuple*, IndexDef*);
 
 void CreateBTreeIndex(const TableDef*, size_t*);
 

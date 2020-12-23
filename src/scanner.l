@@ -100,7 +100,7 @@ void yyerror(Parser* parser, const char* msg) {
     yylval.str_lit = strdup(yytext);
     return TOK_STRING_LITERAL;
 }
-[a-zA-Z]+ {
+[a-zA-Z_]+ {
     yylval.str_lit = strdup(yytext);
     return TOK_STRING_GROUP;
 }
