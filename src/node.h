@@ -77,6 +77,9 @@ typedef struct NIdentifier {
   ParseNodeType type;
 
   char* identifier;
+  size_t
+      idx;  // To be filled in during analysis phase after parsing. Should be internal index/id
+            // to whatever structure (column, table, etc) this identifier refers to.
 } NIdentifier;
 
 typedef struct NSelectStmt {

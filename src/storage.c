@@ -21,6 +21,9 @@ static TableDef RelCatalogTableDef = {.name = "reltabledef", .tuple_desc = NULL,
 static TableDef IndexCatalogTableDef = {
     .name = "indexcatalogtabledef", .tuple_desc = NULL, .index = 0};
 
+// stb array that contains the materialized index definitions from the system catalog.
+static IndexDef* IndexDefs = NULL;
+
 Tuple* MakeTuple(const TableDef* table_def) {
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
@@ -593,6 +596,34 @@ void SMWrite(RelStorageManager* sm, uint64_t page_id, byte* buffer) {
 //////////////////////////////////////////////////////
 // B-Tree Index Code.
 //////////////////////////////////////////////////////
+
+void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
+  assert(table_def != NULL);
+  assert(col_idxs != NULL);
+
+  // Index name is equal to "_".join([table_name, covering col names, index])
+  char* index_name = NULL;
+  size_t index_name_size = strlen(table_def->name) + strlen("_") + 1;
+  index_name = realloc(index_name, index_name_size);
+  index_name = strcat(index_name, table_def->name);
+  index_name = strcat(index_name, "_");
+  for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
+    ColDesc desc = table_def->tuple_desc[i];
+    index_name_size += strlen(desc.column_name) + strlen("_");
+    index_name = realloc(index_name, index_name_size);
+    index_name = strcat(index_name, desc.column_name);
+    index_name = strcat(index_name, "_");
+  }
+  index_name_size += strlen("index");
+  index_name = realloc(index_name, index_name_size);
+  index_name = strcat(index_name, "index");
+
+  IndexDef index_def = {.index_id = arrlenu(IndexDefs),
+                        .index_name = index_name,
+                        .col_idxs = col_idxs,
+                        .table_def_idx = table_def->index};
+  arrpush(IndexDefs, index_def);
+}
 
 Tuple* SerializeIndexDef(const IndexDef* index_def) {
   // Kind of dumb, but we store the col_idxs array serialized as a character string of numbers

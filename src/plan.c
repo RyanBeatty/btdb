@@ -558,11 +558,26 @@ void ExecuteUtilityStmt(Query* query) {
       return;
     }
     case NCREATE_INDEX: {
-      printf("Create Index Not Implemented!\n");
-      // TODO: Create some sort of Index insert Node, then do the following
-      // * Seq scan node on the table
-      // * Sort scan on the results
-      // * Insert tuples into the btree.
+      // TODO: Some of this code should arguably move to the analysis phase since we are
+      // duplicating some work. That would potentially require more plumbing though, so avoid
+      // doing this for now.
+      NCreateIndex* create_index = (NCreateIndex*)query->utility_stmt;
+
+      // Get table def of target table.
+      NIdentifier* table_name = (NIdentifier*)create_index->table_name;
+      TableDef* table_def = FindTableDef(table_name->identifier);
+      assert(table_def != NULL);
+
+      // Build array of columns being indexed.
+      size_t* col_idxs = NULL;
+      ParseNode** column_list = create_index->column_list;
+      assert(column_list != NULL);
+      for (size_t i = 0; i < arrlenu(column_list); ++i) {
+        NIdentifier* col = (NIdentifier*)column_list[i];
+        arrpush(col_idxs, col->idx);
+      }
+
+      CreateBTreeIndex(table_def, col_idxs);
       return;
     }
     default: {

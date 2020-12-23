@@ -663,16 +663,12 @@ Query* AnalyzeCreateIndexStmt(NCreateIndex* create) {
     assert(col != NULL);
     assert(col->type == NIDENTIFIER);
     assert(col->identifier != NULL);
-    bool found = false;
-    for (size_t j = 0; j < arrlenu(table_def->tuple_desc); ++j) {
-      // If column does not exist
-      if (strcmp(table_def->tuple_desc[j].column_name, col->identifier) == 0) {
-        found = true;
-      }
-    }
-    if (!found) {
+    bool is_missing = false;
+    size_t idx = GetColIdx(table_def, col->identifier, &is_missing);
+    if (is_missing) {
       return NULL;
     }
+    col->idx = idx;
   }
 
   Query* query = MakeQuery(CMD_UTILITY);

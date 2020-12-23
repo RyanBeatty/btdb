@@ -152,7 +152,7 @@ typedef struct IndexDef {
 Tuple* SerializeIndexDef(const IndexDef*);
 IndexDef* DeserializeIndexDef(Tuple*);
 
-void CreateBTreeIndex(TableDef*, size_t*);
+void CreateBTreeIndex(const TableDef*, size_t*);
 
 typedef struct BTreeMetaPageHeader {
   uint64_t root_page_id;
