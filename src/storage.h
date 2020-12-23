@@ -156,8 +156,18 @@ void DeserializeIndexDef(Tuple*, IndexDef*);
 
 void CreateBTreeIndex(const TableDef*, size_t*);
 
+// Header for an index tuple. Contains a pointer to a refernce tuple on another page. The tuple
+// key data follows as an additional tuple struct allocated contiguosly after this header.
+typedef struct IndexTupleHeader {
+  // For leaf nodes, this will point to the tuple in the parent table that the key this index
+  // tuple stores corresponds to. For non-leaf tuples, this will point to the first index tuple
+  // of the child that the key for this index tuple corresponds to.
+  TupleId pointer;
+  // Tuple data follows after struct.
+} IndexTupleHeader;
+
 typedef struct BTreeMetaPageHeader {
-  uint64_t root_page_id;
+  PageId root_page_id;
 } BTreeMetaPageheader;
 
 void BTreeMetaPageInit(Page);
