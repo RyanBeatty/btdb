@@ -94,7 +94,7 @@ typedef struct PageHeader {
 #define GetPageNextLocNum(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
-#define PageGetSpecial(ptr) (ptr + GetPageheader(ptr)->special_pointer_offset)
+#define PageGetSpecial(ptr) (ptr + GetPageHeader(ptr)->special_pointer_offset)
 
 void PageInit(Page, uint16_t);
 uint16_t PageGetFreeStart(Page);
@@ -166,11 +166,28 @@ typedef struct IndexTupleHeader {
   // Tuple data follows after struct.
 } IndexTupleHeader;
 
-typedef struct BTreeMetaPageHeader {
+// Get a pointer to the tuple data for a given index tuple.
+#define IndexTupleGetTuple(ptr) ((Tuple*)(ptr + sizeof(IndexTupleHeader)))
+
+// Info stored in metadata page of the index. Allocated in reserved/special space of page.
+typedef struct BTreeMetaPageInfo {
   PageId root_page_id;
-} BTreeMetaPageheader;
+} BTreeMetaPageInfo;
+
+// Since the root (or any other page/node) of a btree cannot be the first page in the index
+// relation file, we consider a page id of 0 to mean the page id pointer is unset.
+#define NULL_PAGE 0
+
+#define PageGetBTreeMetaPageInfo(ptr) ((BTreeMetaPageInfo*)(PageGetSpecial(ptr)))
 
 void BTreeMetaPageInit(Page);
+
+// Info for leaf or non-leaf btree nodes/pages.
+typedef struct BTreePageInfo {
+  uint64_t level;
+} BTreePageInfo;
+
+#define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 
 #ifdef __cplusplus
 }

@@ -659,6 +659,11 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   index_table_def.name = strdup(index_def.index_name);
   index_table_def.tuple_desc = tuple_desc;
   CreateTable(&index_table_def);
+
+  // Init the metadata page for the index.
+  Page page = calloc(PAGE_SIZE, sizeof(byte));
+  BTreeMetaPageInit(page);
+  WritePage(index_table_def.index, index_table_def.name, 0, page);
 }
 
 Tuple* SerializeIndexDef(const IndexDef* index_def) {
@@ -721,5 +726,12 @@ void DeserializeIndexDef(Tuple* tuple, IndexDef* index_def) {
   index_def->index_name = strdup(GetCol(tuple, "index_name", &IndexCatalogTableDef).data);
   index_def->col_idxs = col_idxs;
   index_def->table_def_idx = (size_t)(*table_def_idx_ptr);
+  return;
+}
+
+void BTreeMetaPageInit(Page page) {
+  PageInit(page, sizeof(BTreeMetaPageInfo));
+  BTreeMetaPageInfo* info = PageGetBTreeMetaPageInfo(page);
+  info->root_page_id = NULL_PAGE;
   return;
 }
