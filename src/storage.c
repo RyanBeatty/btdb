@@ -636,19 +636,6 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   index_name = realloc(index_name, index_name_size);
   index_name = strcat(index_name, "index");
 
-  // // Create index definition for the index.
-  // IndexDef index_def = {.index_id = arrlenu(IndexDefs),
-  //                       .index_name = index_name,
-  //                       .col_idxs = col_idxs,
-  //                       .table_def_idx = table_def->index};
-  // arrpush(IndexDefs, index_def);
-
-  // Tuple* tuple = SerializeIndexDef(&index_def);
-  // assert(tuple != NULL);
-  // Cursor cursor;
-  // CursorInit(&cursor, &IndexCatalogTableDef);
-  // CursorInsertTuple(&cursor, tuple);
-
   // Create table def for index tuples + create actual table that will hold the index.
   ColDesc* tuple_desc = NULL;
   for (size_t i = 0; i < arrlenu(col_idxs); ++i) {
