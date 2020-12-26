@@ -577,7 +577,15 @@ void ExecuteUtilityStmt(Query* query) {
         arrpush(col_idxs, col->idx);
       }
 
-      CreateBTreeIndex(table_def, col_idxs);
+      IndexDef* index_def = CreateBTreeIndex(table_def, col_idxs);
+
+      Cursor cursor;
+      CursorInit(&cursor, IndexDefGetParentTableDef(index_def));
+      Tuple* tuple = CursorSeekNext(&cursor);
+      while (tuple != NULL) {
+        BTreeIndexInsert(index_def, tuple);
+        tuple = CursorSeekNext(&cursor);
+      }
       return;
     }
     default: {

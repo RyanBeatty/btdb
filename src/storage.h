@@ -154,8 +154,9 @@ typedef struct IndexDef {
 
 Tuple* SerializeIndexDef(const IndexDef*);
 void DeserializeIndexDef(Tuple*, IndexDef*);
+TableDef* IndexDefGetParentTableDef(const IndexDef*);
 
-void CreateBTreeIndex(const TableDef*, size_t*);
+IndexDef* CreateBTreeIndex(const TableDef*, size_t*);
 
 // Header for an index tuple. Contains a pointer to a refernce tuple on another page. The tuple
 // key data follows as an additional tuple struct allocated contiguosly after this header.

@@ -615,7 +615,7 @@ void SMWrite(RelStorageManager* sm, PageId page_id, byte* buffer) {
 // B-Tree Index Code.
 //////////////////////////////////////////////////////
 
-void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
+IndexDef* CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   assert(table_def != NULL);
   assert(col_idxs != NULL);
 
@@ -667,6 +667,7 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   Page page = calloc(PAGE_SIZE, sizeof(byte));
   BTreeMetaPageInit(page);
   WritePage(index_table_def.index, index_table_def.name, 0, page);
+  return &IndexDefs[index_def.index_id];
 }
 
 Tuple* SerializeIndexDef(const IndexDef* index_def) {
@@ -740,6 +741,11 @@ void DeserializeIndexDef(Tuple* tuple, IndexDef* index_def) {
   return;
 }
 
+TableDef* IndexDefGetParentTableDef(const IndexDef* index_def) {
+  assert(index_def != NULL);
+  return &TableDefs[index_def->table_def_idx];
+}
+
 void BTreeMetaPageInit(Page page) {
   PageInit(page, sizeof(BTreeMetaPageInfo));
   BTreeMetaPageInfo* info = PageGetBTreeMetaPageInfo(page);
@@ -750,11 +756,11 @@ void BTreeMetaPageInit(Page page) {
 IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   assert(index_def != NULL);
   assert(table_tuple != NULL);
-  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
+  const TableDef* parent_table_def = IndexDefGetParentTableDef(index_def);
   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
 
   // Build a tuple that only contains the projections of the columns that are indexed.
-  Tuple* index_tuple_data = NULL;
+  Tuple* index_tuple_data = MakeTuple(index_table_def);
   for (size_t i = 0; i < arrlenu(index_table_def->tuple_desc); ++i) {
     ColDesc desc = index_table_def->tuple_desc[i];
     index_tuple_data =
