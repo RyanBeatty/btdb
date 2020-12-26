@@ -59,8 +59,8 @@ typedef struct Tuple {
 
 Tuple* MakeTuple(const TableDef*);
 size_t GetColIdx(const TableDef*, const char*, bool*);
-Datum GetCol(Tuple*, const char*, TableDef*);
-Tuple* SetCol(Tuple*, const char*, Datum, TableDef*);
+Datum GetCol(Tuple*, const char*, const TableDef*);
+Tuple* SetCol(Tuple*, const char*, Datum, const TableDef*);
 Tuple* CopyTuple(Tuple*);
 
 typedef Tuple** Table;
@@ -159,16 +159,16 @@ void CreateBTreeIndex(const TableDef*, size_t*);
 
 // Header for an index tuple. Contains a pointer to a refernce tuple on another page. The tuple
 // key data follows as an additional tuple struct allocated contiguosly after this header.
-typedef struct IndexTupleHeader {
+typedef struct IndexTuple {
   // For leaf nodes, this will point to the tuple in the parent table that the key this index
   // tuple stores corresponds to. For non-leaf tuples, this will point to the first index tuple
   // of the child that the key for this index tuple corresponds to.
   TupleId pointer;
   // Tuple data follows after struct.
-} IndexTupleHeader;
+} IndexTuple;
 
 // Get a pointer to the tuple data for a given index tuple.
-#define IndexTupleGetTuple(ptr) ((Tuple*)(ptr + sizeof(IndexTupleHeader)))
+#define IndexTupleGetTuple(ptr) ((Tuple*)(ptr + sizeof(IndexTuple)))
 
 // Info stored in metadata page of the index. Allocated in reserved/special space of page.
 typedef struct BTreeMetaPageInfo {

@@ -246,7 +246,7 @@ size_t GetColIdx(const TableDef* table_def, const char* col_name, bool* is_missi
   return 0;
 }
 
-Datum GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
+Datum GetCol(Tuple* tuple, const char* col_name, const TableDef* table_def) {
   assert(tuple != NULL);
   assert(table_def != NULL);
   assert(table_def->tuple_desc != NULL);
@@ -266,7 +266,7 @@ Datum GetCol(Tuple* tuple, const char* col_name, TableDef* table_def) {
   return datum;
 }
 
-Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, TableDef* table_def) {
+Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, const TableDef* table_def) {
   bool is_missing = false;
   size_t change_idx = GetColIdx(table_def, col_name, &is_missing);
   assert(!is_missing);
