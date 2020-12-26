@@ -759,3 +759,26 @@ void BTreeMetaPageInit(Page page) {
   info->root_page_id = NULL_PAGE;
   return;
 }
+
+IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
+  assert(index_def != NULL);
+  assert(table_tuple != NULL);
+  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
+  const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
+
+  // Build a tuple that only contains the projections of the columns that are indexed.
+  Tuple* index_tuple_data = NULL;
+  for (size_t i = 0; i < arrlenu(index_table_def->tuple_desc); ++i) {
+    ColDesc desc = index_table_def->tuple_desc[i];
+    index_tuple_data =
+        SetCol(index_tuple_data, desc.column_name,
+               GetCol(table_tuple, desc.column_name, parent_table_def), index_table_def);
+  }
+
+  // Copy the projected index tuple data into a buffer that is contiguous with an index tuple
+  // header struct.
+  IndexTuple* index_tuple =
+      calloc(sizeof(IndexTuple) + TupleGetSize(table_tuple), sizeof(byte));
+  memcpy(IndexTupleGetTuplePtr(index_tuple), table_tuple, table_tuple->length);
+  return index_tuple;
+}

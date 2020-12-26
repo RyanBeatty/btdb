@@ -168,7 +168,9 @@ typedef struct IndexTuple {
 } IndexTuple;
 
 // Get a pointer to the tuple data for a given index tuple.
-#define IndexTupleGetTuple(ptr) ((Tuple*)(ptr + sizeof(IndexTuple)))
+#define IndexTupleGetTuplePtr(ptr) ((Tuple*)(ptr + sizeof(IndexTuple)))
+
+IndexTuple* MakeIndexTuple(const IndexDef*, Tuple*);
 
 // Info stored in metadata page of the index. Allocated in reserved/special space of page.
 typedef struct BTreeMetaPageInfo {
