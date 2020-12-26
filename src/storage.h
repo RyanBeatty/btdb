@@ -148,7 +148,8 @@ typedef struct IndexDef {
   size_t index_id;
   char* index_name;
   size_t* col_idxs;
-  size_t table_def_idx;
+  size_t table_def_idx;        // Parent table def.
+  size_t index_table_def_idx;  // Table def for index tuples.
 } IndexDef;
 
 Tuple* SerializeIndexDef(const IndexDef*);

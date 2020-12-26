@@ -61,6 +61,8 @@ void InitSystemTables() {
   arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "index_name", .type = T_STRING}));
   arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "col_idxs", .type = T_STRING}));
   arrpush(indexcatalog_col_desc, ((ColDesc){.column_name = "table_def_idx", .type = T_INT}));
+  arrpush(indexcatalog_col_desc,
+          ((ColDesc){.column_name = "index_table_def_idx", .type = T_INT}));
   IndexCatalogTableDef.tuple_desc = indexcatalog_col_desc;
 
   FILE* file = fopen("data_dir/reltabledef", "r");
@@ -634,18 +636,18 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   index_name = realloc(index_name, index_name_size);
   index_name = strcat(index_name, "index");
 
-  // Create index definition for the index.
-  IndexDef index_def = {.index_id = arrlenu(IndexDefs),
-                        .index_name = index_name,
-                        .col_idxs = col_idxs,
-                        .table_def_idx = table_def->index};
-  arrpush(IndexDefs, index_def);
+  // // Create index definition for the index.
+  // IndexDef index_def = {.index_id = arrlenu(IndexDefs),
+  //                       .index_name = index_name,
+  //                       .col_idxs = col_idxs,
+  //                       .table_def_idx = table_def->index};
+  // arrpush(IndexDefs, index_def);
 
-  Tuple* tuple = SerializeIndexDef(&index_def);
-  assert(tuple != NULL);
-  Cursor cursor;
-  CursorInit(&cursor, &IndexCatalogTableDef);
-  CursorInsertTuple(&cursor, tuple);
+  // Tuple* tuple = SerializeIndexDef(&index_def);
+  // assert(tuple != NULL);
+  // Cursor cursor;
+  // CursorInit(&cursor, &IndexCatalogTableDef);
+  // CursorInsertTuple(&cursor, tuple);
 
   // Create table def for index tuples + create actual table that will hold the index.
   ColDesc* tuple_desc = NULL;
@@ -656,9 +658,23 @@ void CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
     arrpush(tuple_desc, col_desc);
   }
   TableDef index_table_def;
-  index_table_def.name = strdup(index_def.index_name);
+  index_table_def.name = strdup(index_name);
   index_table_def.tuple_desc = tuple_desc;
   CreateTable(&index_table_def);
+
+  // Create index definition for the index.
+  IndexDef index_def = {.index_id = arrlenu(IndexDefs),
+                        .index_name = index_name,
+                        .col_idxs = col_idxs,
+                        .table_def_idx = table_def->index,
+                        .index_table_def_idx = index_table_def.index};
+  arrpush(IndexDefs, index_def);
+
+  Tuple* tuple = SerializeIndexDef(&index_def);
+  assert(tuple != NULL);
+  Cursor cursor;
+  CursorInit(&cursor, &IndexCatalogTableDef);
+  CursorInsertTuple(&cursor, tuple);
 
   // Init the metadata page for the index.
   Page page = calloc(PAGE_SIZE, sizeof(byte));
@@ -693,6 +709,9 @@ Tuple* SerializeIndexDef(const IndexDef* index_def) {
   int32_t* table_def_idx = (int32_t*)calloc(1, sizeof(int32_t));
   *table_def_idx = (int32_t)index_def->table_def_idx;
 
+  int32_t* index_table_def_idx = (int32_t*)calloc(1, sizeof(int32_t));
+  *index_table_def_idx = (int32_t)index_def->index_table_def_idx;
+
   Tuple* tuple = MakeTuple(&IndexCatalogTableDef);
   tuple = SetCol(tuple, "index_id", MakeDatum(T_INT, index_id), &IndexCatalogTableDef);
   tuple = SetCol(tuple, "index_name", MakeDatum(T_STRING, strdup(index_def->index_name)),
@@ -700,6 +719,8 @@ Tuple* SerializeIndexDef(const IndexDef* index_def) {
   tuple = SetCol(tuple, "col_idxs", MakeDatum(T_STRING, col_idxs_str), &IndexCatalogTableDef);
   tuple =
       SetCol(tuple, "table_def_idx", MakeDatum(T_INT, table_def_idx), &IndexCatalogTableDef);
+  tuple = SetCol(tuple, "index_table_def_idx", MakeDatum(T_INT, index_table_def_idx),
+                 &IndexCatalogTableDef);
   return tuple;
 }
 
@@ -721,11 +742,14 @@ void DeserializeIndexDef(Tuple* tuple, IndexDef* index_def) {
   int32_t* index_id_ptr = (int32_t*)GetCol(tuple, "index_id", &IndexCatalogTableDef).data;
   int32_t* table_def_idx_ptr =
       (int32_t*)GetCol(tuple, "table_def_idx", &IndexCatalogTableDef).data;
+  int32_t* index_table_def_idx_ptr =
+      (int32_t*)GetCol(tuple, "index_table_def_idx", &IndexCatalogTableDef).data;
 
   index_def->index_id = (size_t)(*index_id_ptr);
   index_def->index_name = strdup(GetCol(tuple, "index_name", &IndexCatalogTableDef).data);
   index_def->col_idxs = col_idxs;
   index_def->table_def_idx = (size_t)(*table_def_idx_ptr);
+  index_def->index_table_def_idx = (size_t)(*index_table_def_idx_ptr);
   return;
 }
 
