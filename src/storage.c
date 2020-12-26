@@ -769,3 +769,39 @@ IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   memcpy(IndexTupleGetTuplePtr(index_tuple), table_tuple, table_tuple->length);
   return index_tuple;
 }
+
+void BTreePageInit(Page page, uint64_t level) {
+  PageInit(page, sizeof(BTreePageInfo));
+  BTreePageInfo* info = PageGetBTreePageInfo(page);
+  info->level = level;
+}
+
+void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
+  IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
+  Page meta_page = ReadPage(index_def->index_table_def_idx,
+                            TableDefs[index_def->index_table_def_idx].name, 0);
+  BTreeMetaPageInfo* meta_info = PageGetBTreeMetaPageInfo(meta_page);
+  PageId root_id = meta_info->root_page_id;
+  if (root_id == NULL_PAGE) {
+    // If root page is not initialized (i.e. the tree is empty), create it.
+    Page root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+    BTreePageInit(root_page, 1);
+    WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
+              1, root_page);
+    // Make sure we update the meta page to point to the new root.
+    meta_info->root_page_id = 1;
+    WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
+              0, meta_page);
+    root_id = 1;
+  }
+  Page root_page = ReadPage(index_def->index_table_def_idx,
+                            TableDefs[index_def->index_table_def_idx].name, root_id);
+  bool ok =
+      PageAddItem(root_page, (unsigned char*)index_tuple, IndexTupleGetSize(index_tuple));
+  // TODO: At the moment since we are still implementing btree indexes, we assume the root page
+  // always has room for items. Fix this later.
+  assert(ok);
+  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
+            root_id, root_page);
+  return;
+}

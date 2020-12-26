@@ -169,6 +169,7 @@ typedef struct IndexTuple {
 
 // Get a pointer to the tuple data for a given index tuple.
 #define IndexTupleGetTuplePtr(ptr) ((Tuple*)(ptr + sizeof(IndexTuple)))
+#define IndexTupleGetSize(ptr) (sizeof(IndexTuple) + TupleGetSize(IndexTupleGetTuplePtr(ptr)))
 
 IndexTuple* MakeIndexTuple(const IndexDef*, Tuple*);
 
@@ -191,6 +192,10 @@ typedef struct BTreePageInfo {
 } BTreePageInfo;
 
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
+
+void BTreePageInit(Page, uint64_t);
+
+void BTreeIndexInsert(const IndexDef*, Tuple*);
 
 #ifdef __cplusplus
 }
