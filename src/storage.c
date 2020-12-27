@@ -620,20 +620,21 @@ IndexDef* CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   assert(col_idxs != NULL);
 
   // Index name is equal to "_".join([table_name, covering col names, index])
-  char* index_name = NULL;
   size_t index_name_size = strlen(table_def->name) + strlen("_") + 1;
-  index_name = realloc(index_name, index_name_size);
+  for (size_t i = 0; i < arrlenu(col_idxs); ++i) {
+    ColDesc desc = table_def->tuple_desc[col_idxs[i]];
+    index_name_size += strlen(desc.column_name) + strlen("_");
+  }
+  index_name_size += strlen("index");
+
+  char* index_name = (char*)calloc(index_name_size, sizeof(char));
   index_name = strcat(index_name, table_def->name);
   index_name = strcat(index_name, "_");
   for (size_t i = 0; i < arrlenu(col_idxs); ++i) {
     ColDesc desc = table_def->tuple_desc[col_idxs[i]];
-    index_name_size += strlen(desc.column_name) + strlen("_");
-    index_name = realloc(index_name, index_name_size);
     index_name = strcat(index_name, desc.column_name);
     index_name = strcat(index_name, "_");
   }
-  index_name_size += strlen("index");
-  index_name = realloc(index_name, index_name_size);
   index_name = strcat(index_name, "index");
 
   // Create table def for index tuples + create actual table that will hold the index.
@@ -673,7 +674,6 @@ IndexDef* CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
 Tuple* SerializeIndexDef(const IndexDef* index_def) {
   // Kind of dumb, but we store the col_idxs array serialized as a character string of numbers
   // separated by ",".
-  char* col_idxs_str = NULL;
   size_t col_idxs_str_size = 1;
   for (size_t i = 0; i < arrlenu(index_def->col_idxs); ++i) {
     char str[256];
@@ -682,11 +682,19 @@ Tuple* SerializeIndexDef(const IndexDef* index_def) {
       Panic("Failed to convert size_t to str");
     }
     col_idxs_str_size += strlen(str);
-    col_idxs_str = realloc(col_idxs_str, col_idxs_str_size);
-    col_idxs_str = strcat(col_idxs_str, str);
     if (i < arrlenu(index_def->col_idxs) - 1) {
       col_idxs_str_size += strlen(",");
-      col_idxs_str = realloc(col_idxs_str, col_idxs_str_size);
+    }
+  }
+  char* col_idxs_str = (char*)calloc(col_idxs_str_size, sizeof(char));
+  for (size_t i = 0; i < arrlenu(index_def->col_idxs); ++i) {
+    char str[256];
+    int err = sprintf(str, "%zu", index_def->col_idxs[i]);
+    if (err < 0) {
+      Panic("Failed to convert size_t to str");
+    }
+    col_idxs_str = strcat(col_idxs_str, str);
+    if (i < arrlenu(index_def->col_idxs) - 1) {
       col_idxs_str = strcat(col_idxs_str, ",");
     }
   }
