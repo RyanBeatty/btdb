@@ -455,7 +455,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   }
   TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = 0};
   tuple->self_tid = tuple_id;
-  cur_page = (Page)calloc(8192, sizeof(unsigned char));
+  cur_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   PageInit(cur_page, 0);
   assert(PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple)));
   WritePage(cursor->table_index, cursor->rel_name, cursor->page_index, cur_page);
@@ -779,8 +779,8 @@ IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   // Copy the projected index tuple data into a buffer that is contiguous with an index tuple
   // header struct.
   IndexTuple* index_tuple =
-      calloc(sizeof(IndexTuple) + TupleGetSize(table_tuple), sizeof(byte));
-  memcpy(IndexTupleGetTuplePtr(index_tuple), table_tuple, table_tuple->length);
+      calloc(sizeof(IndexTuple) + TupleGetSize(index_tuple_data), sizeof(byte));
+  memcpy(IndexTupleGetTuplePtr(index_tuple), index_tuple_data, TupleGetSize(index_tuple_data));
   return index_tuple;
 }
 
