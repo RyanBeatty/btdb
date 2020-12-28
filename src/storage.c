@@ -526,6 +526,13 @@ void WritePage(uint64_t rel_id, const char* rel_name, PageId page_id, Page page)
   SMWrite(sm, page_id, page);
 }
 
+char* SMMakeRelPath(RelStorageManager* sm) {
+  char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
+  rel_path = strcat(rel_path, "data_dir/");
+  rel_path = strcat(rel_path, sm->rel_name);
+  return rel_path;
+}
+
 RelStorageManager* SMOpen(uint64_t rel_id, const char* rel_name) {
   for (uint64_t i = 0; i < arrlenu(SMS); ++i) {
     if (SMS[i].rel_id == rel_id) {
@@ -543,9 +550,7 @@ void SMCreate(RelStorageManager* sm) {
   assert(sm != NULL);
   assert(sm->rel_name != NULL);
   assert(sm->fd == -1);
-  char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
-  rel_path = strcat(rel_path, "data_dir/");
-  rel_path = strcat(rel_path, sm->rel_name);
+  char* rel_path = SMMakeRelPath(sm);
   int fd = open(rel_path, O_RDWR | O_CREAT | O_EXCL, S_IRWXU);
   assert(fd != -1);
   sm->fd = fd;
@@ -565,9 +570,7 @@ int SMRead(RelStorageManager* sm, PageId page_id, byte* buffer) {
   assert(buffer != NULL);
 
   if (sm->fd == -1) {
-    char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
-    rel_path = strcat(rel_path, "data_dir/");
-    rel_path = strcat(rel_path, sm->rel_name);
+    char* rel_path = SMMakeRelPath(sm);
     int fd = open(rel_path, O_RDWR);
     assert(fd != -1);
     sm->fd = fd;
@@ -589,9 +592,7 @@ void SMWrite(RelStorageManager* sm, PageId page_id, byte* buffer) {
   assert(buffer != NULL);
 
   if (sm->fd == -1) {
-    char* rel_path = calloc(sizeof("data_dir") + strlen(sm->rel_name) + 1, sizeof(char));
-    rel_path = strcat(rel_path, "data_dir/");
-    rel_path = strcat(rel_path, sm->rel_name);
+    char* rel_path = SMMakeRelPath(sm);
     int fd = open(rel_path, O_RDWR);
     assert(fd != -1);
     sm->fd = fd;
@@ -834,6 +835,20 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
 //   cursor->tuple_id = 0;
 // }
 
-// void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {}
+// // TODO: Think about if this should just just be combined with IndexCursorInit.
+// void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {
+//   assert(index_def != NULL);
+//   assert(cursor != NULL);
 
-// Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {}
+//   cursor->page_id = BTreeReadOrCreateRootPageId(index_def);
+//   assert(cursor->page_id != NULL_PAGE);
+// }
+
+// Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {
+//   assert(index_def != NULL);
+//   assert(cursor != NULL);
+
+//   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
+//   Page page = ReadPage(index_table_def->index, index_table_def->name, cursor->page_id);
+
+// }

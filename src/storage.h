@@ -134,10 +134,11 @@ typedef struct RelStorageManager {
 RelStorageManager* SMS;  // stb-array.
 
 RelStorageManager* SMOpen(uint64_t, const char*);
+char* SMMakeRelPath(RelStorageManager*);
 void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
-int SMRead(RelStorageManager*, PageId, byte* buffer);
-void SMWrite(RelStorageManager*, PageId, byte* buffer);
+int SMRead(RelStorageManager*, PageId, byte*);
+void SMWrite(RelStorageManager*, PageId, byte*);
 
 ////////////////////////////////////////////////////
 // B-Tree Index Code
