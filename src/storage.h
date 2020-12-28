@@ -186,6 +186,7 @@ typedef struct BTreeMetaPageInfo {
 #define PageGetBTreeMetaPageInfo(ptr) ((BTreeMetaPageInfo*)(PageGetSpecial(ptr)))
 
 void BTreeMetaPageInit(Page);
+Page BTreeReadMetaPage(const IndexDef*);
 
 // Info for leaf or non-leaf btree nodes/pages.
 typedef struct BTreePageInfo {
@@ -195,6 +196,13 @@ typedef struct BTreePageInfo {
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 
 void BTreePageInit(Page, uint64_t);
+Page BTreeReadOrCreateRootPage(const IndexDef*, PageId*);
+
+// // Holds state for a cursor abstraction that is iterating/searching through a btree index.
+// typedef struct IndexCursor {
+//   PageId page_id;
+//   size_t tuple_id;
+// } IndexCursor;
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);
 
