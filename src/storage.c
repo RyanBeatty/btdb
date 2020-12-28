@@ -793,8 +793,9 @@ void BTreePageInit(Page page, uint64_t level) {
 
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
-  PageId root_id = NULL_PAGE;
-  Page root_page = BTreeReadOrCreateRootPage(index_def, &root_id);
+  PageId root_id = BTreeReadOrCreateRootPageId(index_def);
+  Page root_page = ReadPage(index_def->index_table_def_idx,
+                            TableDefs[index_def->index_table_def_idx].name, root_id);
   bool ok =
       PageAddItem(root_page, (unsigned char*)index_tuple, IndexTupleGetSize(index_tuple));
   // TODO: At the moment since we are still implementing btree indexes, we assume the root page
@@ -810,30 +811,29 @@ Page BTreeReadMetaPage(const IndexDef* index_def) {
                   TableDefs[index_def->index_table_def_idx].name, 0);
 }
 
-Page BTreeReadOrCreateRootPage(const IndexDef* index_def, PageId* root_id) {
-  assert(root_id != NULL);
+PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   Page meta_page = BTreeReadMetaPage(index_def);
   BTreeMetaPageInfo* meta_info = PageGetBTreeMetaPageInfo(meta_page);
-  *root_id = meta_info->root_page_id;
-  if (root_id == NULL_PAGE) {
-    // If root page is not initialized (i.e. the tree is empty), create it.
-    Page root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-    BTreePageInit(root_page, 1);
-    WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
-              1, root_page);
-    // Make sure we update the meta page to point to the new root.
-    meta_info->root_page_id = 1;
-    WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
-              0, meta_page);
-    *root_id = 1;
+  if (meta_info->root_page_id != NULL_PAGE) {
+    return meta_info->root_page_id;
   }
-  return ReadPage(index_def->index_table_def_idx,
-                  TableDefs[index_def->index_table_def_idx].name, *root_id);
+  // If root page is not initialized (i.e. the tree is empty), create it.
+  Page root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+  BTreePageInit(root_page, 1);
+  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name, 1,
+            root_page);
+  // Make sure we update the meta page to point to the new root.
+  meta_info->root_page_id = 1;
+  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name, 0,
+            meta_page);
+  return 1;
 }
 
 // void IndexCursorInit(IndexCursor* cursor) {
 //   cursor->page_id = 0;
 //   cursor->tuple_id = 0;
 // }
+
+// void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {}
 
 // Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {}
