@@ -789,6 +789,9 @@ IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* index_tuple =
       calloc(sizeof(IndexTuple) + TupleGetSize(index_tuple_data), sizeof(byte));
   memcpy(IndexTupleGetTuplePtr(index_tuple), index_tuple_data, TupleGetSize(index_tuple_data));
+  // TODO: Need to think about this more. self_tid could point to a more updated tuple. Is this
+  // okay?
+  index_tuple->pointer = table_tuple->self_tid;
   return index_tuple;
 }
 
@@ -831,25 +834,32 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   return 1;
 }
 
-// void IndexCursorInit(IndexCursor* cursor) {
-//   cursor->page_id = 0;
-//   cursor->tuple_id = 0;
-// }
+void IndexCursorInit(IndexCursor* cursor) {
+  cursor->page_id = 0;
+  cursor->tuple_id = 0;
+}
 
-// // TODO: Think about if this should just just be combined with IndexCursorInit.
-// void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {
-//   assert(index_def != NULL);
-//   assert(cursor != NULL);
+// TODO: Think about if this should just just be combined with IndexCursorInit.
+void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {
+  assert(index_def != NULL);
+  assert(cursor != NULL);
 
-//   cursor->page_id = BTreeReadOrCreateRootPageId(index_def);
-//   assert(cursor->page_id != NULL_PAGE);
-// }
+  cursor->page_id = BTreeReadOrCreateRootPageId(index_def);
+  assert(cursor->page_id != NULL_PAGE);
+}
 
-// Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {
-//   assert(index_def != NULL);
-//   assert(cursor != NULL);
+Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {
+  assert(index_def != NULL);
+  assert(cursor != NULL);
+  assert(expr == NULL);
 
-//   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
-//   Page page = ReadPage(index_table_def->index, index_table_def->name, cursor->page_id);
-
-// }
+  Page page = ReadPage(index_def->index_table_def_idx, cursor->page_id);
+  IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
+  if (index_tuple == NULL) {
+    return NULL;
+  }
+  Page table_page = ReadPage(index_def->table_def_idx, index_tuple->pointer.page_num);
+  Tuple* tuple = (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
+  ++cursor->tuple_id;
+  return tuple;
+}
