@@ -357,15 +357,15 @@ Tuple* GetResult(PlanNode* node) {
   }
 }
 
-PlanNode* PlanJoin(Query* query, ParseNode* join_tree) {
+PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) {
   assert(query != NULL);
   assert(join_tree != NULL);
   switch (join_tree->type) {
     case NJOIN: {
       NJoin* join_node = (NJoin*)join_tree;
 
-      PlanNode* left_plan = PlanJoin(query, join_node->left);
-      PlanNode* right_plan = PlanJoin(query, join_node->right);
+      PlanNode* left_plan = PlanJoin(query, join_node->left, where_clause);
+      PlanNode* right_plan = PlanJoin(query, join_node->right, where_clause);
 
       NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
       nested_loop->plan.type = N_PLAN_NESTED_LOOP;
@@ -418,7 +418,7 @@ PlanNode* PlanQuery(Query* query) {
     case CMD_SELECT: {
       assert(arrlenu(query->join_list) > 0);
 
-      PlanNode* left_plan = PlanJoin(query, query->join_tree);
+      PlanNode* left_plan = PlanJoin(query, query->join_tree, query->where_clause);
       assert(left_plan != NULL);
 
       if (query->sort != NULL) {
