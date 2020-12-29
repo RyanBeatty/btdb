@@ -133,7 +133,7 @@ typedef struct RelStorageManager {
 
 RelStorageManager* SMS;  // stb-array.
 
-RelStorageManager* SMOpen(uint64_t, const char*);
+RelStorageManager* SMOpen(uint64_t);
 char* SMMakeRelPath(RelStorageManager*);
 void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);

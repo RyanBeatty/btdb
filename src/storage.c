@@ -113,6 +113,10 @@ void InitSystemTables() {
     // Else, assume system catalog tables + default tables already exist.
     fclose(file);
 
+    // Some of the storage manager code assumes that relations it is trying to read/write to
+    // and from are already defined.
+    arrpush(TableDefs, RelCatalogTableDef);
+
     Cursor cursor;
     CursorInit(&cursor, &RelCatalogTableDef);
 
@@ -120,6 +124,10 @@ void InitSystemTables() {
     // already materialized. Additionally, we assume that the relcatalog table stores table
     // defs in sorted index/creation order.
     Tuple* tuple = CursorSeekNext(&cursor);
+    // NOTE: We assume the first tuple is the rel table def catalog tuple definitions, so
+    // overwrite the existing one.
+    TableDefs[0] = *DeserializeTableDef(tuple);
+    tuple = CursorSeekNext(&cursor);
     while (tuple != NULL) {
       arrpush(TableDefs, *DeserializeTableDef(tuple));
       tuple = CursorSeekNext(&cursor);
@@ -320,7 +328,7 @@ void CreateTable(TableDef* table_def) {
   table_def->index = arrlenu(TableDefs);
   arrpush(TableDefs, *table_def);
   arrpush(TablePages, NULL);
-  RelStorageManager* sm = SMOpen(table_def->index, table_def->name);
+  RelStorageManager* sm = SMOpen(table_def->index);
   assert(sm != NULL);
   SMCreate(sm);
   // Make sure we add the table def to the system catalog.
@@ -509,7 +517,7 @@ Page ReadPage(uint64_t rel_id, const char* rel_name, PageId page_id) {
   assert(rel_name != NULL);
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   assert(page != NULL);
-  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  RelStorageManager* sm = SMOpen(rel_id);
   assert(sm != NULL);
   int result = SMRead(sm, page_id, page);
   if (result == 0) {
@@ -521,7 +529,7 @@ Page ReadPage(uint64_t rel_id, const char* rel_name, PageId page_id) {
 
 void WritePage(uint64_t rel_id, const char* rel_name, PageId page_id, Page page) {
   assert(rel_name != NULL);
-  RelStorageManager* sm = SMOpen(rel_id, rel_name);
+  RelStorageManager* sm = SMOpen(rel_id);
   assert(sm != NULL);
   SMWrite(sm, page_id, page);
 }
@@ -533,16 +541,18 @@ char* SMMakeRelPath(RelStorageManager* sm) {
   return rel_path;
 }
 
-RelStorageManager* SMOpen(uint64_t rel_id, const char* rel_name) {
+RelStorageManager* SMOpen(uint64_t rel_id) {
   for (uint64_t i = 0; i < arrlenu(SMS); ++i) {
     if (SMS[i].rel_id == rel_id) {
       return &SMS[i];
     }
   }
 
+  const TableDef* table_def = &TableDefs[rel_id];
+
   // Don't actually open any files.
-  arrpush(SMS,
-          ((RelStorageManager){.fd = -1, .rel_id = rel_id, .rel_name = strdup(rel_name)}));
+  arrpush(SMS, ((RelStorageManager){
+                   .fd = -1, .rel_id = rel_id, .rel_name = strdup(table_def->name)}));
   return &SMS[arrlenu(SMS) - 1];
 }
 
