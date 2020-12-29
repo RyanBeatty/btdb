@@ -424,9 +424,8 @@ void CursorInit(Cursor* cursor, TableDef* table_def) {
 Tuple* CursorSeekNext(Cursor* cursor) {
   assert(cursor != NULL);
 
-  for (Page cur_page = ReadPage(cursor->table_index, cursor->rel_name, cursor->page_index);
-       cur_page != NULL;
-       cur_page = ReadPage(cursor->table_index, cursor->rel_name, cursor->page_index)) {
+  for (Page cur_page = ReadPage(cursor->table_index, cursor->page_index); cur_page != NULL;
+       cur_page = ReadPage(cursor->table_index, cursor->page_index)) {
     if (cursor->tuple_index >= PageGetNumLocs(cur_page)) {
       ++cursor->page_index;
       cursor->tuple_index = 0;
@@ -451,9 +450,8 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   assert(cursor != NULL);
   assert(tuple != NULL);
   Page cur_page = NULL;
-  for (cur_page = ReadPage(cursor->table_index, cursor->rel_name, cursor->page_index);
-       cur_page != NULL; ++cursor->page_index,
-      cur_page = ReadPage(cursor->table_index, cursor->rel_name, cursor->page_index)) {
+  for (cur_page = ReadPage(cursor->table_index, cursor->page_index); cur_page != NULL;
+       ++cursor->page_index, cur_page = ReadPage(cursor->table_index, cursor->page_index)) {
     uint16_t next_loc = GetPageNextLocNum(cur_page);
     TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = next_loc};
     tuple->self_tid = tuple_id;
@@ -474,7 +472,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
 void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
   assert(cursor != NULL);
 
-  Page page = ReadPage(cursor->table_index, cursor->rel_name, tid.page_num);
+  Page page = ReadPage(cursor->table_index, tid.page_num);
   assert(page != NULL);
 
   assert(tid.loc_num < GetPageHeader(page)->num_locs);
@@ -487,16 +485,16 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(cursor != NULL);
   assert(updated_tuple != NULL);
 
-  Page page = ReadPage(cursor->table_index, cursor->rel_name, tid.page_num);
+  Page page = ReadPage(cursor->table_index, tid.page_num);
   assert(tid.loc_num < GetPageHeader(page)->num_locs);
 
   PageDeleteItem(page, tid.loc_num);
   WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
 
   size_t page_index = tid.page_num;
-  Page cur_page = ReadPage(cursor->table_index, cursor->rel_name, page_index);
+  Page cur_page = ReadPage(cursor->table_index, page_index);
   for (; cur_page != NULL;
-       ++page_index, cur_page = ReadPage(cursor->table_index, cursor->rel_name, page_index)) {
+       ++page_index, cur_page = ReadPage(cursor->table_index, page_index)) {
     uint16_t next_loc = GetPageNextLocNum(cur_page);
     TupleId tuple_id = {.page_num = page_index, .loc_num = next_loc};
     updated_tuple->self_tid = tuple_id;
@@ -513,8 +511,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   WritePage(cursor->table_index, cursor->rel_name, page_index, new_page);
 }
 
-Page ReadPage(uint64_t rel_id, const char* rel_name, PageId page_id) {
-  assert(rel_name != NULL);
+Page ReadPage(uint64_t rel_id, PageId page_id) {
   Page page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   assert(page != NULL);
   RelStorageManager* sm = SMOpen(rel_id);
@@ -805,8 +802,7 @@ void BTreePageInit(Page page, uint64_t level) {
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
-  Page root_page = ReadPage(index_def->index_table_def_idx,
-                            TableDefs[index_def->index_table_def_idx].name, root_id);
+  Page root_page = ReadPage(index_def->index_table_def_idx, root_id);
   bool ok =
       PageAddItem(root_page, (unsigned char*)index_tuple, IndexTupleGetSize(index_tuple));
   // TODO: At the moment since we are still implementing btree indexes, we assume the root page
@@ -818,8 +814,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 }
 
 Page BTreeReadMetaPage(const IndexDef* index_def) {
-  return ReadPage(index_def->index_table_def_idx,
-                  TableDefs[index_def->index_table_def_idx].name, 0);
+  return ReadPage(index_def->index_table_def_idx, 0);
 }
 
 PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
