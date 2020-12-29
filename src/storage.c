@@ -456,7 +456,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
     TupleId tuple_id = {.page_num = cursor->page_index, .loc_num = next_loc};
     tuple->self_tid = tuple_id;
     if (PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple))) {
-      WritePage(cursor->table_index, cursor->rel_name, cursor->page_index, cur_page);
+      WritePage(cursor->table_index, cursor->page_index, cur_page);
       return;
     }
   }
@@ -465,7 +465,7 @@ void CursorInsertTuple(Cursor* cursor, Tuple* tuple) {
   cur_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   PageInit(cur_page, 0);
   assert(PageAddItem(cur_page, (unsigned char*)tuple, TupleGetSize(tuple)));
-  WritePage(cursor->table_index, cursor->rel_name, cursor->page_index, cur_page);
+  WritePage(cursor->table_index, cursor->page_index, cur_page);
   return;
 }
 
@@ -477,7 +477,7 @@ void CursorDeleteTupleById(Cursor* cursor, TupleId tid) {
 
   assert(tid.loc_num < GetPageHeader(page)->num_locs);
   PageDeleteItem(page, tid.loc_num);
-  WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
+  WritePage(cursor->table_index, tid.page_num, page);
   return;
 }
 
@@ -489,7 +489,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   assert(tid.loc_num < GetPageHeader(page)->num_locs);
 
   PageDeleteItem(page, tid.loc_num);
-  WritePage(cursor->table_index, cursor->rel_name, tid.page_num, page);
+  WritePage(cursor->table_index, tid.page_num, page);
 
   size_t page_index = tid.page_num;
   Page cur_page = ReadPage(cursor->table_index, page_index);
@@ -499,7 +499,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
     TupleId tuple_id = {.page_num = page_index, .loc_num = next_loc};
     updated_tuple->self_tid = tuple_id;
     if (PageAddItem(cur_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple))) {
-      WritePage(cursor->table_index, cursor->rel_name, page_index, cur_page);
+      WritePage(cursor->table_index, page_index, cur_page);
       return;
     }
   }
@@ -508,7 +508,7 @@ void CursorUpdateTupleById(Cursor* cursor, Tuple* updated_tuple, TupleId tid) {
   Page new_page = (Page)calloc(8192, sizeof(unsigned char));
   PageInit(new_page, 0);
   assert(PageAddItem(new_page, (unsigned char*)updated_tuple, TupleGetSize(updated_tuple)));
-  WritePage(cursor->table_index, cursor->rel_name, page_index, new_page);
+  WritePage(cursor->table_index, page_index, new_page);
 }
 
 Page ReadPage(uint64_t rel_id, PageId page_id) {
@@ -524,8 +524,7 @@ Page ReadPage(uint64_t rel_id, PageId page_id) {
   return page;
 }
 
-void WritePage(uint64_t rel_id, const char* rel_name, PageId page_id, Page page) {
-  assert(rel_name != NULL);
+void WritePage(uint64_t rel_id, PageId page_id, Page page) {
   RelStorageManager* sm = SMOpen(rel_id);
   assert(sm != NULL);
   SMWrite(sm, page_id, page);
@@ -676,7 +675,7 @@ IndexDef* CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   // Init the metadata page for the index.
   Page page = calloc(PAGE_SIZE, sizeof(byte));
   BTreeMetaPageInit(page);
-  WritePage(index_table_def.index, index_table_def.name, 0, page);
+  WritePage(index_table_def.index, 0, page);
   return &IndexDefs[index_def.index_id];
 }
 
@@ -808,8 +807,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   // TODO: At the moment since we are still implementing btree indexes, we assume the root page
   // always has room for items. Fix this later.
   assert(ok);
-  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name,
-            root_id, root_page);
+  WritePage(index_def->index_table_def_idx, root_id, root_page);
   return;
 }
 
@@ -826,12 +824,10 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   // If root page is not initialized (i.e. the tree is empty), create it.
   Page root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
   BTreePageInit(root_page, 1);
-  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name, 1,
-            root_page);
+  WritePage(index_def->index_table_def_idx, 1, root_page);
   // Make sure we update the meta page to point to the new root.
   meta_info->root_page_id = 1;
-  WritePage(index_def->index_table_def_idx, TableDefs[index_def->index_table_def_idx].name, 0,
-            meta_page);
+  WritePage(index_def->index_table_def_idx, 0, meta_page);
   return 1;
 }
 

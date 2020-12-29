@@ -123,7 +123,7 @@ void CursorUpdateTupleById(Cursor*, Tuple*, TupleId);
 typedef uint64_t PageId;
 
 Page ReadPage(uint64_t, PageId);
-void WritePage(uint64_t, const char*, PageId, Page);
+void WritePage(uint64_t, PageId, Page);
 
 typedef struct RelStorageManager {
   int fd;
