@@ -107,6 +107,39 @@ Tuple* SequentialScan(PlanNode* node) {
   }
 }
 
+void IdxScanInit(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_INDEX_SCAN);
+  IndexScan* scan = (IndexScan*)node;
+  IndexCursorInit(&scan->cursor, scan->index_def);
+  BTreeBeginScan(&scan->cursor);
+}
+
+Tuple* IdxScan(PlanNode* node) {
+  assert(node != NULL);
+  assert(node->type == N_PLAN_INDEX_SCAN);
+  IndexScan* scan = (IndexScan*)node;
+  for (;;) {
+    Tuple* tuple = BTreeGetNext(&scan->cursor, NULL);
+    if (tuple == NULL) {
+      return NULL;
+    }
+
+    // Evaluate predicate if any.
+    if (scan->where_clause != NULL) {
+      Datum result_val = EvalExpr(scan->where_clause, tuple, scan->plan.table_def);
+      assert(result_val.type == T_BOOL);
+      assert(result_val.data != NULL);
+      bool* result = (bool*)result_val.data;
+      if (!*result) {
+        continue;
+      }
+    }
+
+    return tuple;
+  }
+}
+
 Tuple* InsertScan(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_MODIFY_SCAN);
@@ -401,7 +434,6 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
     case NRANGEVAR: {
       NRangeVar* range_var = (NRangeVar*)join_tree;
 
-      PlanNodeType scan_type = N_PLAN_SEQ_SCAN;
       // If we have a where clause on the query, check to see if we can use an index scan.
       if (where_clause != NULL) {
         assert(where_clause->type == NBIN_EXPR);
@@ -439,23 +471,26 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
           }
 
           if (index_def != NULL) {
-            scan_type = N_PLAN_INDEX_SCAN;
+            IndexScan* scan = (IndexScan*)calloc(1, sizeof(IndexScan));
+            scan->plan.type = N_PLAN_INDEX_SCAN;
+            scan->plan.init_func = IdxScanInit;
+            scan->plan.get_next_func = IdxScan;
+            scan->plan.target_list = query->target_list;
+            scan->plan.table_def = query->join_list[range_var->join_list_index];
+            scan->where_clause = where_clause;
+            scan->index_def = index_def;
+            return (PlanNode*)scan;
           }
         }
       }
 
-      if (scan_type == N_PLAN_SEQ_SCAN) {
-        SeqScan* scan = calloc(1, sizeof(SeqScan));
-        scan->plan.type = N_PLAN_SEQ_SCAN;
-        scan->plan.init_func = SequentialScanInit;
-        scan->plan.get_next_func = SequentialScan;
-        scan->plan.target_list = query->target_list;
-        scan->plan.table_def = query->join_list[range_var->join_list_index];
-        return (PlanNode*)scan;
-      } else {
-        Panic("IndexScan not supported yet");
-        return NULL;
-      }
+      SeqScan* scan = calloc(1, sizeof(SeqScan));
+      scan->plan.type = N_PLAN_SEQ_SCAN;
+      scan->plan.init_func = SequentialScanInit;
+      scan->plan.get_next_func = SequentialScan;
+      scan->plan.target_list = query->target_list;
+      scan->plan.table_def = query->join_list[range_var->join_list_index];
+      return (PlanNode*)scan;
     }
     default: {
       Panic("Unknown join node type during planning!");

@@ -36,6 +36,7 @@ typedef struct IndexScan {
   PlanNode plan;
   IndexCursor cursor;
   ParseNode* where_clause;
+  IndexDef* index_def;
 } IndexScan;
 
 typedef struct ModifyScan {

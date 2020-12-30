@@ -845,31 +845,32 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   return 1;
 }
 
-void IndexCursorInit(IndexCursor* cursor) {
+void IndexCursorInit(IndexCursor* cursor, const IndexDef* index_def) {
   cursor->page_id = 0;
   cursor->tuple_id = 0;
+  cursor->index_def = index_def;
 }
 
 // TODO: Think about if this should just just be combined with IndexCursorInit.
-void BTreeBeginScan(const IndexDef* index_def, IndexCursor* cursor) {
-  assert(index_def != NULL);
+void BTreeBeginScan(IndexCursor* cursor) {
   assert(cursor != NULL);
+  assert(cursor->index_def != NULL);
 
-  cursor->page_id = BTreeReadOrCreateRootPageId(index_def);
+  cursor->page_id = BTreeReadOrCreateRootPageId(cursor->index_def);
   assert(cursor->page_id != NULL_PAGE);
 }
 
-Tuple* BTreeGetNext(const IndexDef* index_def, IndexCursor* cursor, ParseNode* expr) {
-  assert(index_def != NULL);
+Tuple* BTreeGetNext(IndexCursor* cursor, ParseNode* expr) {
   assert(cursor != NULL);
+  assert(cursor->index_def != NULL);
   assert(expr == NULL);
 
-  Page page = ReadPage(index_def->index_table_def_idx, cursor->page_id);
+  Page page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;
   }
-  Page table_page = ReadPage(index_def->table_def_idx, index_tuple->pointer.page_num);
+  Page table_page = ReadPage(cursor->index_def->table_def_idx, index_tuple->pointer.page_num);
   Tuple* tuple = (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
   ++cursor->tuple_id;
   return tuple;

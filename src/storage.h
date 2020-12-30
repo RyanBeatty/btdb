@@ -9,6 +9,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#include "node.h"
 #include "types.h"
 #include "utils.h"
 
@@ -205,9 +206,12 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef*);
 typedef struct IndexCursor {
   PageId page_id;
   size_t tuple_id;
+  const IndexDef* index_def;
 } IndexCursor;
 
-void IndexCursorInit(IndexCursor*);
+void IndexCursorInit(IndexCursor*, const IndexDef*);
+void BTreeBeginScan(IndexCursor*);
+Tuple* BTreeGetNext(IndexCursor*, ParseNode*);
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);
 
