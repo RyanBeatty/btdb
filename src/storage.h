@@ -207,11 +207,12 @@ typedef struct IndexCursor {
   PageId page_id;
   size_t tuple_id;
   const IndexDef* index_def;
+  const ParseNode* filter_expr;
 } IndexCursor;
 
-void IndexCursorInit(IndexCursor*, const IndexDef*);
+void IndexCursorInit(IndexCursor*, const IndexDef*, const ParseNode*);
 void BTreeBeginScan(IndexCursor*);
-Tuple* BTreeGetNext(IndexCursor*, ParseNode*);
+Tuple* BTreeGetNext(IndexCursor*);
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);
 

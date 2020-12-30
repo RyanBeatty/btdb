@@ -111,7 +111,7 @@ void IdxScanInit(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_INDEX_SCAN);
   IndexScan* scan = (IndexScan*)node;
-  IndexCursorInit(&scan->cursor, scan->index_def);
+  IndexCursorInit(&scan->cursor, scan->index_def, scan->where_clause);
   BTreeBeginScan(&scan->cursor);
 }
 
@@ -120,7 +120,7 @@ Tuple* IdxScan(PlanNode* node) {
   assert(node->type == N_PLAN_INDEX_SCAN);
   IndexScan* scan = (IndexScan*)node;
   for (;;) {
-    Tuple* tuple = BTreeGetNext(&scan->cursor, NULL);
+    Tuple* tuple = BTreeGetNext(&scan->cursor);
     if (tuple == NULL) {
       return NULL;
     }

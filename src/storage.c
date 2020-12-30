@@ -845,10 +845,12 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   return 1;
 }
 
-void IndexCursorInit(IndexCursor* cursor, const IndexDef* index_def) {
+void IndexCursorInit(IndexCursor* cursor, const IndexDef* index_def,
+                     const ParseNode* filter_expr) {
   cursor->page_id = 0;
   cursor->tuple_id = 0;
   cursor->index_def = index_def;
+  cursor->filter_expr = filter_expr;
 }
 
 // TODO: Think about if this should just just be combined with IndexCursorInit.
@@ -860,10 +862,9 @@ void BTreeBeginScan(IndexCursor* cursor) {
   assert(cursor->page_id != NULL_PAGE);
 }
 
-Tuple* BTreeGetNext(IndexCursor* cursor, ParseNode* expr) {
+Tuple* BTreeGetNext(IndexCursor* cursor) {
   assert(cursor != NULL);
   assert(cursor->index_def != NULL);
-  assert(expr == NULL);
 
   Page page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
