@@ -30,6 +30,7 @@ Result ExecPlan(PlanNode* plan) {
     arrpush(results.columns, plan->target_list[i]->column_name);
   }
   results.tuples = NULL;
+  plan->init_func(plan);
   Tuple* tuple = plan->get_next_func(plan);
   while (tuple != NULL) {
     arrpush(results.tuples, tuple);

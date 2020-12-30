@@ -64,11 +64,22 @@ Datum EvalExpr(ParseNode* node, Tuple* cur_tuple, TableDef* table_def) {
   }
 }
 
+void InitChildren(PlanNode* node) {
+  assert(node != NULL);
+  if (node->left != NULL) {
+    node->left->init_func(node->left);
+  }
+  if (node->right != NULL) {
+    node->right->init_func(node->right);
+  }
+}
+
 void SequentialScanInit(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_SEQ_SCAN);
   SeqScan* scan = (SeqScan*)node;
   CursorInit(&scan->cursor, scan->plan.table_def);
+  InitChildren(node);
 }
 
 Tuple* SequentialScan(PlanNode* node) {
@@ -370,6 +381,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
       NestedLoop* nested_loop = calloc(1, sizeof(NestedLoop));
       nested_loop->plan.type = N_PLAN_NESTED_LOOP;
       nested_loop->plan.get_next_func = NestedLoopScan;
+      nested_loop->plan.init_func = InitChildren;
       nested_loop->plan.target_list = query->target_list;
       nested_loop->plan.table_def = query->join_list[join_node->join_list_index];
       nested_loop->plan.left = left_plan;
@@ -439,7 +451,6 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
         scan->plan.get_next_func = SequentialScan;
         scan->plan.target_list = query->target_list;
         scan->plan.table_def = query->join_list[range_var->join_list_index];
-        CursorInit(&scan->cursor, scan->plan.table_def);
         return (PlanNode*)scan;
       } else {
         Panic("IndexScan not supported yet");
@@ -460,6 +471,7 @@ PlanNode* PlanQuery(Query* query) {
   result->plan.target_list = query->target_list;
   result->plan.table_def = query->join_list[arrlenu(query->join_list) - 1];
   result->plan.get_next_func = GetResult;
+  result->plan.init_func = InitChildren;
   result->where_clause = query->where_clause;
   PlanNode* plan = (PlanNode*)result;
   switch (query->cmd) {
@@ -473,6 +485,7 @@ PlanNode* PlanQuery(Query* query) {
         Sort* sort = calloc(1, sizeof(Sort));
         sort->plan.type = N_PLAN_SORT;
         sort->plan.get_next_func = SortScan;
+        sort->plan.init_func = InitChildren;
         sort->plan.target_list = query->target_list;
         sort->method = INSERTION_SORT;
 
@@ -523,6 +536,7 @@ PlanNode* PlanQuery(Query* query) {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = InsertScan;
+      scan->plan.init_func = InitChildren;
       scan->cmd = CMD_INSERT;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->join_list[0];
@@ -539,6 +553,7 @@ PlanNode* PlanQuery(Query* query) {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = UpdateScan;
+      scan->plan.init_func = InitChildren;
       scan->cmd = CMD_UPDATE;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->join_list[0];
@@ -555,6 +570,7 @@ PlanNode* PlanQuery(Query* query) {
       ModifyScan* scan = calloc(1, sizeof(ModifyScan));
       scan->plan.type = N_PLAN_MODIFY_SCAN;
       scan->plan.get_next_func = DeleteScan;
+      scan->plan.init_func = InitChildren;
       scan->plan.target_list = query->target_list;
       scan->plan.table_def = query->join_list[0];
       scan->cmd = CMD_DELETE;
