@@ -176,6 +176,10 @@ TableDef* FindTableDef(const char* table_name) {
   return i == arrlenu(TableDefs) ? NULL : table_def;
 }
 
+TableDef* GetTableDef(size_t idx) {
+  return idx >= arrlenu(TableDefs) ? NULL : &TableDefs[idx];
+}
+
 BType GetColType(TableDef* table_def, const char* col_name) {
   for (size_t i = 0; i < arrlenu(table_def->tuple_desc); ++i) {
     if (strcmp(col_name, table_def->tuple_desc[i].column_name) == 0) {
@@ -622,6 +626,13 @@ void SMWrite(RelStorageManager* sm, PageId page_id, byte* buffer) {
 //////////////////////////////////////////////////////
 // B-Tree Index Code.
 //////////////////////////////////////////////////////
+
+IndexDef* GetIndexDef(size_t idx) {
+  if (idx >= arrlenu(IndexDefs)) {
+    return NULL;
+  }
+  return &IndexDefs[idx];
+}
 
 IndexDef* CreateBTreeIndex(const TableDef* table_def, size_t* col_idxs) {
   assert(table_def != NULL);

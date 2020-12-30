@@ -389,14 +389,62 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
     case NRANGEVAR: {
       NRangeVar* range_var = (NRangeVar*)join_tree;
 
-      SeqScan* scan = calloc(1, sizeof(SeqScan));
-      scan->plan.type = N_PLAN_SEQ_SCAN;
-      scan->plan.init_func = SequentialScanInit;
-      scan->plan.get_next_func = SequentialScan;
-      scan->plan.target_list = query->target_list;
-      scan->plan.table_def = query->join_list[range_var->join_list_index];
-      CursorInit(&scan->cursor, scan->plan.table_def);
-      return (PlanNode*)scan;
+      PlanNodeType scan_type = N_PLAN_SEQ_SCAN;
+      // If we have a where clause on the query, check to see if we can use an index scan.
+      if (where_clause != NULL) {
+        assert(where_clause->type == NBIN_EXPR);
+        NBinExpr* expr = (NBinExpr*)where_clause;
+
+        // For now we only support using index scans when the where clause is a simple binary
+        // expr and one of the terms of the expression is a column reference covered by an
+        // index.
+        NIdentifier* col_ref = NULL;
+        if (expr->lhs != NULL && expr->lhs->type == NIDENTIFIER) {
+          col_ref = (NIdentifier*)expr->lhs;
+        } else if (expr->rhs != NULL && expr->rhs->type == NIDENTIFIER) {
+          col_ref = (NIdentifier*)expr->rhs;
+        }
+
+        // One of the expression terms is an column identifier, check to see if an index covers
+        // this column.
+        if (col_ref != NULL) {
+          TableDef* table_def = query->join_list[range_var->join_list_index];
+          size_t i = 0;
+          IndexDef* index_def = GetIndexDef(i);
+          while (index_def != NULL) {
+            if (index_def->table_def_idx == table_def->index) {
+              TableDef* index_table_def = GetTableDef(index_def->index_table_def_idx);
+              assert(index_table_def != NULL);
+              // We only support single column indexes for now for correctness.
+              if (arrlenu(index_table_def->tuple_desc) == 1 &&
+                  strcmp(index_table_def->tuple_desc[0].column_name, col_ref->identifier) ==
+                      0) {
+                break;
+              }
+            }
+            ++i;
+            index_def = GetIndexDef(i);
+          }
+
+          if (index_def != NULL) {
+            scan_type = N_PLAN_INDEX_SCAN;
+          }
+        }
+      }
+
+      if (scan_type == N_PLAN_SEQ_SCAN) {
+        SeqScan* scan = calloc(1, sizeof(SeqScan));
+        scan->plan.type = N_PLAN_SEQ_SCAN;
+        scan->plan.init_func = SequentialScanInit;
+        scan->plan.get_next_func = SequentialScan;
+        scan->plan.target_list = query->target_list;
+        scan->plan.table_def = query->join_list[range_var->join_list_index];
+        CursorInit(&scan->cursor, scan->plan.table_def);
+        return (PlanNode*)scan;
+      } else {
+        Panic("IndexScan not supported yet");
+        return NULL;
+      }
     }
     default: {
       Panic("Unknown join node type during planning!");

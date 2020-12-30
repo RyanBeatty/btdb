@@ -11,6 +11,7 @@ typedef enum PLanNodeType {
   N_PLAN_MODIFY_SCAN,
   N_PLAN_SORT,
   N_PLAN_NESTED_LOOP,
+  N_PLAN_INDEX_SCAN
 } PlanNodeType;
 
 typedef struct PlanNode {
@@ -30,6 +31,12 @@ typedef struct SeqScan {
   Cursor cursor;
   ParseNode* where_clause;
 } SeqScan;
+
+typedef struct IndexScan {
+  PlanNode plan;
+  IndexCursor cursor;
+  ParseNode* where_clause;
+} IndexScan;
 
 typedef struct ModifyScan {
   PlanNode plan;

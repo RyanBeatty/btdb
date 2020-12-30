@@ -28,6 +28,7 @@ TableDef* MakeTableDef(const char*, ColDesc*, size_t);
 extern TableDef* TableDefs;  // sbarr
 
 TableDef* FindTableDef(const char*);
+TableDef* GetTableDef(size_t);
 BType GetColType(TableDef*, const char*);
 
 typedef struct DataLoc {
@@ -156,6 +157,7 @@ typedef struct IndexDef {
 Tuple* SerializeIndexDef(const IndexDef*);
 void DeserializeIndexDef(Tuple*, IndexDef*);
 TableDef* IndexDefGetParentTableDef(const IndexDef*);
+IndexDef* GetIndexDef(size_t);
 
 IndexDef* CreateBTreeIndex(const TableDef*, size_t*);
 
