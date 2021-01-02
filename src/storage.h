@@ -146,6 +146,11 @@ void SMWrite(RelStorageManager*, PageId, byte*);
 // B-Tree Index Code
 ////////////////////////////////////////////////////
 
+// Comparison function for ordering btree elements.
+typedef Datum (*CmpFunc)(Datum, Datum);
+
+CmpFunc TypeToCmpFunc(BType);
+
 // Description of an index defined on a table.
 typedef struct IndexDef {
   size_t index_id;

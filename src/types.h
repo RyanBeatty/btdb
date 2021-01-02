@@ -59,6 +59,8 @@ Datum IntSub(Datum, Datum);
 Datum IntMult(Datum, Datum);
 Datum IntDiv(Datum, Datum);
 
+#define GetBoolResult(datum) (*((bool*)datum.data))
+
 #ifdef __cplusplus
 }
 #endif

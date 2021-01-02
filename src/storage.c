@@ -279,6 +279,20 @@ Datum GetCol(Tuple* tuple, const char* col_name, const TableDef* table_def) {
   return datum;
 }
 
+Datum GetColByIdx(Tuple* tuple, size_t idx, const TableDef* table_def) {
+  assert(tuple != NULL);
+
+  if (tuple->null_bitmap[idx]) {
+    return MakeDatum(T_NULL, NULL);
+  }
+
+  DataLoc* locs = GetDataLocs(tuple);
+  byte* data = GetDataPtr(tuple) + locs[idx].offset;
+  Datum datum = MakeDatum(table_def->tuple_desc[idx].type, data);
+  datum.length = locs[idx].length;
+  return datum;
+}
+
 Tuple* SetCol(Tuple* tuple, const char* col_name, Datum datum, const TableDef* table_def) {
   bool is_missing = false;
   size_t change_idx = GetColIdx(table_def, col_name, &is_missing);
@@ -812,12 +826,59 @@ void BTreePageInit(Page page, uint64_t level) {
   info->level = level;
 }
 
+CmpFunc TypeToCmpFunc(BType type) {
+  switch (type) {
+    case T_STRING: {
+      return StrLTE;
+    }
+    case T_INT: {
+      return IntLTE;
+    }
+    case T_BOOL: {
+      return BoolLTE;
+    }
+    case T_NULL:
+    case T_UNKNOWN:
+    default: {
+      Panic("Unsopported type for btree index");
+      return NULL;
+    }
+  }
+}
+
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
   Page root_page = ReadPage(index_def->index_table_def_idx, root_id);
   bool ok =
       PageAddItem(root_page, (unsigned char*)index_tuple, IndexTupleGetSize(index_tuple));
+  assert(ok);
+
+  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
+  const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
+
+  // Find index where item loc should be to be in sorted order.
+  uint16_t i = 0;
+  for (; i < PageGetNumLocs(root_page); ++i) {
+    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(root_page, i);
+    Datum d1 = GetColByIdx(table_tuple, 0, parent_table_def);
+    Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
+    CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+    // TODO: This needs to be a more more complicated comparison function.
+    if (GetBoolResult(cmp_func(d1, d2))) {
+      break;
+    }
+  }
+  // Don't handle page full
+  assert(i < PageGetNumLocs(root_page));
+
+  // Swap item locs until they are in sorted order.
+  ItemLoc inserted_loc = PageGetItemLoc(root_page, PageGetNumLocs(root_page) - 1);
+  for (uint16_t j = PageGetNumLocs(root_page) - 1; j > i; --j) {
+    PageGetItemLoc(root_page, j) = PageGetItemLoc(root_page, j - 1);
+  }
+  PageGetItemLoc(root_page, i) = inserted_loc;
+
   // TODO: At the moment since we are still implementing btree indexes, we assume the root page
   // always has room for items. Fix this later.
   assert(ok);
