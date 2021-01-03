@@ -62,6 +62,7 @@ typedef struct Tuple {
 Tuple* MakeTuple(const TableDef*);
 size_t GetColIdx(const TableDef*, const char*, bool*);
 Datum GetCol(Tuple*, const char*, const TableDef*);
+Datum GetColByIdx(Tuple*, size_t, const TableDef*);
 Tuple* SetCol(Tuple*, const char*, Datum, const TableDef*);
 Tuple* CopyTuple(Tuple*);
 
@@ -200,6 +201,7 @@ Page BTreeReadMetaPage(const IndexDef*);
 // Info for leaf or non-leaf btree nodes/pages.
 typedef struct BTreePageInfo {
   uint64_t level;
+  PageId right;  // Pointer to right sibling.
 } BTreePageInfo;
 
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))

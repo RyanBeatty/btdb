@@ -711,3 +711,52 @@ def test_create_table_durable():
         encoding="utf8",
     )
     proc.kill()
+
+
+def test_create_index():
+    """
+    Simple test to verify we can create an index on a table and use it in a scan. assumes that the order of
+    results are in index order.
+    """
+    proc = _start_btdb_process()
+
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
+        create table c (d int);
+        insert into c (d) values (4), (3), (2), (1);
+        create index on c (d);
+        select d from c where d >= 1;
+        """
+        ),
+        encoding="utf-8",
+    )
+    try:
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes(
+        textwrap.dedent(
+            f"""\
+        Starting btdb
+        btdb> UTILITY DONE
+        btdb>     d
+        ===============
+        btdb> UTILITY DONE
+        btdb>     d
+        ===============
+        1\t
+        2\t
+        3\t
+        4\t
+        btdb> Shutting down btdb
+        """
+        ),
+        encoding="utf8",
+    )
+
+    proc.kill()
