@@ -849,9 +849,16 @@ CmpFunc TypeToCmpFunc(BType type) {
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
-  Page root_page = ReadPage(index_def->index_table_def_idx, root_id);
-  bool ok =
-      PageAddItem(root_page, (unsigned char*)index_tuple, IndexTupleGetSize(index_tuple));
+  _BTreeDoInsert(index_def, index_tuple, root_id);
+  return;
+}
+
+// Internal function that will perform insert. BTreeIndexInsert is a driver/initial caller of
+// this function.
+void _BTreeDoInsert(const IndexDef* index_def, IndexTuple* new_tuple, PageId cur_page_id) {
+  Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+
+  bool ok = PageAddItem(cur_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
   assert(ok);
 
   const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
@@ -859,9 +866,9 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
   // Find index where item loc should be to be in sorted order.
   uint16_t i = 0;
-  for (; i < PageGetNumLocs(root_page); ++i) {
-    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(root_page, i);
-    Datum d1 = GetColByIdx(table_tuple, 0, parent_table_def);
+  for (; i < PageGetNumLocs(cur_page); ++i) {
+    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
+    Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
     Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
     CmpFunc cmp_func = TypeToCmpFunc(d1.type);
     // TODO: This needs to be a more more complicated comparison function.
@@ -870,19 +877,19 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
     }
   }
   // Don't handle page full
-  assert(i < PageGetNumLocs(root_page));
+  assert(i < PageGetNumLocs(cur_page));
 
   // Swap item locs until they are in sorted order.
-  ItemLoc inserted_loc = PageGetItemLoc(root_page, PageGetNumLocs(root_page) - 1);
-  for (uint16_t j = PageGetNumLocs(root_page) - 1; j > i; --j) {
-    PageGetItemLoc(root_page, j) = PageGetItemLoc(root_page, j - 1);
+  ItemLoc inserted_loc = PageGetItemLoc(cur_page, PageGetNumLocs(cur_page) - 1);
+  for (uint16_t j = PageGetNumLocs(cur_page) - 1; j > i; --j) {
+    PageGetItemLoc(cur_page, j) = PageGetItemLoc(cur_page, j - 1);
   }
-  PageGetItemLoc(root_page, i) = inserted_loc;
+  PageGetItemLoc(cur_page, i) = inserted_loc;
 
   // TODO: At the moment since we are still implementing btree indexes, we assume the root page
   // always has room for items. Fix this later.
   assert(ok);
-  WritePage(index_def->index_table_def_idx, root_id, root_page);
+  WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
   return;
 }
 

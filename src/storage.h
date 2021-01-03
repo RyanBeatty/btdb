@@ -98,6 +98,9 @@ typedef struct PageHeader {
 #define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
 #define PageGetSpecial(ptr) (ptr + GetPageHeader(ptr)->special_pointer_offset)
+#define PageGetFreeSpace(page)                                                       \
+  (GetPageHeader(page)->free_upper_offset - GetPageheader(page)->free_lower_offset - \
+   sizeof(ItemLoc))
 
 void PageInit(Page, uint16_t);
 uint16_t PageGetFreeStart(Page);
@@ -222,6 +225,7 @@ void BTreeBeginScan(IndexCursor*);
 Tuple* BTreeGetNext(IndexCursor*);
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);
+void _BTreeDoInsert(const IndexDef*, IndexTuple*, PageId);
 
 #ifdef __cplusplus
 }
