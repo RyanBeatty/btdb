@@ -760,3 +760,59 @@ def test_create_index():
     )
 
     proc.kill()
+
+
+def test_create_index_page_splits():
+    """
+    Verify that we can create an index on a table who's data will take up more than a single page.
+    """
+    proc = _start_btdb_process()
+
+    input_cmds = []
+    expected_output = ["Starting btdb"]
+    for _ in range(800):
+        input_cmds.append("insert into foo (bar, baz) values ('hello world', true);\n")
+        expected_output.append("btdb>     bar    baz")
+        expected_output.append("===============")
+    input_cmds.append('create index on foo (bar)')
+    expected_output.append('btdb> UTILITY DONE')
+    input_cmds.append("select bar, baz from foo where bar = 'hello world';")
+    expected_output.append("btdb>     bar    baz")
+    expected_output.append("===============")
+    # These rows are already pre populated.
+    expected_output.append("hello\ttrue\t")
+    expected_output.append("world\tfalse\t")
+    for _ in range(800):
+        expected_output.append("hello world\ttrue\t")
+    expected_output.append("btdb> Shutting down btdb\n")
+    try:
+        output, err = proc.communicate(
+            input=bytes("".join(input_cmds), encoding="utf-8"), timeout=TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    input_cmds = bytes(
+        textwrap.dedent(
+            """\
+        create table c (d int);
+        insert into c (d) values (4), (3), (2), (1);
+        create index on c (d);
+        select d from c where d >= 1;
+        """
+        ),
+        encoding="utf-8",
+    )
+    try:
+        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes("\n".join(expected_output), encoding="utf8")
+
+    proc.kill()
