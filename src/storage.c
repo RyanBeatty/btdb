@@ -862,11 +862,60 @@ CmpFunc TypeToCmpFunc(BType type) {
   }
 }
 
+// void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
+//   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
+//   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
+//   _BTreeDoInsert(index_def, index_tuple, root_id);
+//   return;
+// }
+
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
-  IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
+  IndexTuple* new_tuple = MakeIndexTuple(index_def, table_tuple);
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
-  _BTreeDoInsert(index_def, index_tuple, root_id);
-  return;
+
+  PageId cur_page_id = root_id;
+  Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+  while (!BTreePageIsLeaf(cur_page)) {
+    // Do search to find where to move down or laterally in tree.
+  }
+
+  // TODO: move_right(). Not necessary now because we have no concurrent updates, so once we
+  // get to this point, we are guaranteed to be at the leaf node where we can insert the new
+  // tuple to be in the correct order (unless we need to split the node).
+
+  // If there is enough space to insert the tuple, do so and reorder the keys.
+  if (PageGetFreeSpace(cur_page) >= IndexTupleGetSize(new_tuple)) {
+    const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
+    const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
+
+    // Find index where item loc should be to be in sorted order.
+    uint16_t i = 0;
+    for (; i < PageGetNumLocs(cur_page); ++i) {
+      IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
+      Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+      Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
+      CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+      // TODO: This needs to be a more more complicated comparison function.
+      if (GetBoolResult(cmp_func(d1, d2))) {
+        break;
+      }
+    }
+
+    bool ok = PageAddItem(cur_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
+    assert(ok);
+
+    // Swap item locs until they are in sorted order.
+    ItemLoc inserted_loc = PageGetItemLoc(cur_page, PageGetNumLocs(cur_page) - 1);
+    for (uint16_t j = PageGetNumLocs(cur_page) - 1; j > i; --j) {
+      PageGetItemLoc(cur_page, j) = PageGetItemLoc(cur_page, j - 1);
+    }
+    PageGetItemLoc(cur_page, i) = inserted_loc;
+
+    // TODO: At the moment since we are still implementing btree indexes, we assume the root
+    // page always has room for items. Fix this later.
+    assert(ok);
+    WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+  }
 }
 
 // Internal function that will perform insert. BTreeIndexInsert is a driver/initial caller of
