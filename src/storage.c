@@ -835,10 +835,11 @@ IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   return index_tuple;
 }
 
-void BTreePageInit(Page page, uint64_t level) {
+void BTreePageInit(Page page, uint64_t level, uint16_t flags) {
   PageInit(page, sizeof(BTreePageInfo));
   BTreePageInfo* info = PageGetBTreePageInfo(page);
   info->level = level;
+  info->flags = flags;
 }
 
 CmpFunc TypeToCmpFunc(BType type) {
@@ -959,7 +960,7 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
   }
   // If root page is not initialized (i.e. the tree is empty), create it.
   Page root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  BTreePageInit(root_page, 1);
+  BTreePageInit(root_page, 0, ROOT_PAGE | LEAF_PAGE);
   WritePage(index_def->index_table_def_idx, 1, root_page);
   // Make sure we update the meta page to point to the new root.
   meta_info->root_page_id = 1;

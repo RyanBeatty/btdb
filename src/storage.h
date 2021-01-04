@@ -205,12 +205,18 @@ Page BTreeReadMetaPage(const IndexDef*);
 // Info for leaf or non-leaf btree nodes/pages.
 typedef struct BTreePageInfo {
   uint64_t level;
+  uint16_t flags;
   PageId right;  // Pointer to right sibling.
 } BTreePageInfo;
 
-#define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
+#define LEAF_PAGE (1 << 0)
+#define ROOT_PAGE (1 << 1)
 
-void BTreePageInit(Page, uint64_t);
+#define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
+#define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)
+#define BTreePageIsLeaf(page) ((PageGetBTreePageInfo(page)->flags & LEAF_PAGE) != 0)
+
+void BTreePageInit(Page, uint64_t, uint16_t);
 PageId BTreeReadOrCreateRootPageId(const IndexDef*);
 
 // Holds state for a cursor abstraction that is iterating/searching through a btree index.
