@@ -99,7 +99,7 @@ typedef struct PageHeader {
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
 #define PageGetSpecial(ptr) (ptr + GetPageHeader(ptr)->special_pointer_offset)
 #define PageGetFreeSpace(page)                                                       \
-  (GetPageHeader(page)->free_upper_offset - GetPageheader(page)->free_lower_offset - \
+  (GetPageHeader(page)->free_upper_offset - GetPageHeader(page)->free_lower_offset - \
    sizeof(ItemLoc))
 
 void PageInit(Page, uint16_t);
@@ -145,6 +145,7 @@ void SMCreate(RelStorageManager*);
 void SMClose(RelStorageManager*);
 int SMRead(RelStorageManager*, PageId, byte*);
 void SMWrite(RelStorageManager*, PageId, byte*);
+PageId SMNumPages(RelStorageManager*);
 
 ////////////////////////////////////////////////////
 // B-Tree Index Code

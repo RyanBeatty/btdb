@@ -770,43 +770,25 @@ def test_create_index_page_splits():
 
     input_cmds = []
     expected_output = ["Starting btdb"]
-    for _ in range(800):
-        input_cmds.append("insert into foo (bar, baz) values ('hello world', true);\n")
-        expected_output.append("btdb>     bar    baz")
-        expected_output.append("===============")
-    input_cmds.append('create index on foo (bar)')
+    input_cmds.append('create table c (d text);\n')
     expected_output.append('btdb> UTILITY DONE')
-    input_cmds.append("select bar, baz from foo where bar = 'hello world';")
-    expected_output.append("btdb>     bar    baz")
+    for i in range(10 ** 15, 10 ** 15 + 10):
+        input_cmds.append(f"insert into c (d) values ('{str(i)}');\n")
+        expected_output.append("btdb>     d")
+        expected_output.append("===============")
+    input_cmds.append("create index on c (d);\n")
+    expected_output.append('btdb> UTILITY DONE')
+    input_cmds.append("select d from c where d > '1';")
+    expected_output.append("btdb>     d")
     expected_output.append("===============")
-    # These rows are already pre populated.
-    expected_output.append("hello\ttrue\t")
-    expected_output.append("world\tfalse\t")
-    for _ in range(800):
-        expected_output.append("hello world\ttrue\t")
+    for i in range(10 ** 15, 10 ** 15 + 10):
+        expected_output.append(f"{str(i)}\t")
     expected_output.append("btdb> Shutting down btdb\n")
+    # print("".join(input_cmds))
     try:
         output, err = proc.communicate(
             input=bytes("".join(input_cmds), encoding="utf-8"), timeout=TIMEOUT
         )
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.communicate()
-        assert False
-
-    input_cmds = bytes(
-        textwrap.dedent(
-            """\
-        create table c (d int);
-        insert into c (d) values (4), (3), (2), (1);
-        create index on c (d);
-        select d from c where d >= 1;
-        """
-        ),
-        encoding="utf-8",
-    )
-    try:
-        output, err = proc.communicate(input=input_cmds, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
