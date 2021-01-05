@@ -907,10 +907,24 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   IndexTuple* new_tuple = MakeIndexTuple(index_def, table_tuple);
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
 
+  PageId* path = NULL;
+
   PageId cur_page_id = root_id;
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   while (!BTreePageIsLeaf(cur_page)) {
     // Do search to find where to move down or laterally in tree.
+    uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
+    if (i >= PageGetNumLocs(cur_page)) {
+      // Move right.
+      BTreePageInfo* info = PageGetBTreePageInfo(cur_page);
+      cur_page_id = info->right;
+    } else {
+      // Move down. Remember our path down tree.
+      arrpush(path, cur_page_id);
+      IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i);
+      cur_page_id = t->pointer.page_num;
+    }
+    cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   }
 
   // TODO: move_right(). Not necessary now because we have no concurrent updates, so once we
