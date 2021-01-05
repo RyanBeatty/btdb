@@ -215,6 +215,7 @@ typedef struct BTreePageInfo {
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 #define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)
 #define BTreePageIsLeaf(page) ((PageGetBTreePageInfo(page)->flags & LEAF_PAGE) != 0)
+#define BTreePageGetLevel(page) (PageGetBTreePageInfo(page)->level)
 
 void BTreePageInit(Page, uint64_t, uint16_t);
 PageId BTreeReadOrCreateRootPageId(const IndexDef*);
