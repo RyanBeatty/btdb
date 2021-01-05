@@ -430,6 +430,21 @@ void PageDeleteItem(Page page, size_t item_id) {
   return;
 }
 
+void PageRemoveLoc(Page page, size_t item_id) {
+  assert(page != NULL);
+
+  PageHeader* header = GetPageHeader(page);
+  assert(item_id < header->num_locs);
+  // Shift item locs down by to cover the removed loc.
+  for (uint16_t i = item_id; i < arrlenu(page); ++i) {
+    PageGetItemLoc(page, i) = PageGetItemLoc(page, i + 1);
+  }
+  --header->num_locs;
+  // "grow" free space by moving it back since we've removed an item loc.
+  header->free_lower_offset -= sizeof(ItemLoc);
+  return;
+}
+
 void CursorInit(Cursor* cursor, TableDef* table_def) {
   assert(cursor != NULL);
   assert(table_def != NULL);
@@ -922,22 +937,50 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
     WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
   } else {
     // We must split the node.
-    // BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
+    BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
 
-    // RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
-    // PageId num_pages = SMNumPages(sm);
-    // PageId new_page_id = num_pages + 1;
+    RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
+    PageId num_pages = SMNumPages(sm);
+    PageId new_page_id = num_pages + 1;
 
-    // Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-    // BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
-    // BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
-    // new_page_info->right = cur_page_info->right;
+    Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+    BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
+    BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
+    new_page_info->right = cur_page_info->right;
 
-    // WritePage(index_def->index_table_def_idx, new_page_id, new_page);
+    uint16_t orig_insertion_idx = GetInsertionIdx(index_def, new_tuple, cur_page);
 
-    // cur_page_info->right = new_page_id;
-    // WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-    // _BTreeDoInsert(index_def, new_tuple, new_page_id);
+    // Copy over half the items to the new page and delete them from the current page.
+    uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
+    for (uint16_t i = cur_page_num_locs; i < cur_page_num_locs; ++i) {
+      Tuple* t = (Tuple*)PageGetItem(cur_page, i);
+      PageAddItem(new_page, (unsigned char*)t, TupleGetSize(t));
+    }
+    for (uint16_t i = cur_page_num_locs, j = cur_page_num_locs; i < cur_page_num_locs; ++i) {
+      PageRemoveLoc(cur_page, j);
+    }
+
+    // Insert the new index tuple in the right page.
+    Page insert_page;
+    if (orig_insertion_idx < cur_page_num_locs / 2) {
+      insert_page = cur_page;
+    } else {
+      insert_page = new_page;
+    }
+
+    bool ok =
+        PageAddItem(insert_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
+    assert(ok);
+
+    // Swap item locs until they are in sorted order.
+    ItemLoc inserted_loc = PageGetItemLoc(insert_page, PageGetNumLocs(insert_page) - 1);
+    for (uint16_t j = PageGetNumLocs(insert_page) - 1; j > orig_insertion_idx; --j) {
+      PageGetItemLoc(insert_page, j) = PageGetItemLoc(insert_page, j - 1);
+    }
+    PageGetItemLoc(insert_page, orig_insertion_idx) = inserted_loc;
+
+    WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+    WritePage(index_def->index_table_def_idx, new_page_id, new_page);
   }
 }
 
