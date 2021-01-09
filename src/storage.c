@@ -889,7 +889,8 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
 
   // Find index where item loc should be to be in sorted order.
-  uint16_t i = 0;
+  // Non-leaf pages treat the index tuple at location 0 as the low key.
+  uint16_t i = BTreePageIsLeaf(cur_page) ? 0 : 1;
   for (; i < PageGetNumLocs(cur_page); ++i) {
     IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
     Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
@@ -996,85 +997,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
     WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
     WritePage(index_def->index_table_def_idx, new_page_id, new_page);
   }
-}
-
-// Internal function that will perform insert. BTreeIndexInsert is a driver/initial caller of
-// this function.
-void _BTreeDoInsert(const IndexDef* index_def, IndexTuple* new_tuple, PageId cur_page_id) {
-  Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
-
-  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
-  const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
-
-  // Find index where item loc should be to be in sorted order.
-  uint16_t i = 0;
-  for (; i < PageGetNumLocs(cur_page); ++i) {
-    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
-    Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
-    Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
-    CmpFunc cmp_func = TypeToCmpFunc(d1.type);
-    // TODO: This needs to be a more more complicated comparison function.
-    if (GetBoolResult(cmp_func(d1, d2))) {
-      break;
-    }
-  }
-
-  // if (i >= PageGetNumLocs(cur_page)) {
-  //   BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
-  //   if (_BTreeDoInsert(index_def, new_tuple, cur_page_info->right)) {
-  //     return true;
-  //   }
-  // }
-
-  // if (i >= PageGetNumLocs(cur_page) && i != 0) {
-  //   // Need to traverse to right sibiling.
-  //   BTreePageInfo* info = PageGetBTreePageInfo(cur_page);
-  //   // No sibiling, so make a new one.
-  //   if (info->right == NULL_PAGE) {
-  //     Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  //     BTreePageInit(new_page, 0);
-  //     WritePage(index_def->index_table_def_idx, cur_page_id + 1, new_page);
-  //     info->right = cur_page_id + 1;
-  //     WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-  //   }
-  //   _BTreeDoInsert(index_def, new_tuple, info->right);
-  // } else if (PageGetFreeSpace(cur_page) < IndexTupleGetSize(new_tuple)) {
-  //   // Not enough space in node, so need to do a split before inserting.
-  //   // TODO: At the moment we don't actually move any of the elements over to the new page.
-  //   BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
-
-  //   RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
-  //   PageId num_pages = SMNumPages(sm);
-  //   PageId new_page_id = num_pages + 1;
-
-  //   Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-  //   BTreePageInit(new_page, 0);
-  //   BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
-  //   new_page_info->right = cur_page_info->right;
-  //   WritePage(index_def->index_table_def_idx, new_page_id, new_page);
-
-  //   cur_page_info->right = new_page_id;
-  //   WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-  //   _BTreeDoInsert(index_def, new_tuple, new_page_id);
-  // } else {
-  // Else we can insert the item into this page, so do so and make sure item locs are
-  // ordered.
-  bool ok = PageAddItem(cur_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
-  assert(ok);
-
-  // Swap item locs until they are in sorted order.
-  ItemLoc inserted_loc = PageGetItemLoc(cur_page, PageGetNumLocs(cur_page) - 1);
-  for (uint16_t j = PageGetNumLocs(cur_page) - 1; j > i; --j) {
-    PageGetItemLoc(cur_page, j) = PageGetItemLoc(cur_page, j - 1);
-  }
-  PageGetItemLoc(cur_page, i) = inserted_loc;
-
-  // TODO: At the moment since we are still implementing btree indexes, we assume the root
-  // page always has room for items. Fix this later.
-  assert(ok);
-  WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-  // }
-  return;
 }
 
 Page BTreeReadMetaPage(const IndexDef* index_def) {

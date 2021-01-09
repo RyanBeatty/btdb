@@ -212,6 +212,13 @@ typedef struct BTreePageInfo {
 #define LEAF_PAGE (1 << 0)
 #define ROOT_PAGE (1 << 1)
 
+// According to L+Y, every non-leaf node (and possibly leaf nodes too) have a "high key" which
+// is a key greater than any key in the subtree pointed to by the last pointer on the page. We
+// store this key at index 0 for ease of access.
+#define HIGH_KEY 0
+// The index of the first "pointer key" in an index page.
+#define FIRST_KEY 1
+
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 #define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)
 #define BTreePageIsLeaf(page) ((PageGetBTreePageInfo(page)->flags & LEAF_PAGE) != 0)
