@@ -218,6 +218,7 @@ typedef struct BTreePageInfo {
 #define HIGH_KEY 0
 // The index of the first "pointer key" in an index page.
 #define FIRST_KEY 1
+#define FirstKey(page) (BTreePageIsLeaf(page) ? 0 : 1)
 
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 #define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)

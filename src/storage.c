@@ -445,6 +445,23 @@ void PageRemoveLoc(Page page, size_t item_id) {
   return;
 }
 
+bool PageAddItemAt(Page page, size_t idx, unsigned char* item, size_t size) {
+  assert(idx <= PageGetNumLocs(page));
+  // Insert item if space.
+  bool ok = PageAddItem(page, item, size);
+  if (!ok) {
+    return false;
+  }
+
+  // Move the item loc (which was appended to the end of the locs) to the right position.
+  ItemLoc inserted_loc = PageGetItemLoc(page, PageGetNumLocs(page) - 1);
+  for (uint16_t i = PageGetNumLocs(page) - 1; i > idx; --i) {
+    PageGetItemLoc(page, i) = PageGetItemLoc(page, i - 1);
+  }
+  PageGetItemLoc(page, idx) = inserted_loc;
+  return true;
+}
+
 void CursorInit(Cursor* cursor, TableDef* table_def) {
   assert(cursor != NULL);
   assert(table_def != NULL);
@@ -860,13 +877,13 @@ void BTreePageInit(Page page, uint64_t level, uint16_t flags) {
 CmpFunc TypeToCmpFunc(BType type) {
   switch (type) {
     case T_STRING: {
-      return StrLTE;
+      return StrGT;
     }
     case T_INT: {
-      return IntLTE;
+      return IntGT;
     }
     case T_BOOL: {
-      return BoolLTE;
+      return BoolGT;
     }
     case T_NULL:
     case T_UNKNOWN:
@@ -890,18 +907,28 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
 
   // Find index where item loc should be to be in sorted order.
   // Non-leaf pages treat the index tuple at location 0 as the low key.
-  uint16_t i = BTreePageIsLeaf(cur_page) ? 0 : 1;
+  uint16_t i = FirstKey(cur_page);
   for (; i < PageGetNumLocs(cur_page); ++i) {
     IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
     Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
     Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
     CmpFunc cmp_func = TypeToCmpFunc(d1.type);
     // TODO: This needs to be a more more complicated comparison function.
-    if (GetBoolResult(cmp_func(d1, d2))) {
-      break;
+    if (!GetBoolResult(cmp_func(d1, d2))) {
+      return i;
     }
   }
-  return i;
+  if (!BTreePageIsLeaf(cur_page)) {
+    // Check high key.
+    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, HIGH_KEY);
+    Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+    Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
+    CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+    if (!GetBoolResult(cmp_func(d1, d2))) {
+      return HIGH_KEY;
+    }
+  }
+  return PageGetNumLocs(cur_page);
 }
 
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
@@ -910,6 +937,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
   PageId* path = NULL;
 
+  arrpush(path, root_id);
   PageId cur_page_id = root_id;
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   while (!BTreePageIsLeaf(cur_page)) {
@@ -928,74 +956,68 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
     cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   }
 
-  // TODO: move_right(). Not necessary now because we have no concurrent updates, so once we
-  // get to this point, we are guaranteed to be at the leaf node where we can insert the new
-  // tuple to be in the correct order (unless we need to split the node).
+  bool do_insertion = true;
+  while (do_insertion) {
+    // TODO: move_right(). Not necessary now because we have no concurrent updates, so once we
+    // get to this point, we are guaranteed to be at the leaf node where we can insert the new
+    // tuple to be in the correct order (unless we need to split the node).
 
-  // If there is enough space to insert the tuple, do so and reorder the keys.
-  if (PageGetFreeSpace(cur_page) >= IndexTupleGetSize(new_tuple)) {
-    uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
+    // If there is enough space to insert the tuple, do so and reorder the keys.
+    if (PageGetFreeSpace(cur_page) >= IndexTupleGetSize(new_tuple)) {
+      uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
 
-    bool ok = PageAddItem(cur_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
-    assert(ok);
-
-    // Swap item locs until they are in sorted order.
-    ItemLoc inserted_loc = PageGetItemLoc(cur_page, PageGetNumLocs(cur_page) - 1);
-    for (uint16_t j = PageGetNumLocs(cur_page) - 1; j > i; --j) {
-      PageGetItemLoc(cur_page, j) = PageGetItemLoc(cur_page, j - 1);
-    }
-    PageGetItemLoc(cur_page, i) = inserted_loc;
-
-    // TODO: At the moment since we are still implementing btree indexes, we assume the root
-    // page always has room for items. Fix this later.
-    assert(ok);
-    WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-  } else {
-    // We must split the node.
-    BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
-
-    RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
-    PageId num_pages = SMNumPages(sm);
-    PageId new_page_id = num_pages + 1;
-
-    Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-    BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
-    BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
-    new_page_info->right = cur_page_info->right;
-
-    uint16_t orig_insertion_idx = GetInsertionIdx(index_def, new_tuple, cur_page);
-
-    // Copy over half the items to the new page and delete them from the current page.
-    uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
-    for (uint16_t i = cur_page_num_locs; i < cur_page_num_locs; ++i) {
-      Tuple* t = (Tuple*)PageGetItem(cur_page, i);
-      PageAddItem(new_page, (unsigned char*)t, TupleGetSize(t));
-    }
-    for (uint16_t i = cur_page_num_locs, j = cur_page_num_locs; i < cur_page_num_locs; ++i) {
-      PageRemoveLoc(cur_page, j);
-    }
-
-    // Insert the new index tuple in the right page.
-    Page insert_page;
-    if (orig_insertion_idx < cur_page_num_locs / 2) {
-      insert_page = cur_page;
+      bool ok =
+          PageAddItemAt(cur_page, i, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
+      assert(ok);
+      WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+      return;
     } else {
-      insert_page = new_page;
+      // We must split the node.
+      BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
+
+      RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
+      PageId num_pages = SMNumPages(sm);
+      PageId new_page_id = num_pages + 1;
+
+      Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+      BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
+      BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
+      new_page_info->right = cur_page_info->right;
+
+      uint16_t orig_insertion_idx = GetInsertionIdx(index_def, new_tuple, cur_page);
+
+      // Copy over half the items to the new page and delete them from the current page.
+      uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
+      for (uint16_t i = cur_page_num_locs; i < cur_page_num_locs; ++i) {
+        Tuple* t = (Tuple*)PageGetItem(cur_page, i);
+        PageAddItem(new_page, (unsigned char*)t, TupleGetSize(t));
+      }
+      for (uint16_t i = cur_page_num_locs, j = cur_page_num_locs; i < cur_page_num_locs; ++i) {
+        PageRemoveLoc(cur_page, j);
+      }
+
+      // Insert the new index tuple in the right page.
+      Page insert_page;
+      if (orig_insertion_idx < cur_page_num_locs / 2) {
+        insert_page = cur_page;
+      } else {
+        insert_page = new_page;
+      }
+
+      bool ok =
+          PageAddItem(insert_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
+      assert(ok);
+
+      // Swap item locs until they are in sorted order.
+      ItemLoc inserted_loc = PageGetItemLoc(insert_page, PageGetNumLocs(insert_page) - 1);
+      for (uint16_t j = PageGetNumLocs(insert_page) - 1; j > orig_insertion_idx; --j) {
+        PageGetItemLoc(insert_page, j) = PageGetItemLoc(insert_page, j - 1);
+      }
+      PageGetItemLoc(insert_page, orig_insertion_idx) = inserted_loc;
+
+      WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+      WritePage(index_def->index_table_def_idx, new_page_id, new_page);
     }
-
-    bool ok =
-        PageAddItem(insert_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
-    assert(ok);
-
-    // Swap item locs until they are in sorted order.
-    ItemLoc inserted_loc = PageGetItemLoc(insert_page, PageGetNumLocs(insert_page) - 1);
-    for (uint16_t j = PageGetNumLocs(insert_page) - 1; j > orig_insertion_idx; --j) {
-      PageGetItemLoc(insert_page, j) = PageGetItemLoc(insert_page, j - 1);
-    }
-    PageGetItemLoc(insert_page, orig_insertion_idx) = inserted_loc;
-
-    WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
-    WritePage(index_def->index_table_def_idx, new_page_id, new_page);
   }
 }
 
