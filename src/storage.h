@@ -212,18 +212,21 @@ typedef struct BTreePageInfo {
 #define LEAF_PAGE (1 << 0)
 #define ROOT_PAGE (1 << 1)
 
-// According to L+Y, every non-leaf node (and possibly leaf nodes too) have a "high key" which
-// is a key greater than any key in the subtree pointed to by the last pointer on the page. We
-// store this key at index 0 for ease of access.
-#define HIGH_KEY 0
-// The index of the first "pointer key" in an index page.
-#define FIRST_KEY 1
-#define FirstKey(page) (BTreePageIsLeaf(page) ? 0 : 1)
-
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 #define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)
 #define BTreePageIsLeaf(page) ((PageGetBTreePageInfo(page)->flags & LEAF_PAGE) != 0)
 #define BTreePageGetLevel(page) (PageGetBTreePageInfo(page)->level)
+#define BTreePageGetRight(page) (PageGetBTreePageInfo(page)->right)
+#define BTreePageIsRightMost(page) (BTreePageGetRight(page) == NULL_PAGE)
+
+// According to L+Y, every non-leaf node (and possibly leaf nodes too) have a "high key" which
+// is a key greater than any key in the subtree pointed to by the last pointer on the page. We
+// store this key at index 0 for ease of access.
+#define HIGH_KEY 0
+// For non-leaf pages, the "key" at position 1 is empty, but its pointer is not null. This is
+// the "low pointer" of a non-leaf page in L+Y, so the real search keys start at index 2. In
+// leaf pages, there is no concept of a "low pointer", so search keys start at index 1.
+#define BTreePageGetFirstKey(page) (BTreePageIsLeaf(page) ? 1 : 2)
 
 void BTreePageInit(Page, uint64_t, uint16_t);
 PageId BTreeReadOrCreateRootPageId(const IndexDef*);

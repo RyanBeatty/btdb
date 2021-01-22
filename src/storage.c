@@ -434,7 +434,9 @@ void PageRemoveLoc(Page page, size_t item_id) {
   assert(page != NULL);
 
   PageHeader* header = GetPageHeader(page);
-  assert(item_id < header->num_locs);
+  if (item_id >= header->num_locs) {
+    return;
+  }
   // Shift item locs down by to cover the removed loc.
   for (uint16_t i = item_id; i < arrlenu(page); ++i) {
     PageGetItemLoc(page, i) = PageGetItemLoc(page, i + 1);
@@ -867,11 +869,23 @@ IndexTuple* MakeIndexTuple(const IndexDef* index_def, Tuple* table_tuple) {
   return index_tuple;
 }
 
+void BTreePageSetHighKey(Page page, IndexTuple* new_high_key) {
+  PageRemoveLoc(page, HIGH_KEY);
+  PageAddItemAt(page, HIGH_KEY, (unsigned char*)new_high_key, IndexTupleGetSize(new_high_key));
+  return;
+}
+
 void BTreePageInit(Page page, uint64_t level, uint16_t flags) {
   PageInit(page, sizeof(BTreePageInfo));
   BTreePageInfo* info = PageGetBTreePageInfo(page);
   info->level = level;
   info->flags = flags;
+
+  // Init the high key to be empty.
+  IndexTuple* high_key = (IndexTuple*)calloc(sizeof(IndexTuple) + sizeof(Tuple), sizeof(byte));
+  Tuple* high_key_tuple = IndexTupleGetTuplePtr(high_key);
+  high_key_tuple->length = sizeof(Tuple);
+  PageAddItemAt(page, HIGH_KEY, (unsigned char*)high_key, IndexTupleGetSize(high_key));
 }
 
 CmpFunc TypeToCmpFunc(BType type) {
@@ -894,20 +908,13 @@ CmpFunc TypeToCmpFunc(BType type) {
   }
 }
 
-// void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
-//   IndexTuple* index_tuple = MakeIndexTuple(index_def, table_tuple);
-//   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
-//   _BTreeDoInsert(index_def, index_tuple, root_id);
-//   return;
-// }
-
 uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page cur_page) {
   const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
 
   // Find index where item loc should be to be in sorted order.
   // Non-leaf pages treat the index tuple at location 0 as the low key.
-  uint16_t i = FirstKey(cur_page);
+  uint16_t i = BTreePageGetFirstKey(cur_page);
   for (; i < PageGetNumLocs(cur_page); ++i) {
     IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
     Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
@@ -918,17 +925,22 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
       return i;
     }
   }
-  if (!BTreePageIsLeaf(cur_page)) {
-    // Check high key.
-    IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, HIGH_KEY);
-    Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
-    Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
-    CmpFunc cmp_func = TypeToCmpFunc(d1.type);
-    if (!GetBoolResult(cmp_func(d1, d2))) {
-      return HIGH_KEY;
-    }
+  if (BTreePageIsRightMost(cur_page)) {
+    // Right most pages, do not have a high key (since there is no right neighbor bounding what
+    // keys the rightmost node could contain), so the insertion index should be at the end of
+    // the items on the current page.
+    return PageGetNumLocs(cur_page);
   }
-  return PageGetNumLocs(cur_page);
+
+  // Check high key.
+  IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, HIGH_KEY);
+  Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+  Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
+  CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+  // If the key we are trying to insert is greater than the high key of the page, we signal
+  // that the insertion point is in a right neighbor by returning the index of the high key.
+  // Otherwise, we need to insert at the end of the keys/before the high key.
+  return GetBoolResult(cmp_func(d1, d2)) ? HIGH_KEY : PageGetNumLocs(cur_page);
 }
 
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
@@ -937,27 +949,28 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
   PageId* path = NULL;
 
-  arrpush(path, root_id);
+  // arrpush(path, root_id);
   PageId cur_page_id = root_id;
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   while (!BTreePageIsLeaf(cur_page)) {
     // Do search to find where to move down or laterally in tree.
     uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
-    if (i >= PageGetNumLocs(cur_page)) {
+    if (i == HIGH_KEY) {
       // Move right.
-      BTreePageInfo* info = PageGetBTreePageInfo(cur_page);
-      cur_page_id = info->right;
+      cur_page_id = BTreePageGetRight(cur_page);
     } else {
       // Move down. Remember our path down tree.
       arrpush(path, cur_page_id);
-      IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i);
+      // Since we are moving down through the tree, we need to follow the pointer of the key
+      // right before where we would insert into the page. Since this pointer will be at the
+      // key right before where we would insert, we subtract 1 from the insertion index.
+      IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i - 1);
       cur_page_id = t->pointer.page_num;
     }
     cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   }
 
-  bool do_insertion = true;
-  while (do_insertion) {
+  while (true) {
     // TODO: move_right(). Not necessary now because we have no concurrent updates, so once we
     // get to this point, we are guaranteed to be at the leaf node where we can insert the new
     // tuple to be in the correct order (unless we need to split the node).
@@ -975,10 +988,12 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // We must split the node.
       BTreePageInfo* cur_page_info = PageGetBTreePageInfo(cur_page);
 
+      // Extend index file.
       RelStorageManager* sm = SMOpen(index_def->index_table_def_idx);
       PageId num_pages = SMNumPages(sm);
       PageId new_page_id = num_pages + 1;
 
+      // Initialize new page.
       Page new_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
       BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
       BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
@@ -996,27 +1011,81 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
         PageRemoveLoc(cur_page, j);
       }
 
-      // Insert the new index tuple in the right page.
-      Page insert_page;
-      if (orig_insertion_idx < cur_page_num_locs / 2) {
-        insert_page = cur_page;
-      } else {
-        insert_page = new_page;
-      }
-
-      bool ok =
-          PageAddItem(insert_page, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
+      // Insert the new index tuple in the correct page.
+      Page insert_page = orig_insertion_idx < cur_page_num_locs / 2 ? cur_page : new_page;
+      bool ok = PageAddItemAt(insert_page, orig_insertion_idx, (unsigned char*)new_tuple,
+                              IndexTupleGetSize(new_tuple));
       assert(ok);
 
-      // Swap item locs until they are in sorted order.
-      ItemLoc inserted_loc = PageGetItemLoc(insert_page, PageGetNumLocs(insert_page) - 1);
-      for (uint16_t j = PageGetNumLocs(insert_page) - 1; j > orig_insertion_idx; --j) {
-        PageGetItemLoc(insert_page, j) = PageGetItemLoc(insert_page, j - 1);
-      }
-      PageGetItemLoc(insert_page, orig_insertion_idx) = inserted_loc;
+      // Set high key of cur_page to be smallest key of new page.
+      IndexTuple* new_cur_page_high_key = (IndexTuple*)PageGetItem(new_page, HIGH_KEY);
+      PageRemoveLoc(cur_page, HIGH_KEY);
+      PageAddItemAt(cur_page, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
+                    IndexTupleGetSize(new_cur_page_high_key));
 
+      // // Set high keys if not leaf pages. High key of new page is the high key of cur
+      // page. The
+      // // new high key of cur page is The smallest key of new page.
+      // if (!BTreePageIsLeaf(cur_page)) {
+      //   IndexTuple* cur_high_key = (IndexTuple*)PageGetItem(cur_page, HIGH_KEY);
+      //   PageAddItemAt(cur_page, HIGH_KEY, (unsigned char*)cur_high_key,
+      //                 IndexTupleGetSize(cur_high_key));
+      //   IndexTuple* new_cur_page_high_key = (IndexTuple*)PageGetItem(new_page, 1);
+      //   PageRemoveLoc(cur_page, HIGH_KEY);
+      //   PageAddItemAt(cur_page, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
+      //                 IndexTupleGetSize(new_cur_page_high_key));
+      // }
+
+      // Write out the modified pages.
       WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
       WritePage(index_def->index_table_def_idx, new_page_id, new_page);
+
+      // We need to insert a key + pointer in the parent to the new page. So new_tuple's (the
+      // tuple to insert) key becomes the high key of cur_page and its pointer points to the
+      // new_page.
+      new_tuple = (IndexTuple*)calloc(IndexTupleGetSize(new_cur_page_high_key), sizeof(byte));
+      new_tuple =
+          memcpy(new_tuple, new_cur_page_high_key, IndexTupleGetSize(new_cur_page_high_key));
+      new_tuple->pointer.page_num = new_page_id;
+
+      // If we are at the end of the path, then we need to create a new root.
+      if (arrlenu(path) == 0) {
+        PageId new_root_page_id = SMNumPages(sm) + 1;
+
+        // Initialize new page.
+        Page new_root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+        BTreePageInit(new_root_page, BTreePageGetLevel(cur_page) + 1, false);
+        BTreePageInfo* new_root_page_info = PageGetBTreePageInfo(new_root_page);
+        new_root_page_info->right = cur_page_info->right;
+
+        // Insert the low/left pointer into the new root.
+        IndexTuple low_pointer;
+        low_pointer.pointer.page_num = cur_page_id;
+        uint16_t low_pointer_insert_idx =
+            GetInsertionIdx(index_def, &low_pointer, new_root_page);
+        assert(low_pointer_insert_idx == 1);
+        PageAddItemAt(new_root_page, low_pointer_insert_idx, (unsigned char*)(&new_root_page),
+                      IndexTupleGetSize(&low_pointer));
+
+        // Insert new key + pointer to right child.
+        uint16_t new_key_insertion_idx = GetInsertionIdx(index_def, new_tuple, new_root_page);
+        PageAddItemAt(new_root_page, new_key_insertion_idx, (unsigned char*)new_tuple,
+                      IndexTupleGetSize(new_tuple));
+
+        // Update meta page to point to new root.
+        Page meta_page = BTreeReadMetaPage(index_def);
+        BTreeMetaPageInfo* meta_info = PageGetBTreeMetaPageInfo(meta_page);
+        meta_info->root_page_id = new_root_page_id;
+
+        // Write out new root page and updated meta page.
+        WritePage(index_def->index_table_def_idx, new_root_page_id, new_root_page);
+        WritePage(index_def->index_table_def_idx, 0, meta_page);
+        return;
+      }
+
+      // Go up a level.
+      cur_page_id = arrpop(path);
+      cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
     }
   }
 }
