@@ -1135,7 +1135,12 @@ Tuple* BTreeFirst(IndexCursor* cursor) {
   cursor->page_id = BTreeReadOrCreateRootPageId(cursor->index_def);
   Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
   assert(cur_page != NULL);
-  cursor->tuple_id = BTreePageGetFirstKey(cur_page);
+  cursor->tuple_id = GetInsertionIdx(cursor->index_def, cursor->search_key, cur_page);
+  printf("index idx: %ld\n", cursor->tuple_id);
+  if (cursor->tuple_id == HIGH_KEY || cursor->tuple_id == PageGetNumLocs(cur_page)) {
+    // TODO: Handle traversing to right page.
+    return NULL;
+  }
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;
@@ -1154,48 +1159,13 @@ Tuple* BTreeGetNext(IndexCursor* cursor) {
   }
 
   ++cursor->tuple_id;
+  printf("get_next: %ld\n", cursor->tuple_id);
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;
   }
   Page table_page = ReadPage(cursor->index_def->table_def_idx, index_tuple->pointer.page_num);
   return (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
-  // IndexTuple* new_tuple = MakeIndexTuple(index_def, table_tuple);
-  // PageId root_id = BTreeReadOrCreateRootPageId(index_def);
-
-  // PageId* path = NULL;
-
-  // // arrpush(path, root_id);
-  // PageId cur_page_id = root_id;
-  // Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
-  // while (!BTreePageIsLeaf(cur_page)) {
-  //   // Do search to find where to move down or laterally in tree.
-  //   uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
-  //   if (i == HIGH_KEY) {
-  //     // Move right.
-  //     cur_page_id = BTreePageGetRight(cur_page);
-  //   } else {
-  //     // Move down. Remember our path down tree.
-  //     arrpush(path, cur_page_id);
-  //     // Since we are moving down through the tree, we need to follow the pointer of the key
-  //     // right before where we would insert into the page. Since this pointer will be at the
-  //     // key right before where we would insert, we subtract 1 from the insertion index.
-  //     IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i - 1);
-  //     cur_page_id = t->pointer.page_num;
-  //   }
-  //   cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
-  // }
-
-  // Page page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
-  // IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
-  // if (index_tuple == NULL) {
-  //   return NULL;
-  // }
-  // Page table_page = ReadPage(cursor->index_def->table_def_idx,
-  // index_tuple->pointer.page_num); Tuple* tuple = (Tuple*)PageGetItem(table_page,
-  // index_tuple->pointer.loc_num);
-  // ++cursor->tuple_id;
-  // return tuple;
 }
 
 void SearchKeyInit(SearchKey* sk, Datum search_value) {
