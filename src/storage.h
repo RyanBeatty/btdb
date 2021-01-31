@@ -156,6 +156,13 @@ typedef Datum (*CmpFunc)(Datum, Datum);
 
 CmpFunc TypeToCmpFunc(BType);
 
+typedef struct SearchKey {
+  Datum search_value;
+  CmpFunc cmp_func;
+} SearchKey;
+
+void SearchKeyInit(SearchKey*, Datum);
+
 // Description of an index defined on a table.
 typedef struct IndexDef {
   size_t index_id;
@@ -236,11 +243,12 @@ typedef struct IndexCursor {
   PageId page_id;
   size_t tuple_id;
   const IndexDef* index_def;
-  const ParseNode* filter_expr;
+  SearchKey* search_key;
 } IndexCursor;
 
-void IndexCursorInit(IndexCursor*, const IndexDef*, const ParseNode*);
-void BTreeBeginScan(IndexCursor*);
+#define IndexCursorInvalidPos(cursor) ((cursor)->page_id == NULL_PAGE)
+void IndexCursorInit(IndexCursor*, const IndexDef*, Datum);
+Tuple* BTreeFirst(IndexCursor*);
 Tuple* BTreeGetNext(IndexCursor*);
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);

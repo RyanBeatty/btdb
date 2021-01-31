@@ -908,8 +908,7 @@ CmpFunc TypeToCmpFunc(BType type) {
   }
 }
 
-uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page cur_page) {
-  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
+uint16_t GetInsertionIdx(const IndexDef* index_def, SearchKey* sk, Page cur_page) {
   const TableDef* index_table_def = &TableDefs[index_def->index_table_def_idx];
 
   // Find index where item loc should be to be in sorted order.
@@ -917,9 +916,10 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
   uint16_t i = BTreePageGetFirstKey(cur_page);
   for (; i < PageGetNumLocs(cur_page); ++i) {
     IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, i);
-    Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+    // Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+    Datum d1 = sk->search_value;
     Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
-    CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+    CmpFunc cmp_func = sk->cmp_func;
     // TODO: This needs to be a more more complicated comparison function.
     if (!GetBoolResult(cmp_func(d1, d2))) {
       return i;
@@ -934,9 +934,9 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
 
   // Check high key.
   IndexTuple* cur_tuple = (IndexTuple*)PageGetItem(cur_page, HIGH_KEY);
-  Datum d1 = GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def);
+  Datum d1 = sk->search_value;
   Datum d2 = GetColByIdx(IndexTupleGetTuplePtr(cur_tuple), 0, index_table_def);
-  CmpFunc cmp_func = TypeToCmpFunc(d1.type);
+  CmpFunc cmp_func = sk->cmp_func;
   // If the key we are trying to insert is greater than the high key of the page, we signal
   // that the insertion point is in a right neighbor by returning the index of the high key.
   // Otherwise, we need to insert at the end of the keys/before the high key.
@@ -944,7 +944,11 @@ uint16_t GetInsertionIdx(const IndexDef* index_def, IndexTuple* new_tuple, Page 
 }
 
 void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
+  const TableDef* parent_table_def = &TableDefs[index_def->table_def_idx];
   IndexTuple* new_tuple = MakeIndexTuple(index_def, table_tuple);
+  SearchKey new_tuple_sk;
+  SearchKeyInit(&new_tuple_sk,
+                GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
 
   PageId* path = NULL;
@@ -954,7 +958,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   while (!BTreePageIsLeaf(cur_page)) {
     // Do search to find where to move down or laterally in tree.
-    uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
+    uint16_t i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
     if (i == HIGH_KEY) {
       // Move right.
       cur_page_id = BTreePageGetRight(cur_page);
@@ -977,7 +981,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
     // If there is enough space to insert the tuple, do so and reorder the keys.
     if (PageGetFreeSpace(cur_page) >= IndexTupleGetSize(new_tuple)) {
-      uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
+      uint16_t i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
 
       bool ok =
           PageAddItemAt(cur_page, i, (unsigned char*)new_tuple, IndexTupleGetSize(new_tuple));
@@ -999,7 +1003,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
       new_page_info->right = cur_page_info->right;
 
-      uint16_t orig_insertion_idx = GetInsertionIdx(index_def, new_tuple, cur_page);
+      uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
 
       // Copy over half the items to the new page and delete them from the current page.
       uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
@@ -1047,6 +1051,8 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       new_tuple =
           memcpy(new_tuple, new_cur_page_high_key, IndexTupleGetSize(new_cur_page_high_key));
       new_tuple->pointer.page_num = new_page_id;
+      SearchKeyInit(&new_tuple_sk,
+                    GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
 
       // If we are at the end of the path, then we need to create a new root.
       if (arrlenu(path) == 0) {
@@ -1061,14 +1067,18 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
         // Insert the low/left pointer into the new root.
         IndexTuple low_pointer;
         low_pointer.pointer.page_num = cur_page_id;
+        SearchKey low_pointer_sk;
+        SearchKeyInit(&low_pointer_sk,
+                      GetColByIdx(IndexTupleGetTuplePtr(&low_pointer), 0, parent_table_def));
         uint16_t low_pointer_insert_idx =
-            GetInsertionIdx(index_def, &low_pointer, new_root_page);
+            GetInsertionIdx(index_def, &low_pointer_sk, new_root_page);
         assert(low_pointer_insert_idx == 1);
         PageAddItemAt(new_root_page, low_pointer_insert_idx, (unsigned char*)(&new_root_page),
                       IndexTupleGetSize(&low_pointer));
 
         // Insert new key + pointer to right child.
-        uint16_t new_key_insertion_idx = GetInsertionIdx(index_def, new_tuple, new_root_page);
+        uint16_t new_key_insertion_idx =
+            GetInsertionIdx(index_def, &new_tuple_sk, new_root_page);
         PageAddItemAt(new_root_page, new_key_insertion_idx, (unsigned char*)new_tuple,
                       IndexTupleGetSize(new_tuple));
 
@@ -1111,33 +1121,84 @@ PageId BTreeReadOrCreateRootPageId(const IndexDef* index_def) {
 }
 
 void IndexCursorInit(IndexCursor* cursor, const IndexDef* index_def,
-                     const ParseNode* filter_expr) {
+                     Datum boundry_search_key_value) {
   cursor->page_id = 0;
   cursor->tuple_id = 0;
   cursor->index_def = index_def;
-  cursor->filter_expr = filter_expr;
+  cursor->search_key = (SearchKey*)calloc(1, sizeof(SearchKey));
+  SearchKeyInit(cursor->search_key, boundry_search_key_value);
 }
 
-// TODO: Think about if this should just just be combined with IndexCursorInit.
-void BTreeBeginScan(IndexCursor* cursor) {
+Tuple* BTreeFirst(IndexCursor* cursor) {
   assert(cursor != NULL);
-  assert(cursor->index_def != NULL);
 
   cursor->page_id = BTreeReadOrCreateRootPageId(cursor->index_def);
-  assert(cursor->page_id != NULL_PAGE);
+  Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
+  assert(cur_page != NULL);
+  cursor->tuple_id = BTreePageGetFirstKey(cur_page);
+  IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
+  if (index_tuple == NULL) {
+    return NULL;
+  }
+  Page table_page = ReadPage(cursor->index_def->table_def_idx, index_tuple->pointer.page_num);
+  return (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
 }
 
 Tuple* BTreeGetNext(IndexCursor* cursor) {
   assert(cursor != NULL);
   assert(cursor->index_def != NULL);
 
-  Page page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
-  IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
+  Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
+  if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
+    return NULL;
+  }
+
+  ++cursor->tuple_id;
+  IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;
   }
   Page table_page = ReadPage(cursor->index_def->table_def_idx, index_tuple->pointer.page_num);
-  Tuple* tuple = (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
-  ++cursor->tuple_id;
-  return tuple;
+  return (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
+  // IndexTuple* new_tuple = MakeIndexTuple(index_def, table_tuple);
+  // PageId root_id = BTreeReadOrCreateRootPageId(index_def);
+
+  // PageId* path = NULL;
+
+  // // arrpush(path, root_id);
+  // PageId cur_page_id = root_id;
+  // Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+  // while (!BTreePageIsLeaf(cur_page)) {
+  //   // Do search to find where to move down or laterally in tree.
+  //   uint16_t i = GetInsertionIdx(index_def, new_tuple, cur_page);
+  //   if (i == HIGH_KEY) {
+  //     // Move right.
+  //     cur_page_id = BTreePageGetRight(cur_page);
+  //   } else {
+  //     // Move down. Remember our path down tree.
+  //     arrpush(path, cur_page_id);
+  //     // Since we are moving down through the tree, we need to follow the pointer of the key
+  //     // right before where we would insert into the page. Since this pointer will be at the
+  //     // key right before where we would insert, we subtract 1 from the insertion index.
+  //     IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i - 1);
+  //     cur_page_id = t->pointer.page_num;
+  //   }
+  //   cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+  // }
+
+  // Page page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
+  // IndexTuple* index_tuple = (IndexTuple*)PageGetItem(page, cursor->tuple_id);
+  // if (index_tuple == NULL) {
+  //   return NULL;
+  // }
+  // Page table_page = ReadPage(cursor->index_def->table_def_idx,
+  // index_tuple->pointer.page_num); Tuple* tuple = (Tuple*)PageGetItem(table_page,
+  // index_tuple->pointer.loc_num);
+  // ++cursor->tuple_id;
+  // return tuple;
+}
+
+void SearchKeyInit(SearchKey* sk, Datum search_value) {
+  sk->search_value = search_value;
+  sk->cmp_func = TypeToCmpFunc(search_value.type);
 }

@@ -37,6 +37,7 @@ typedef struct IndexScan {
   IndexCursor cursor;
   ParseNode* where_clause;
   IndexDef* index_def;
+  ParseNode* boundry_search_key_value;
 } IndexScan;
 
 typedef struct ModifyScan {

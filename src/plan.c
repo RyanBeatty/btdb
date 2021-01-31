@@ -111,8 +111,8 @@ void IdxScanInit(PlanNode* node) {
   assert(node != NULL);
   assert(node->type == N_PLAN_INDEX_SCAN);
   IndexScan* scan = (IndexScan*)node;
-  IndexCursorInit(&scan->cursor, scan->index_def, scan->where_clause);
-  BTreeBeginScan(&scan->cursor);
+  IndexCursorInit(&scan->cursor, scan->index_def,
+                  EvalExpr(scan->boundry_search_key_value, NULL, NULL));
 }
 
 Tuple* IdxScan(PlanNode* node) {
@@ -120,7 +120,12 @@ Tuple* IdxScan(PlanNode* node) {
   assert(node->type == N_PLAN_INDEX_SCAN);
   IndexScan* scan = (IndexScan*)node;
   for (;;) {
-    Tuple* tuple = BTreeGetNext(&scan->cursor);
+    Tuple* tuple = NULL;
+    if (IndexCursorInvalidPos(&scan->cursor)) {
+      tuple = BTreeFirst(&scan->cursor);
+    } else {
+      tuple = BTreeGetNext(&scan->cursor);
+    }
     if (tuple == NULL) {
       return NULL;
     }
@@ -441,12 +446,19 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
 
         // For now we only support using index scans when the where clause is a simple binary
         // expr and one of the terms of the expression is a column reference covered by an
-        // index.
+        // index. We also only support simple expressions where the side that is not an
+        // identifier is a simple value. This is to make finding the initial/boundry key to
+        // search for in the index easier.
         NIdentifier* col_ref = NULL;
-        if (expr->lhs != NULL && expr->lhs->type == NIDENTIFIER) {
+        ParseNode* boundry_search_key_value = NULL;
+        if (expr->lhs != NULL && expr->lhs->type == NIDENTIFIER && expr->rhs != NULL &&
+            expr->rhs->type != NIDENTIFIER && expr->rhs->type != NBIN_EXPR) {
           col_ref = (NIdentifier*)expr->lhs;
-        } else if (expr->rhs != NULL && expr->rhs->type == NIDENTIFIER) {
+          boundry_search_key_value = expr->rhs;
+        } else if (expr->rhs != NULL && expr->rhs->type == NIDENTIFIER && expr->lhs != NULL &&
+                   expr->lhs->type != NIDENTIFIER && expr->lhs->type != NBIN_EXPR) {
           col_ref = (NIdentifier*)expr->rhs;
+          boundry_search_key_value = expr->lhs;
         }
 
         // One of the expression terms is an column identifier, check to see if an index covers
@@ -479,6 +491,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
             scan->plan.table_def = query->join_list[range_var->join_list_index];
             scan->where_clause = where_clause;
             scan->index_def = index_def;
+            scan->boundry_search_key_value = boundry_search_key_value;
             return (PlanNode*)scan;
           }
         }
