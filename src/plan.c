@@ -124,7 +124,7 @@ Tuple* IdxScan(PlanNode* node) {
     if (IndexCursorInvalidPos(&scan->cursor)) {
       tuple = BTreeFirst(&scan->cursor);
     } else {
-      tuple = BTreeGetNext(&scan->cursor);
+      tuple = BTreeGetNext(&scan->cursor, SCAN_FORWARD);
     }
     if (tuple == NULL) {
       return NULL;

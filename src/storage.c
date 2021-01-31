@@ -1136,7 +1136,6 @@ Tuple* BTreeFirst(IndexCursor* cursor) {
   Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
   assert(cur_page != NULL);
   cursor->tuple_id = GetInsertionIdx(cursor->index_def, cursor->search_key, cur_page);
-  printf("index idx: %ld\n", cursor->tuple_id);
   if (cursor->tuple_id == HIGH_KEY || cursor->tuple_id == PageGetNumLocs(cur_page)) {
     // TODO: Handle traversing to right page.
     return NULL;
@@ -1149,17 +1148,17 @@ Tuple* BTreeFirst(IndexCursor* cursor) {
   return (Tuple*)PageGetItem(table_page, index_tuple->pointer.loc_num);
 }
 
-Tuple* BTreeGetNext(IndexCursor* cursor) {
+Tuple* BTreeGetNext(IndexCursor* cursor, ScanDirection dir) {
   assert(cursor != NULL);
   assert(cursor->index_def != NULL);
 
   Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
+  assert(dir == SCAN_FORWARD);
   if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
     return NULL;
   }
 
   ++cursor->tuple_id;
-  printf("get_next: %ld\n", cursor->tuple_id);
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;

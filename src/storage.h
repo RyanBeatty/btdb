@@ -151,11 +151,15 @@ PageId SMNumPages(RelStorageManager*);
 // B-Tree Index Code
 ////////////////////////////////////////////////////
 
+typedef enum ScanDirection { SCAN_FORWARD, SCAN_BACKWARDS } ScanDirection;
+
 // Comparison function for ordering btree elements.
 typedef Datum (*CmpFunc)(Datum, Datum);
 
 CmpFunc TypeToCmpFunc(BType);
 
+// Abstraction for searching for a particular key inside of a btree. Sort of like a curried or
+// partially applied function.
 typedef struct SearchKey {
   Datum search_value;
   CmpFunc cmp_func;
@@ -249,7 +253,7 @@ typedef struct IndexCursor {
 #define IndexCursorInvalidPos(cursor) ((cursor)->page_id == NULL_PAGE)
 void IndexCursorInit(IndexCursor*, const IndexDef*, Datum);
 Tuple* BTreeFirst(IndexCursor*);
-Tuple* BTreeGetNext(IndexCursor*);
+Tuple* BTreeGetNext(IndexCursor*, ScanDirection);
 
 void BTreeIndexInsert(const IndexDef*, Tuple*);
 void _BTreeDoInsert(const IndexDef*, IndexTuple*, PageId);
