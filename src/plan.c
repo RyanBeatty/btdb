@@ -124,7 +124,7 @@ Tuple* IdxScan(PlanNode* node) {
     if (IndexCursorInvalidPos(&scan->cursor)) {
       tuple = BTreeFirst(&scan->cursor);
     } else {
-      tuple = BTreeGetNext(&scan->cursor, SCAN_FORWARD);
+      tuple = BTreeGetNext(&scan->cursor, scan->dir);
     }
     if (tuple == NULL) {
       return NULL;
@@ -444,6 +444,9 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
         assert(where_clause->type == NBIN_EXPR);
         NBinExpr* expr = (NBinExpr*)where_clause;
 
+        // TODO: Make sure we only use index scan for supported ops.
+        // https://www.postgresql.org/docs/11/indexes-types.html
+
         // For now we only support using index scans when the where clause is a simple binary
         // expr and one of the terms of the expression is a column reference covered by an
         // index. We also only support simple expressions where the side that is not an
@@ -451,14 +454,21 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
         // search for in the index easier.
         NIdentifier* col_ref = NULL;
         ParseNode* boundry_search_key_value = NULL;
+        ScanDirection dir = SCAN_FORWARD;
         if (expr->lhs != NULL && expr->lhs->type == NIDENTIFIER && expr->rhs != NULL &&
             expr->rhs->type != NIDENTIFIER && expr->rhs->type != NBIN_EXPR) {
           col_ref = (NIdentifier*)expr->lhs;
           boundry_search_key_value = expr->rhs;
+          if (expr->op == LT || expr->op == LE) {
+            dir = SCAN_BACKWARDS;
+          }
         } else if (expr->rhs != NULL && expr->rhs->type == NIDENTIFIER && expr->lhs != NULL &&
                    expr->lhs->type != NIDENTIFIER && expr->lhs->type != NBIN_EXPR) {
           col_ref = (NIdentifier*)expr->rhs;
           boundry_search_key_value = expr->lhs;
+          if (expr->op == GT || expr->op == GE) {
+            dir = SCAN_BACKWARDS;
+          }
         }
 
         // One of the expression terms is an column identifier, check to see if an index covers
@@ -492,6 +502,7 @@ PlanNode* PlanJoin(Query* query, ParseNode* join_tree, ParseNode* where_clause) 
             scan->where_clause = where_clause;
             scan->index_def = index_def;
             scan->boundry_search_key_value = boundry_search_key_value;
+            scan->dir = dir;
             return (PlanNode*)scan;
           }
         }

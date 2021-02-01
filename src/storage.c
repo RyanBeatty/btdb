@@ -1153,12 +1153,28 @@ Tuple* BTreeGetNext(IndexCursor* cursor, ScanDirection dir) {
   assert(cursor->index_def != NULL);
 
   Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
-  assert(dir == SCAN_FORWARD);
-  if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
-    return NULL;
+  switch (dir) {
+    case SCAN_FORWARD: {
+      if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
+        // TODO: Handle traversing right.
+        return NULL;
+      }
+      ++cursor->tuple_id;
+      break;
+    }
+    case SCAN_BACKWARDS: {
+      if (cursor->tuple_id <= BTreePageGetFirstKey(cur_page)) {
+        // TODO: Handle traversing left.
+        return NULL;
+      }
+      --cursor->tuple_id;
+      break;
+    }
+    default: {
+      Panic("Unknown BTree Scan Direction");
+    }
   }
 
-  ++cursor->tuple_id;
   IndexTuple* index_tuple = (IndexTuple*)PageGetItem(cur_page, cursor->tuple_id);
   if (index_tuple == NULL) {
     return NULL;
