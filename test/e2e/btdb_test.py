@@ -12,7 +12,7 @@ SHUTDOWN_MSG = PROMPT + b"Shutting down btdb\n"
 # TODO: Using this script to start the db each time breaks debug mode. gdb can't load the symbol
 # table because of the other commands I think. As a short term fix, you can change this statement 
 # to ./build/apps/btdb to get around this.
-BTDB_BIN_PATH = "./start.sh"
+BTDB_BIN_PATH = "./build/apps/btdb"
 DEBUG = os.getenv("DEBUG", None) is not None
 TIMEOUT = None if DEBUG else 2
 
@@ -20,7 +20,7 @@ TIMEOUT = None if DEBUG else 2
 def _start_btdb_process(clean_start=True):
     start_cmd = [BTDB_BIN_PATH]
     if clean_start:
-        start_cmd.append('clean')
+        os.system('cd build && make reset_data_dir && cd ..')
     proc = subprocess.Popen(
         start_cmd,
         stdin=subprocess.PIPE,

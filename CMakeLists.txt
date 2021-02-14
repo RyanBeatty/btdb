@@ -34,3 +34,8 @@ add_custom_target(run_btdb
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS btdb
 )
+
+# Change cmake to be debug mode so that we build with symbols.
+add_custom_target(debug
+    COMMAND cmake -DCMAKE_BUILD_TYPE=Debug ..
+)
