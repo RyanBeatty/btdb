@@ -20,3 +20,16 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         add_subdirectory(test)
     endif()
 endif()
+
+# Add a custom make command to reset the data directory
+add_custom_target(reset_data_dir
+    COMMAND rm -rf data_dir && mkdir data_dir
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(run_btdb
+    COMMAND ./build/apps/btdb
+    # Need to run from project root so that we can find data directory.
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS btdb
+)
