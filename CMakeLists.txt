@@ -21,12 +21,13 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     endif()
 endif()
 
-# Add a custom make command to reset the data directory
+# Custom make command to reset the data directory
 add_custom_target(reset_data_dir
     COMMAND rm -rf data_dir && mkdir data_dir
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
+# Custom make command to compile and run btdb executable. 
 add_custom_target(run_btdb
     COMMAND ./build/apps/btdb
     # Need to run from project root so that we can find data directory.
