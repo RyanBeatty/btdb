@@ -1003,23 +1003,116 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
       new_page_info->right = cur_page_info->right;
 
-      uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
+      {
+        // Calculate split point. We need to account for the size of the new value we are
+        // inserting or else we could end up with not enough space in the page the new item
+        // must be inserted into.
 
-      // Copy over half the items to the new page and delete them from the current page.
-      uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
-      for (uint16_t i = cur_page_num_locs; i < cur_page_num_locs; ++i) {
-        Tuple* t = (Tuple*)PageGetItem(cur_page, i);
-        PageAddItem(new_page, (unsigned char*)t, TupleGetSize(t));
-      }
-      for (uint16_t i = cur_page_num_locs, j = cur_page_num_locs; i < cur_page_num_locs; ++i) {
-        PageRemoveLoc(cur_page, j);
+        // Because we have not inserted the new item yet, we need to get where we "would've"
+        // inserted it. This is so that when we are calculating the split point, we make sure
+        // to take into account the item to be inserted.
+        uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
+
+        // Calculate current space used by current page. Make sure we take into account the
+        // size of the new item to insert (since it has not been inserted into any page yet)
+        // as well as the size of each item's item loc since we'll be moving those around as
+        // well.
+        // TODO: This might be kind of stupid, but its straightforward. Figure out if I can
+        // reuse some other functions to do this for me. Possibly PageGetFreeSpace()
+
+        size_t left_page_space_free = PageGetFreeSpace(cur_page);
+        // Since we are going to change the high key on the left page, make sure we add back
+        // the space.
+        left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
+
+        size_t new_high_key_size = 0;
+
+        // Handle case where new item is to be inserted in the last position. Since we will end
+        // up moving the new item to the right page, we must make sure we add the free space
+        // back to the left page.
+        if (PageGetNumLocs(cur_page) == orig_insertion_idx) {
+          left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+          new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+        }
+        {
+          // size_t left_page_space_used = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+          // for (uint16_t i = BTreePageGetFirstKey(cur_page); i < PageGetNumLocs(cur_page);
+          // ++i)
+          // {
+          //   left_page_space_used += PageGetItemSize(cur_page, i) + sizeof(ItemLoc);
+          // }
+        }
+
+        // Starting from the right, iterate over all the items and calculate what the
+        // space used would be if we moved the item over to the new page. Iterate until we have
+        // enough free space on the left page so that it is under the threshold.
+        // After this loop is finished, i should be pointing to the last item that should
+        // remain on the left page, meaning i + 1 signifies the first item of the right page.
+        uint16_t i = PageGetNumLocs(cur_page) - 1;
+        while (left_page_space_free < IndexTupleGetSize(new_tuple) + new_high_key_size &&
+               i >= BTreePageGetFirstKey(cur_page)) {
+          // while (left_page_space_used > PAGE_SIZE && i >= BTreePageGetFirstKey(cur_page)) {
+          if (i == orig_insertion_idx) {
+            left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+            new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+            orig_insertion_idx = 0;
+          } else {
+            left_page_space_free += PageGetItemSize(cur_page, i) + sizeof(ItemLoc);
+            new_high_key_size = PageGetItemSize(cur_page, i) + sizeof(ItemLoc);
+            --i;
+          }
+        }
+
+        // Move all of the items after the split to the new page.
+        for (uint16_t j = i + 1; j < PageGetNumLocs(cur_page); ++j) {
+          IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
+          PageAddItem(new_page, (unsigned char*)t, IndexTupleGetSize(t));
+        }
+        // Delete the moved items from the left page.
+        for (uint16_t j = PageGetNumLocs(cur_page) - 1; j > i; --j) {
+          PageRemoveLoc(cur_page, j);
+        }
+
+        // Based on the original insertion idx of the new item and the split point, calculate
+        // which page we should insert the new item into, get the new insertion point on that
+        // page, and then insert the new item.
+        Page insert_page = orig_insertion_idx > i ? new_page : cur_page;
+        uint16_t insert_idx = GetInsertionIdx(index_def, &new_tuple_sk, insert_page);
+        bool ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
+                                IndexTupleGetSize(new_tuple));
+        assert(ok);
+
+        // Set high key of cur_page to be smallest key of new page.
+        IndexTuple* new_cur_page_high_key =
+            (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
+        PageRemoveLoc(cur_page, HIGH_KEY);
+        PageAddItemAt(cur_page, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
+                      IndexTupleGetSize(new_cur_page_high_key));
+
+        // TODO: Set high key of new page to be old high key of cur_page.
+
+        // Write out the modified pages.
+        WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+        WritePage(index_def->index_table_def_idx, new_page_id, new_page);
+        return;
       }
 
-      // Insert the new index tuple in the correct page.
-      Page insert_page = orig_insertion_idx < cur_page_num_locs / 2 ? cur_page : new_page;
-      bool ok = PageAddItemAt(insert_page, orig_insertion_idx, (unsigned char*)new_tuple,
-                              IndexTupleGetSize(new_tuple));
-      assert(ok);
+      // // Copy over half the items to the new page and delete them from the current page.
+      // uint16_t cur_page_num_locs = PageGetNumLocs(cur_page);
+      // for (uint16_t i = cur_page_num_locs; i < cur_page_num_locs; ++i) {
+      //   Tuple* t = (Tuple*)PageGetItem(cur_page, i);
+      //   PageAddItem(new_page, (unsigned char*)t, TupleGetSize(t));
+      // }
+      // for (uint16_t i = cur_page_num_locs, j = cur_page_num_locs; i < cur_page_num_locs;
+      // ++i) {
+      //   PageRemoveLoc(cur_page, j);
+      // }
+
+      // // Insert the new index tuple in the correct page.
+      // Page insert_page = orig_insertion_idx < cur_page_num_locs / 2 ? cur_page : new_page;
+      // bool ok = PageAddItemAt(insert_page, orig_insertion_idx, (unsigned char*)new_tuple,
+      //                         IndexTupleGetSize(new_tuple));
+      // assert(ok);
 
       // Set high key of cur_page to be smallest key of new page.
       IndexTuple* new_cur_page_high_key = (IndexTuple*)PageGetItem(new_page, HIGH_KEY);
@@ -1043,59 +1136,64 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // Write out the modified pages.
       WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
       WritePage(index_def->index_table_def_idx, new_page_id, new_page);
+      return;
 
-      // We need to insert a key + pointer in the parent to the new page. So new_tuple's (the
-      // tuple to insert) key becomes the high key of cur_page and its pointer points to the
-      // new_page.
-      new_tuple = (IndexTuple*)calloc(IndexTupleGetSize(new_cur_page_high_key), sizeof(byte));
-      new_tuple =
-          memcpy(new_tuple, new_cur_page_high_key, IndexTupleGetSize(new_cur_page_high_key));
-      new_tuple->pointer.page_num = new_page_id;
-      SearchKeyInit(&new_tuple_sk,
-                    GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
+      // // We need to insert a key + pointer in the parent to the new page. So new_tuple's
+      // (the
+      // // tuple to insert) key becomes the high key of cur_page and its pointer points to the
+      // // new_page.
+      // new_tuple = (IndexTuple*)calloc(IndexTupleGetSize(new_cur_page_high_key),
+      // sizeof(byte)); new_tuple =
+      //     memcpy(new_tuple, new_cur_page_high_key,
+      //     IndexTupleGetSize(new_cur_page_high_key));
+      // new_tuple->pointer.page_num = new_page_id;
+      // SearchKeyInit(&new_tuple_sk,
+      //               GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
 
-      // If we are at the end of the path, then we need to create a new root.
-      if (arrlenu(path) == 0) {
-        PageId new_root_page_id = SMNumPages(sm) + 1;
+      // // If we are at the end of the path, then we need to create a new root.
+      // if (arrlenu(path) == 0) {
+      //   PageId new_root_page_id = SMNumPages(sm) + 1;
 
-        // Initialize new page.
-        Page new_root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
-        BTreePageInit(new_root_page, BTreePageGetLevel(cur_page) + 1, false);
-        BTreePageInfo* new_root_page_info = PageGetBTreePageInfo(new_root_page);
-        new_root_page_info->right = cur_page_info->right;
+      //   // Initialize new page.
+      //   Page new_root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+      //   BTreePageInit(new_root_page, BTreePageGetLevel(cur_page) + 1, false);
+      //   BTreePageInfo* new_root_page_info = PageGetBTreePageInfo(new_root_page);
+      //   new_root_page_info->right = cur_page_info->right;
 
-        // Insert the low/left pointer into the new root.
-        IndexTuple low_pointer;
-        low_pointer.pointer.page_num = cur_page_id;
-        SearchKey low_pointer_sk;
-        SearchKeyInit(&low_pointer_sk,
-                      GetColByIdx(IndexTupleGetTuplePtr(&low_pointer), 0, parent_table_def));
-        uint16_t low_pointer_insert_idx =
-            GetInsertionIdx(index_def, &low_pointer_sk, new_root_page);
-        assert(low_pointer_insert_idx == 1);
-        PageAddItemAt(new_root_page, low_pointer_insert_idx, (unsigned char*)(&new_root_page),
-                      IndexTupleGetSize(&low_pointer));
+      //   // Insert the low/left pointer into the new root.
+      //   IndexTuple low_pointer;
+      //   low_pointer.pointer.page_num = cur_page_id;
+      //   SearchKey low_pointer_sk;
+      //   SearchKeyInit(&low_pointer_sk,
+      //                 GetColByIdx(IndexTupleGetTuplePtr(&low_pointer), 0,
+      //                 parent_table_def));
+      //   uint16_t low_pointer_insert_idx =
+      //       GetInsertionIdx(index_def, &low_pointer_sk, new_root_page);
+      //   assert(low_pointer_insert_idx == 1);
+      //   PageAddItemAt(new_root_page, low_pointer_insert_idx, (unsigned
+      //   char*)(&new_root_page),
+      //                 IndexTupleGetSize(&low_pointer));
 
-        // Insert new key + pointer to right child.
-        uint16_t new_key_insertion_idx =
-            GetInsertionIdx(index_def, &new_tuple_sk, new_root_page);
-        PageAddItemAt(new_root_page, new_key_insertion_idx, (unsigned char*)new_tuple,
-                      IndexTupleGetSize(new_tuple));
+      //   // Insert new key + pointer to right child.
+      //   uint16_t new_key_insertion_idx =
+      //       GetInsertionIdx(index_def, &new_tuple_sk, new_root_page);
+      //   PageAddItemAt(new_root_page, new_key_insertion_idx, (unsigned char*)new_tuple,
+      //                 IndexTupleGetSize(new_tuple));
 
-        // Update meta page to point to new root.
-        Page meta_page = BTreeReadMetaPage(index_def);
-        BTreeMetaPageInfo* meta_info = PageGetBTreeMetaPageInfo(meta_page);
-        meta_info->root_page_id = new_root_page_id;
+      //   // Update meta page to point to new root.
+      //   Page meta_page = BTreeReadMetaPage(index_def);
+      //   BTreeMetaPageInfo* meta_info = PageGetBTreeMetaPageInfo(meta_page);
+      //   meta_info->root_page_id = new_root_page_id;
 
-        // Write out new root page and updated meta page.
-        WritePage(index_def->index_table_def_idx, new_root_page_id, new_root_page);
-        WritePage(index_def->index_table_def_idx, 0, meta_page);
-        return;
-      }
+      //   // Write out new root page and updated meta page.
+      //   WritePage(index_def->index_table_def_idx, new_root_page_id, new_root_page);
+      //   WritePage(index_def->index_table_def_idx, 0, meta_page);
+      //   return;
+      // }
 
-      // Go up a level.
-      cur_page_id = arrpop(path);
-      cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+      // // Go up a level.
+      // cur_page_id = arrpop(path);
+      // cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
     }
   }
 }

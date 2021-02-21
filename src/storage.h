@@ -98,6 +98,10 @@ typedef struct PageHeader {
 #define PageGetNumLocs(ptr) GetPageHeader(ptr)->num_locs
 #define PageGetItemLoc(ptr, i) GetPageHeader(ptr)->item_locs[i]
 #define PageGetSpecial(ptr) (ptr + GetPageHeader(ptr)->special_pointer_offset)
+// Caluclate the free space of the page for inserting a new item. Note that it subtracts from
+// the free space the size of adding a new item loc.
+// TODO: Can the item loc size abstraction cause underflow? I think it might be able to when
+// the amount of free space is very small.
 #define PageGetFreeSpace(page)                                                       \
   (GetPageHeader(page)->free_upper_offset - GetPageHeader(page)->free_lower_offset - \
    sizeof(ItemLoc))
