@@ -1002,8 +1002,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
       BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
       new_page_info->right = cur_page_info->right;
-      // Link old page to new page.
-      cur_page_info->right = new_page_id;
 
       {
         // Calculate split point. We need to account for the size of the new value we are
@@ -1035,14 +1033,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
         if (PageGetNumLocs(cur_page) == orig_insertion_idx) {
           left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
           new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-        }
-        {
-          // size_t left_page_space_used = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-          // for (uint16_t i = BTreePageGetFirstKey(cur_page); i < PageGetNumLocs(cur_page);
-          // ++i)
-          // {
-          //   left_page_space_used += PageGetItemSize(cur_page, i) + sizeof(ItemLoc);
-          // }
         }
 
         // Starting from the right, iterate over all the items and calculate what the
@@ -1092,6 +1082,10 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
                       IndexTupleGetSize(new_cur_page_high_key));
 
         // TODO: Set high key of new page to be old high key of cur_page.
+
+        // Link old page to new page. Do this down here because some functions (like calulating
+        // insert indexes on pages) depend on knowing if the page is the rightmost page or not.
+        cur_page_info->right = new_page_id;
 
         // Write out the modified pages.
         WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
@@ -1263,7 +1257,9 @@ Tuple* BTreeGetNext(IndexCursor* cursor, ScanDirection dir) {
       ++cursor->tuple_id;
       if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
         // TODO: Handle traversing right.
-        return NULL;
+        cursor->page_id = BTreePageGetRight(cur_page);
+        cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
+        cursor->tuple_id = BTreePageGetFirstKey(cur_page);
       }
       break;
     }
