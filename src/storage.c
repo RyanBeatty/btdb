@@ -1002,6 +1002,8 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInit(new_page, BTreePageGetLevel(cur_page), BTreePageIsLeaf(cur_page));
       BTreePageInfo* new_page_info = PageGetBTreePageInfo(new_page);
       new_page_info->right = cur_page_info->right;
+      // Link old page to new page.
+      cur_page_info->right = new_page_id;
 
       {
         // Calculate split point. We need to account for the size of the new value we are
@@ -1250,22 +1252,27 @@ Tuple* BTreeGetNext(IndexCursor* cursor, ScanDirection dir) {
   assert(cursor != NULL);
   assert(cursor->index_def != NULL);
 
+  // TODO: Make sure this works.
+  if (cursor->page_id == NULL_PAGE) {
+    return NULL;
+  }
+
   Page cur_page = ReadPage(cursor->index_def->index_table_def_idx, cursor->page_id);
   switch (dir) {
     case SCAN_FORWARD: {
+      ++cursor->tuple_id;
       if (cursor->tuple_id >= PageGetNumLocs(cur_page)) {
         // TODO: Handle traversing right.
         return NULL;
       }
-      ++cursor->tuple_id;
       break;
     }
     case SCAN_BACKWARDS: {
+      --cursor->tuple_id;
       if (cursor->tuple_id <= BTreePageGetFirstKey(cur_page)) {
         // TODO: Handle traversing left.
         return NULL;
       }
-      --cursor->tuple_id;
       break;
     }
     default: {
