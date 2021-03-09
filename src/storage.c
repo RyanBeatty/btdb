@@ -1043,7 +1043,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
         uint16_t i = PageGetNumLocs(cur_page) - 1;
         while (left_page_space_free < IndexTupleGetSize(new_tuple) + new_high_key_size &&
                i >= BTreePageGetFirstKey(cur_page)) {
-          // while (left_page_space_used > PAGE_SIZE && i >= BTreePageGetFirstKey(cur_page)) {
           if (i == orig_insertion_idx) {
             left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
             new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
@@ -1056,7 +1055,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
         }
 
         // Move all of the items after the split to the new page.
-        for (uint16_t j = i + 1; j < PageGetNumLocs(cur_page); ++j) {
+        for (uint16_t j = i; j < PageGetNumLocs(cur_page); ++j) {
           IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
           PageAddItem(new_page, (unsigned char*)t, IndexTupleGetSize(t));
         }
