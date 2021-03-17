@@ -1009,144 +1009,99 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInfo* cur_page_new_info = PageGetBTreePageInfo(cur_page_new);
       cur_page_new_info->right = cur_page_info->right;
 
-      {
-        // Calculate split point. We need to account for the size of the new value we are
-        // inserting or else we could end up with not enough space in the page the new item
-        // must be inserted into.
+      // Calculate split point. We need to account for the size of the new value we are
+      // inserting or else we could end up with not enough space in the page the new item
+      // must be inserted into.
 
-        // Because we have not inserted the new item yet, we need to get where we "would've"
-        // inserted it. This is so that when we are calculating the split point, we make sure
-        // to take into account the item to be inserted.
-        uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
+      // Because we have not inserted the new item yet, we need to get where we "would've"
+      // inserted it. This is so that when we are calculating the split point, we make sure
+      // to take into account the item to be inserted.
+      uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
 
-        // Calculate current space used by current page. Make sure we take into account the
-        // size of the new item to insert (since it has not been inserted into any page yet)
-        // as well as the size of each item's item loc since we'll be moving those around as
-        // well.
-        // TODO: This might be kind of stupid, but its straightforward. Figure out if I can
-        // reuse some other functions to do this for me. Possibly PageGetFreeSpace()
+      // Calculate current space used by current page. Make sure we take into account the
+      // size of the new item to insert (since it has not been inserted into any page yet)
+      // as well as the size of each item's item loc since we'll be moving those around as
+      // well.
+      // TODO: This might be kind of stupid, but its straightforward. Figure out if I can
+      // reuse some other functions to do this for me. Possibly PageGetFreeSpace()
 
-        size_t left_page_space_free = PageGetFreeSpace(cur_page);
-        // Since we are going to change the high key on the left page, make sure we add back
-        // the space.
-        left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
+      size_t left_page_space_free = PageGetFreeSpace(cur_page);
+      // Since we are going to change the high key on the left page, make sure we add back
+      // the space.
+      left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
 
-        // size_t new_high_key_size = 0;
+      // size_t new_high_key_size = 0;
 
-        // // Handle case where new item is to be inserted in the last position. Since we will
-        // end
-        // // up moving the new item to the right page, we must make sure we add the free space
-        // // back to the left page.
-        // if (PageGetNumLocs(cur_page) == orig_insertion_idx) {
-        //   left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-        //   new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-        // }
+      // // Handle case where new item is to be inserted in the last position. Since we will
+      // end
+      // // up moving the new item to the right page, we must make sure we add the free space
+      // // back to the left page.
+      // if (PageGetNumLocs(cur_page) == orig_insertion_idx) {
+      //   left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+      //   new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+      // }
 
-        // Starting from the right, iterate over all the items and calculate what the
-        // space used would be if we moved the item over to the new page. Iterate until we have
-        // enough free space on the left page so that it is under the threshold.
-        // After this loop is finished, i should be pointing to the last item that should
-        // remain on the left page, meaning i + 1 signifies the first item of the right page.
+      // Starting from the right, iterate over all the items and calculate what the
+      // space used would be if we moved the item over to the new page. Iterate until we have
+      // enough free space on the left page so that it is under the threshold.
+      // After this loop is finished, i should be pointing to the last item that should
+      // remain on the left page, meaning i + 1 signifies the first item of the right page.
 
-        // Pull out all of the locs for the current page. The locs have the tuple sizes which
-        // we will use to calculate how much free space we open up by shifting them to the new
-        // page.
-        {
-          ItemLoc* locs = NULL;
-          arraddnptr(locs, PageGetNumLocs(cur_page));
-        }
-        ItemLoc* locs = NULL;
-        arrsetcap(locs, PageGetNumLocs(cur_page) + 1);
-        for (uint16_t i = 0; i < PageGetNumLocs(cur_page); ++i) {
-          arrpush(locs, PageGetItemLoc(cur_page, i));
-        }
-
-        // We need to account for the size of the new tuple, but we cannot insert it into a
-        // page yet. So "virtually" insert it by creating the ItemLoc for it in order to
-        // account for its size.
-        ItemLoc new_tuple_loc = {
-            .offset = 0, .length = IndexTupleGetSize(new_tuple), .dead = false};
-        // if (orig_insertion_idx == arrlenu(locs)) {
-        //   arrpush(locs, new_tuple_loc);
-        // } else {
-        arrins(locs, orig_insertion_idx, new_tuple_loc);
-        // }
-
-        {
-          assert(arrlenu(locs) > 0);
-          uint16_t i = arrlenu(locs) - 1;
-          size_t new_high_key_size = 0;
-          while (left_page_space_free < IndexTupleGetSize(new_tuple) + new_high_key_size &&
-                 i >= BTreePageGetFirstKey(cur_page)) {
-            ItemLoc* loc = &locs[i];
-            left_page_space_free += loc->length + sizeof(ItemLoc);
-            new_high_key_size = loc->length + sizeof(ItemLoc);
-            --i;
-          }
-
-          // Since we have "virtually" inserted the new tuple, we need to account for the
-          // starting position of actual items to copy over to the new page. If the new item is
-          // to be inserted before the split, we need to account for this by modifying the
-          // split index.
-          if (orig_insertion_idx < i) {
-            --i;
-          }
-
-          // Move all of the items after the split to the new page.
-          for (uint16_t j = i + 1; j < PageGetNumLocs(cur_page); ++j) {
-            IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
-            PageAddItem(new_page, (unsigned char*)t, IndexTupleGetSize(t));
-          }
-        }
-
-        // Move items on left page to new copy (essentially deleting the items we moved to
-        // the right page, just not in place).
-        for (uint16_t j = BTreePageGetFirstKey(cur_page); j <= i; ++j) {
-          IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
-          PageAddItem(cur_page_new, (unsigned char*)t, IndexTupleGetSize(t));
-        }
-
-        // Based on the original insertion idx of the new item and the split point, calculate
-        // which page we should insert the new item into, get the new insertion point on that
-        // page, and then insert the new item.
-        Page insert_page = orig_insertion_idx > i ? new_page : cur_page_new;
-        uint16_t insert_idx = GetInsertionIdx(index_def, &new_tuple_sk, insert_page);
-        bool ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
-                                IndexTupleGetSize(new_tuple));
-        assert(ok);
-
-        // Set high key of cur_page to be smallest key of new page.
-        // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
-        // space when removing items/locs from pages currently. This messes with the way we
-        // calculate free space remainging on the page when finding the split pos.
-        IndexTuple* new_cur_page_high_key =
-            (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
-        PageRemoveLoc(cur_page_new, HIGH_KEY);
-        ok = PageAddItemAt(cur_page_new, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
-                           IndexTupleGetSize(new_cur_page_high_key));
-        assert(ok);
-
-        // TODO: Set high key of new page to be old high key of cur_page.
-
-        // Link old page to new page. Do this down here because some functions (like
-        // calulating insert indexes on pages) depend on knowing if the page is the rightmost
-        // page or not.
-        cur_page_new_info->right = new_page_id;
-
-        // Write out the modified pages.
-        WritePage(index_def->index_table_def_idx, cur_page_id, cur_page_new);
-        WritePage(index_def->index_table_def_idx, new_page_id, new_page);
-        return;
+      // Pull out all of the locs for the current page. The locs have the tuple sizes which
+      // we will use to calculate how much free space we open up by shifting them to the new
+      // page.
+      ItemLoc* locs = NULL;
+      arrsetcap(locs, PageGetNumLocs(cur_page) + 1);
+      for (uint16_t i = 0; i < PageGetNumLocs(cur_page); ++i) {
+        arrpush(locs, PageGetItemLoc(cur_page, i));
       }
 
-      // Set high key of cur_page to be smallest key of new page.
-      IndexTuple* new_cur_page_high_key = (IndexTuple*)PageGetItem(new_page, HIGH_KEY);
-      PageRemoveLoc(cur_page, HIGH_KEY);
-      PageAddItemAt(cur_page, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
-                    IndexTupleGetSize(new_cur_page_high_key));
+      // We need to account for the size of the new tuple, but we cannot insert it into a
+      // page yet. So "virtually" insert it by creating the ItemLoc for it in order to
+      // account for its size.
+      ItemLoc new_tuple_loc = {
+          .offset = 0, .length = IndexTupleGetSize(new_tuple), .dead = false};
+      arrins(locs, orig_insertion_idx, new_tuple_loc);
+
+      // Move items on left page to new copy (essentially deleting the items we moved to
+      // the right page, just not in place).
+      // TODO: Change this to stop iteration at <= i once we are supporting middle
+      // insertions.
+      for (uint16_t j = BTreePageGetFirstKey(cur_page); j < PageGetNumLocs(cur_page); ++j) {
+        IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
+        PageAddItem(cur_page_new, (unsigned char*)t, IndexTupleGetSize(t));
+      }
+
+      // Based on the original insertion idx of the new item and the split point, calculate
+      // which page we should insert the new item into, get the new insertion point on that
+      // page, and then insert the new item.
+      // TODO: insert into correct page later.
+      Page insert_page = new_page;
+      uint16_t insert_idx = GetInsertionIdx(index_def, &new_tuple_sk, insert_page);
+      bool ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
+                              IndexTupleGetSize(new_tuple));
+      assert(ok);
+
+      // // Set high key of cur_page to be smallest key of new page.
+      // // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
+      // // space when removing items/locs from pages currently. This messes with the way we
+      // // calculate free space remainging on the page when finding the split pos.
+      // IndexTuple* new_cur_page_high_key =
+      //     (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
+      // PageRemoveLoc(cur_page_new, HIGH_KEY);
+      // ok = PageAddItemAt(cur_page_new, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
+      //                    IndexTupleGetSize(new_cur_page_high_key));
+      // assert(ok);
+
+      // TODO: Set high key of new page to be old high key of cur_page.
+
+      // Link old page to new page. Do this down here because some functions (like
+      // calulating insert indexes on pages) depend on knowing if the page is the rightmost
+      // page or not.
+      cur_page_new_info->right = new_page_id;
 
       // Write out the modified pages.
-      WritePage(index_def->index_table_def_idx, cur_page_id, cur_page);
+      WritePage(index_def->index_table_def_idx, cur_page_id, cur_page_new);
       WritePage(index_def->index_table_def_idx, new_page_id, new_page);
       return;
     }
