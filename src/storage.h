@@ -86,7 +86,9 @@ typedef struct ItemLoc {
 } ItemLoc;
 
 typedef struct PageHeader {
+  // Offset from the start of the page where the lowest free memory location is.
   uint16_t free_lower_offset;
+  // Offset from the start of the page where the highest free memory location is.
   uint16_t free_upper_offset;
   uint16_t special_pointer_offset;
   uint16_t num_locs;

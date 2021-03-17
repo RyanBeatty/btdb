@@ -437,13 +437,28 @@ void PageRemoveLoc(Page page, size_t item_id) {
   if (item_id >= header->num_locs) {
     return;
   }
+  ItemLoc loc_to_remove = PageGetItemLoc(page, item_id);
   // Shift item locs down by to cover the removed loc.
-  for (uint16_t i = item_id; i < arrlenu(page); ++i) {
+  for (uint16_t i = item_id; i < header->num_locs; ++i) {
     PageGetItemLoc(page, i) = PageGetItemLoc(page, i + 1);
   }
   --header->num_locs;
   // "grow" free space by moving it back since we've removed an item loc.
   header->free_lower_offset -= sizeof(ItemLoc);
+
+  // Shift data the amount of the data item we removed.
+  memmove(page + header->free_upper_offset + loc_to_remove.length,
+          page + header->free_upper_offset, loc_to_remove.offset - header->free_upper_offset);
+  // Grow free space on page by moving upper offset.
+  header->free_upper_offset += loc_to_remove.length;
+  // Since we shifted all of the data items, we need to shift/fix the itemloc pointers' offsets
+  // by the amount we shifted the data items.
+  for (uint16_t i = 0; i < header->num_locs; ++i) {
+    ItemLoc* loc = &PageGetItemLoc(page, i);
+    if (loc->offset <= loc_to_remove.offset) {
+      loc->offset += loc_to_remove.length;
+    }
+  }
   return;
 }
 
@@ -1063,13 +1078,23 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
           .offset = 0, .length = IndexTupleGetSize(new_tuple), .dead = false};
       arrins(locs, orig_insertion_idx, new_tuple_loc);
 
+      // split_idx is the index at which to split the items between the current page and new
+      // page in order to make space for insertion of the new tuple. split_idx + 1 is the first
+      // item to move to the next page from the current page.
+      uint16_t split_idx = PageGetNumLocs(cur_page) - 2;
+
       // Move items on left page to new copy (essentially deleting the items we moved to
       // the right page, just not in place).
       // TODO: Change this to stop iteration at <= i once we are supporting middle
       // insertions.
-      for (uint16_t j = BTreePageGetFirstKey(cur_page); j < PageGetNumLocs(cur_page); ++j) {
+      for (uint16_t j = BTreePageGetFirstKey(cur_page); j <= split_idx; ++j) {
         IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
         PageAddItem(cur_page_new, (unsigned char*)t, IndexTupleGetSize(t));
+      }
+      // Move items from current page over to new page.
+      for (uint16_t j = split_idx + 1; j < PageGetNumLocs(cur_page); ++j) {
+        IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
+        PageAddItem(new_page, (unsigned char*)t, IndexTupleGetSize(t));
       }
 
       // Based on the original insertion idx of the new item and the split point, calculate
@@ -1082,10 +1107,10 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
                               IndexTupleGetSize(new_tuple));
       assert(ok);
 
-      // // Set high key of cur_page to be smallest key of new page.
-      // // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
-      // // space when removing items/locs from pages currently. This messes with the way we
-      // // calculate free space remainging on the page when finding the split pos.
+      // Set high key of cur_page to be smallest key of new page.
+      // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
+      // space when removing items/locs from pages currently. This messes with the way we
+      // calculate free space remainging on the page when finding the split pos.
       // IndexTuple* new_cur_page_high_key =
       //     (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
       // PageRemoveLoc(cur_page_new, HIGH_KEY);
