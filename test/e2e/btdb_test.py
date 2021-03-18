@@ -772,7 +772,7 @@ def test_create_index_page_splits():
     expected_output = ["Starting btdb"]
     input_cmds.append('create table c (d text);\n')
     expected_output.append('btdb> UTILITY DONE')
-    for i in range(10 ** 15, 10 ** 15 + 121):
+    for i in range(10 ** 15, 10 ** 15 + 400):
         input_cmds.append(f"insert into c (d) values ('{str(i)}');\n")
         expected_output.append("btdb>     d")
         expected_output.append("===============")
@@ -781,7 +781,7 @@ def test_create_index_page_splits():
     input_cmds.append("select d from c where d > '1';")
     expected_output.append("btdb>     d")
     expected_output.append("===============")
-    for i in range(10 ** 15, 10 ** 15 + 121):
+    for i in range(10 ** 15, 10 ** 15 + 400):
         expected_output.append(f"{str(i)}\t")
     expected_output.append("btdb> Shutting down btdb\n")
     try:
