@@ -228,6 +228,7 @@ typedef struct BTreePageInfo {
 
 #define LEAF_PAGE (1 << 0)
 #define ROOT_PAGE (1 << 1)
+#define NON_LEAF_PAGE (1 << 2)
 
 #define PageGetBTreePageInfo(ptr) ((BTreePageInfo*)(PageGetSpecial(ptr)))
 #define BTreePageIsRoot(page) ((PageGetBTreePageInfo(page)->flags & ROOT_PAGE) != 0)

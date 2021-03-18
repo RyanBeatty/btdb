@@ -966,28 +966,16 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
                 GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
 
-  PageId* path = NULL;
-
-  // arrpush(path, root_id);
   PageId cur_page_id = root_id;
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
-  while (!BTreePageIsLeaf(cur_page)) {
-    // Do search to find where to move down or laterally in tree.
-    uint16_t i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
-    if (i == HIGH_KEY) {
-      // Move right.
-      cur_page_id = BTreePageGetRight(cur_page);
-    } else {
-      Panic("moving down btree during insertion not implemented");
-      // Move down. Remember our path down tree.
-      arrpush(path, cur_page_id);
-      // Since we are moving down through the tree, we need to follow the pointer of the key
-      // right before where we would insert into the page. Since this pointer will be at the
-      // key right before where we would insert, we subtract 1 from the insertion index.
-      IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, i - 1);
-      cur_page_id = t->pointer.page_num;
-    }
+  uint16_t i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
+  // Traverse index page list until we either find the correctly sorted position to place the
+  // new element, or we get to the end of the page list.
+  while (i == HIGH_KEY && BTreePageGetRight(cur_page) != NULL_PAGE) {
+    // Move right.
+    cur_page_id = BTreePageGetRight(cur_page);
     cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
+    i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
   }
 
   while (true) {
