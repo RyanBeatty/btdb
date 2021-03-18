@@ -1033,17 +1033,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // the space.
       left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
 
-      // size_t new_high_key_size = 0;
-
-      // // Handle case where new item is to be inserted in the last position. Since we will
-      // end
-      // // up moving the new item to the right page, we must make sure we add the free space
-      // // back to the left page.
-      // if (PageGetNumLocs(cur_page) == orig_insertion_idx) {
-      //   left_page_space_free += IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-      //   new_high_key_size = IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
-      // }
-
       // Starting from the right, iterate over all the items and calculate what the
       // space used would be if we moved the item over to the new page. Iterate until we have
       // enough free space on the left page so that it is under the threshold.
