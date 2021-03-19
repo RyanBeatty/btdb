@@ -814,7 +814,7 @@ def test_create_index_page_splits_reverse_order():
     input_cmds.append('create table c (d text);\n')
     expected_output.append('btdb> UTILITY DONE')
     # Insertion is in the reverse order, so each new tuple should be inserted at front of page.
-    for i in range(10 ** 15 + 120 - 1, 10 ** 15 -1, -1):
+    for i in range(10 ** 15 + 400 - 1, 10 ** 15 -1, -1):
         input_cmds.append(f"insert into c (d) values ('{str(i)}');\n")
         expected_output.append("btdb>     d")
         expected_output.append("===============")
@@ -823,7 +823,7 @@ def test_create_index_page_splits_reverse_order():
     input_cmds.append("select d from c where d > '1';")
     expected_output.append("btdb>     d")
     expected_output.append("===============")
-    for i in range(10 ** 15, 10 ** 15 + 120):
+    for i in range(10 ** 15, 10 ** 15 + 400):
         expected_output.append(f"{str(i)}\t")
     expected_output.append("btdb> Shutting down btdb\n")
     try:
