@@ -762,9 +762,11 @@ def test_create_index():
     proc.kill()
 
 
-def test_create_index_page_splits():
+def test_create_index_page_splits_in_order():
     """
     Verify that we can create an index on a table who's data will take up more than a single page.
+    Note that we only test situations where the next tuple to be inserted occurs at the end of
+    the page.
     """
     proc = _start_btdb_process()
 
