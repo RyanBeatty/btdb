@@ -1077,8 +1077,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // Based on the original insertion idx of the new item and the split point, calculate
       // which page we should insert the new item into, get the new insertion point on that
       // page, and then insert the new item.
-      // TODO: insert into correct page later.
-      Page insert_page = new_page;
+      Page insert_page = orig_insertion_idx > split_idx ? new_page : cur_page_new;
       uint16_t insert_idx = GetInsertionIdx(index_def, &new_tuple_sk, insert_page);
       bool ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
                               IndexTupleGetSize(new_tuple));
