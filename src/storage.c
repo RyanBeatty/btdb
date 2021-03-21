@@ -1021,18 +1021,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // to take into account the item to be inserted.
       uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
 
-      // Calculate current space used by current page. Make sure we take into account the
-      // size of the new item to insert (since it has not been inserted into any page yet)
-      // as well as the size of each item's item loc since we'll be moving those around as
-      // well.
-      // TODO: This might be kind of stupid, but its straightforward. Figure out if I can
-      // reuse some other functions to do this for me. Possibly PageGetFreeSpace()
-
-      size_t left_page_space_free = PageGetFreeSpace(cur_page);
-      // Since we are going to change the high key on the left page, make sure we add back
-      // the space.
-      left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
-
       // Starting from the right, iterate over all the items and calculate what the
       // space used would be if we moved the item over to the new page. Iterate until we have
       // enough free space on the left page so that it is under the threshold.
@@ -1055,10 +1043,33 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
           .offset = 0, .length = IndexTupleGetSize(new_tuple), .dead = false};
       arrins(locs, orig_insertion_idx, new_tuple_loc);
 
+      // Get the amount of free space left in the current page since we need to calculate how many
+      // items to move over to the new page in order to free up enough space to insert the new item.
+      // NOTE: This substracts sizeof(ItemLoc) to account for inserting a new item.
+      size_t left_page_space_free = PageGetFreeSpace(cur_page);
+      // Since we are going to change the high key on the left page, make sure we add back
+      // the space.
+      left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
+
+
       // split_idx is the index at which to split the items between the current page and new
       // page in order to make space for insertion of the new tuple. split_idx + 1 is the first
       // item to move to the next page from the current page.
-      uint16_t split_idx = PageGetNumLocs(cur_page) - 2;
+      uint16_t split_idx = PageGetNumLocs(cur_page) - 1;
+      size_t new_tuple_size = IndexTupleGetSize(new_tuple);
+      size_t new_high_key_size = locs[split_idx].length + sizeof(IndexTuple) + sizeof(ItemLoc);
+      // TODO: Need to think about if this loop is correct in all cases. Could see a case where maybe
+      // we move too many items over to the new page and we also need to insert the new tuple into the new page
+      // but end up not having enough space.
+      // TODO: Try to calculate a better split. Maybe we can keep track of the ratio of free space on left vs right page and
+      // keep moving items to the right page as long as it improves the ratio.
+      while (left_page_space_free < new_tuple_size + new_high_key_size && split_idx >= BTreePageGetFirstKey(cur_page)) {
+        ItemLoc *loc = &locs[split_idx];
+        size_t size_to_return = loc->length + sizeof(IndexTuple) + sizeof(ItemLoc);
+        left_page_space_free += size_to_return;
+        new_high_key_size = size_to_return;
+        --split_idx;
+      }
 
       // Move items on left page to new copy (essentially deleting the items we moved to
       // the right page, just not in place).
