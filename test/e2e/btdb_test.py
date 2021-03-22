@@ -896,3 +896,48 @@ def test_create_index_page_splits_uneven_row_size():
     assert output == bytes("\n".join(expected_output), encoding="utf8")
 
     proc.kill()
+
+
+def test_create_index_page_splits_in_order_large_final_item():
+    """
+    Verify that we can create an index on a table who's data will take up more than a single page.
+    Note that we only test situations where the next tuple to be inserted occurs at the end of
+    the page.
+    """
+    proc = _start_btdb_process()
+
+    input_cmds = []
+    expected_output = ["Starting btdb"]
+    input_cmds.append('create table c (d text);\n')
+    expected_output.append('btdb> UTILITY DONE')
+    for i in range(10 ** 15, 10 ** 15 + 58):
+        input_cmds.append(f"insert into c (d) values ('{str(i)}');\n")
+        expected_output.append("btdb>     d")
+        expected_output.append("===============")
+    # Insert very long string thats about 3/4's the size of a page.
+    long_str = '2' * (2 ** 12 + 2 ** 11)
+    input_cmds.append(f"insert into c (d) values ('{long_str}');\n")
+    expected_output.append("btdb>     d")
+    expected_output.append("===============")
+    input_cmds.append("create index on c (d);\n")
+    expected_output.append('btdb> UTILITY DONE')
+    input_cmds.append("select d from c where d > '1';")
+    expected_output.append("btdb>     d")
+    expected_output.append("===============")
+    for i in range(10 ** 15, 10 ** 15 + 58):
+        expected_output.append(f"{str(i)}\t")
+    expected_output.append(f"{long_str}\t")
+    expected_output.append("btdb> Shutting down btdb\n")
+    try:
+        output, err = proc.communicate(
+            input=bytes("".join(input_cmds), encoding="utf-8"), timeout=TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        assert False
+
+    assert not err
+    assert output == bytes("\n".join(expected_output), encoding="utf8")
+
+    proc.kill()
