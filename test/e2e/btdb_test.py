@@ -804,8 +804,7 @@ def test_create_index_page_splits_in_order():
 def test_create_index_page_splits_reverse_order():
     """
     Verify that we can create an index on a table who's data will take up more than a single page.
-    Note that we only test situations where the next tuple to be inserted occurs at the end of
-    the page.
+    We insert items in reverse order to verify that we can calculate which page to add the new item to.
     """
     proc = _start_btdb_process()
 
@@ -845,8 +844,9 @@ def test_create_index_page_splits_reverse_order():
 def test_create_index_page_splits_uneven_row_size():
     """
     Verify that we can create an index on a table who's data will take up more than a single page.
-    Note that we only test situations where the next tuple to be inserted occurs at the end of
-    the page.
+    We first insert some rows with the same size. Then we insert a row with a much larger size that
+    should be in the middle of the left page when splitting to test that we can calculate the split loc
+    correctly.
     """
     proc = _start_btdb_process()
 
