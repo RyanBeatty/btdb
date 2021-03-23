@@ -1012,20 +1012,10 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       BTreePageInfo* cur_page_new_info = PageGetBTreePageInfo(cur_page_new);
       cur_page_new_info->right = cur_page_info->right;
 
-      // Calculate split point. We need to account for the size of the new value we are
-      // inserting or else we could end up with not enough space in the page the new item
-      // must be inserted into.
-
       // Because we have not inserted the new item yet, we need to get where we "would've"
       // inserted it. This is so that when we are calculating the split point, we make sure
       // to take into account the item to be inserted.
       uint16_t orig_insertion_idx = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
-
-      // Starting from the right, iterate over all the items and calculate what the
-      // space used would be if we moved the item over to the new page. Iterate until we have
-      // enough free space on the left page so that it is under the threshold.
-      // After this loop is finished, i should be pointing to the last item that should
-      // remain on the left page, meaning i + 1 signifies the first item of the right page.
 
       // Pull out all of the locs for the current page. The locs have the tuple sizes which
       // we will use to calculate how much free space we open up by shifting them to the new
