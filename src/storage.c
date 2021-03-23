@@ -1068,6 +1068,8 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
           break;
         }
       }
+      // If this happens, we did not find a valid split point, so just fail.
+      assert(split_idx != BTreePageGetFirstKey(cur_page) - 1);
 
       // Because we virtually inserted the new index tuple into the locs list, we potentially need to adjust the actual
       // split index. If the virtually inserted tuple is before the split index, we need to shift the split index
