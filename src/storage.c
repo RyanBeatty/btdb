@@ -1088,8 +1088,6 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
       // Move items on left page to new copy (essentially deleting the items we moved to
       // the right page, just not in place).
-      // TODO: Change this to stop iteration at <= i once we are supporting middle
-      // insertions.
       for (uint16_t j = BTreePageGetFirstKey(cur_page); j <= split_idx; ++j) {
         IndexTuple* t = (IndexTuple*)PageGetItem(cur_page, j);
         PageAddItem(cur_page_new, (unsigned char*)t, IndexTupleGetSize(t));
