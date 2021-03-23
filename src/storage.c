@@ -1045,29 +1045,43 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
 
       // Get the amount of free space left in the current page since we need to calculate how many
       // items to move over to the new page in order to free up enough space to insert the new item.
-      // NOTE: This substracts sizeof(ItemLoc) to account for inserting a new item.
-      size_t left_page_space_free = PageGetFreeSpace(cur_page);
+      // NOTE: PageGetFreeSpace subtracts an item loc, so we add back here for transparency.
+      ssize_t left_page_space_free = PageGetFreeSpace(cur_page) + sizeof(ItemLoc);
       // Since we are going to change the high key on the left page, make sure we add back
       // the space.
       left_page_space_free += PageGetItemSize(cur_page, HIGH_KEY) + sizeof(ItemLoc);
+      // Since we've virtually added the new index tuple to the left page, subtract the size of the tuple. 
+      left_page_space_free -= IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
+
+      // Grab amount of free space on new page, add size of ItemLoc to account for PageGetFreeSpace subtracting.
+      ssize_t right_page_space_free = PageGetFreeSpace(new_page) + sizeof(ItemLoc);
 
 
-      // split_idx is the index at which to split the items between the current page and new
-      // page in order to make space for insertion of the new tuple. split_idx + 1 is the first
-      // item to move to the next page from the current page.
-      uint16_t split_idx = PageGetNumLocs(cur_page) - 1;
-      size_t new_tuple_size = IndexTupleGetSize(new_tuple);
-      size_t new_high_key_size = locs[split_idx].length + sizeof(IndexTuple) + sizeof(ItemLoc);
-      // TODO: Need to think about if this loop is correct in all cases. Could see a case where maybe
-      // we move too many items over to the new page and we also need to insert the new tuple into the new page
-      // but end up not having enough space.
-      // TODO: Try to calculate a better split. Maybe we can keep track of the ratio of free space on left vs right page and
-      // keep moving items to the right page as long as it improves the ratio.
-      while (left_page_space_free < new_tuple_size + new_high_key_size && split_idx >= BTreePageGetFirstKey(cur_page)) {
+      // Calculate the split index location. Starting from the right of the locs list, "move" an item to the right page,
+      // add back free space to left, subtract moved item size from right, and check if the remaining free space of both
+      // pages is >= 0. If it is, then we know we can split at this index and have enough space to add the new tuple after
+      // moving items. split_idx is the index at which to split the items between the current page and new page in order
+      // to make space for insertion of the new tuple. split_idx + 1 is the first item to move to the next page from the current page.
+      uint16_t split_idx = arrlenu(locs)-1;
+      ssize_t new_high_key_size = locs[split_idx].length + sizeof(IndexTuple) + sizeof(ItemLoc);
+      for (; split_idx >= BTreePageGetFirstKey(cur_page);) {
         ItemLoc *loc = &locs[split_idx];
-        size_t size_to_return = loc->length + sizeof(IndexTuple) + sizeof(ItemLoc);
-        left_page_space_free += size_to_return;
-        new_high_key_size = size_to_return;
+        ssize_t tuple_to_move_size = loc->length + sizeof(IndexTuple) + sizeof(ItemLoc);
+        left_page_space_free += tuple_to_move_size;
+        assert(right_page_space_free >= tuple_to_move_size); // Check for underflow.
+        right_page_space_free -= tuple_to_move_size;
+        new_high_key_size = tuple_to_move_size;
+        --split_idx;
+
+        if (left_page_space_free - new_high_key_size >= 0 && right_page_space_free >= 0) {
+          break;
+        }
+      }
+
+      // Because we virtually inserted the new index tuple into the locs list, we potentially need to adjust the actual
+      // split index. If the virtually inserted tuple is before the split index, we need to shift the split index
+      // left by 1.
+      if (orig_insertion_idx <= split_idx) {
         --split_idx;
       }
 
