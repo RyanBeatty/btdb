@@ -1043,6 +1043,14 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // Since we've virtually added the new index tuple to the left page, subtract the size of the tuple. 
       left_page_space_free -= IndexTupleGetSize(new_tuple) + sizeof(ItemLoc);
 
+      // Set the high key of the right page to be the current high key of the left page. Do this early
+      // so that we take into account the right page high key size when calculating split index.
+      IndexTuple* cur_page_high_key =
+          (IndexTuple*)PageGetItem(cur_page, BTreePageGetFirstKey(cur_page));
+      PageRemoveLoc(new_page, HIGH_KEY);
+      bool ok = PageAddItemAt(new_page, HIGH_KEY, (unsigned char*)cur_page_high_key,
+                         IndexTupleGetSize(cur_page_high_key));
+      assert(ok);
       // Grab amount of free space on new page, add size of ItemLoc to account for PageGetFreeSpace subtracting.
       ssize_t right_page_space_free = PageGetFreeSpace(new_page) + sizeof(ItemLoc);
 
@@ -1095,7 +1103,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // page, and then insert the new item.
       Page insert_page = orig_insertion_idx > split_idx ? new_page : cur_page_new;
       uint16_t insert_idx = GetInsertionIdx(index_def, &new_tuple_sk, insert_page);
-      bool ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
+      ok = PageAddItemAt(insert_page, insert_idx, (unsigned char*)new_tuple,
                               IndexTupleGetSize(new_tuple));
       assert(ok);
 
