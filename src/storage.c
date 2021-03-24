@@ -1103,12 +1103,12 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
       // space when removing items/locs from pages currently. This messes with the way we
       // calculate free space remainging on the page when finding the split pos.
-      // IndexTuple* new_cur_page_high_key =
-      //     (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
-      // PageRemoveLoc(cur_page_new, HIGH_KEY);
-      // ok = PageAddItemAt(cur_page_new, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
-      //                    IndexTupleGetSize(new_cur_page_high_key));
-      // assert(ok);
+      IndexTuple* new_cur_page_high_key =
+          (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
+      PageRemoveLoc(cur_page_new, HIGH_KEY);
+      ok = PageAddItemAt(cur_page_new, HIGH_KEY, (unsigned char*)new_cur_page_high_key,
+                         IndexTupleGetSize(new_cur_page_high_key));
+      assert(ok);
 
       // TODO: Set high key of new page to be old high key of cur_page.
 
