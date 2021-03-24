@@ -1099,10 +1099,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
                               IndexTupleGetSize(new_tuple));
       assert(ok);
 
-      // Set high key of cur_page to be smallest key of new page.
-      // TODO: Do this first before moving keys over to cur_page_new since we don't reclaim
-      // space when removing items/locs from pages currently. This messes with the way we
-      // calculate free space remainging on the page when finding the split pos.
+      // Set high key of cur_page to be the first key of new page.
       IndexTuple* new_cur_page_high_key =
           (IndexTuple*)PageGetItem(new_page, BTreePageGetFirstKey(new_page));
       PageRemoveLoc(cur_page_new, HIGH_KEY);
