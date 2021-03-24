@@ -1056,7 +1056,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       ssize_t new_high_key_size = locs[split_idx].length + sizeof(IndexTuple) + sizeof(ItemLoc);
       for (; split_idx >= BTreePageGetFirstKey(cur_page);) {
         ItemLoc *loc = &locs[split_idx];
-        ssize_t tuple_to_move_size = loc->length + sizeof(IndexTuple) + sizeof(ItemLoc);
+        ssize_t tuple_to_move_size = loc->length + sizeof(ItemLoc); // loc->length should be the full size of the tuple item.
         left_page_space_free += tuple_to_move_size;  // Add space to left side since we are removing the item.
         assert(right_page_space_free >= tuple_to_move_size); // Check for underflow.
         right_page_space_free -= tuple_to_move_size; // Subtract space from right side since we are adding the item.
