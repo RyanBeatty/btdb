@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#include "driver.h"
 #include "stb_ds.h"
 #include "storage.h"
 #include "types.h"
@@ -35,6 +36,9 @@ Query* AnalyzeParseTree(ParseNode* node) {
     }
     case NCREATE_INDEX: {
       return AnalyzeCreateIndexStmt((NCreateIndex*)node);
+    }
+    case NLIST_TABLES_CMD: {
+      return AnalyzeListTablesCmd((NListTablesCmd*)node);
     }
     default: {
       Panic("Unknown statement type when validating");
@@ -674,4 +678,17 @@ Query* AnalyzeCreateIndexStmt(NCreateIndex* create) {
   Query* query = MakeQuery(CMD_UTILITY);
   query->utility_stmt = (ParseNode*)create;
   return query;
+}
+
+Query* AnalyzeListTablesCmd(NListTablesCmd* cmd) {
+  assert(cmd != NULL);
+  assert(cmd->type == NLIST_TABLES_CMD);
+
+  // Kind of hacky to use the parser to generate the plan/right structures for me, but very
+  // convenient. Having to hand build the right plannode structure would be a pain.
+  Parser* parser = InitParser(strdup("select name, columns from reltabledef;"));
+  int result = Parse(parser);
+  assert(result == 0);
+  assert(parser->tree->type == NSELECT_STMT);
+  return AnalyzeSelectStmt((NSelectStmt*)parser->tree);
 }
