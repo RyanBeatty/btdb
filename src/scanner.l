@@ -88,6 +88,7 @@ void yyerror(Parser* parser, const char* msg) {
 "outer" return TOK_OUTER;
 "ON" return TOK_ON;
 "on" return TOK_ON;
+"\\dt" return TOK_LIST_TABLES_CMD;
 "true" {
     yylval.bool_lit = true;
     return TOK_BOOLEAN_LITERAL;

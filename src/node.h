@@ -38,6 +38,7 @@ typedef enum ParseNodeType {
   NRANGEVAR,
   NJOIN,
   NCREATE_INDEX,
+  NLIST_TABLES_CMD
 } ParseNodeType;
 
 typedef enum SortDir { SORT_ASC, SORT_DESC } SortDir;
@@ -185,6 +186,10 @@ typedef struct NJoin {
   ParseNode* qual_cond;
   size_t join_list_index;  // Set during analyze phase.
 } NJoin;
+
+typedef struct NListTablesCmd {
+  ParseNodeType type;
+} NListTablesCmd;
 
 void free_parse_node(ParseNode*);
 void print_parse_node(ParseNode*, PrintContext*);

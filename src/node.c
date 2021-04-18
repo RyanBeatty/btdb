@@ -191,6 +191,11 @@ void free_parse_node(ParseNode* node) {
       free(join);
       break;
     }
+    case NLIST_TABLES_CMD: {
+      NListTablesCmd* cmd = (NListTablesCmd*)node;
+      free(cmd);
+      break;
+    }
     default: {
       Panic("Unkown Parse Node Type when freeing");
       break;
@@ -468,6 +473,11 @@ void print_parse_node(ParseNode* node, PrintContext* ctx) {
       PrintObject(ctx, "qual_cond");
       print_parse_node(join->qual_cond, ctx);
       EndObject(ctx);
+      EndObject(ctx);
+      break;
+    }
+    case NLIST_TABLES_CMD: {
+      PrintObject(ctx, "NListTablesCmd");
       EndObject(ctx);
       break;
     }

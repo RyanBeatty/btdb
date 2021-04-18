@@ -87,13 +87,14 @@
     RIGHT
     OUTER
     ON
+    LIST_TABLES_CMD
 ;
 %token <str_lit> STRING_GROUP STRING_LITERAL
 %token <bool_lit> BOOLEAN_LITERAL
 %token <int_lit> INT_LITERAL
 
 // %type <std::vector<std::string>> column_exp
-%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_item from_clause create_index_stmt
+%type <node> expr where_clause select_stmt insert_stmt delete_stmt update_stmt assign_expr sort_clause create_table_stmt range_var join_item from_clause create_index_stmt utility_stmt
 %type <list_node> target_list insert_column_list column_list insert_value_items update_assign_expr_list table_expr
 %type <list_list_node> insert_values_clause insert_values_list 
 %type <sort_dir> sort_direction
@@ -119,6 +120,9 @@ stmt:
     parser->tree = $1;
   }
   | create_index_stmt {
+    parser->tree = $1;
+  }
+  | utility_stmt {
     parser->tree = $1;
   }
 
@@ -548,6 +552,16 @@ create_index_stmt:
     stmt->table_name = (ParseNode*) table_name;
     stmt->column_list = $6;
     $$ = (ParseNode*) stmt;
+  }
+
+// TODO: Bring index and table creation statements under this definition.
+utility_stmt:
+  LIST_TABLES_CMD {
+    NListTablesCmd* cmd = (NListTablesCmd*)calloc(1, sizeof(NListTablesCmd));
+    assert(cmd != NULL);
+    cmd->type = NLIST_TABLES_CMD;
+
+    $$ = (ParseNode*) cmd;
   }
 
 
