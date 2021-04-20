@@ -1,0 +1,1 @@
+A disk-based relational database management system with heavy inspiration from Postgres. Not intended for production use, purely for learning. Supports basic selects, inserts, updates, and deletes along with table creation, sorting, where clauses and filtering, and initial b-tree index support
