@@ -966,6 +966,9 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
                 GetColByIdx(IndexTupleGetTuplePtr(new_tuple), 0, parent_table_def));
   PageId root_id = BTreeReadOrCreateRootPageId(index_def);
 
+  // Keep track of path through the tree in order to recursive back up and fix the tree after page
+  // split inserts.
+  PageId* path = NULL;
   PageId cur_page_id = root_id;
   Page cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
   uint16_t i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
@@ -973,6 +976,7 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
   // new element, or we get to the end of the page list.
   while (i == HIGH_KEY && BTreePageGetRight(cur_page) != NULL_PAGE) {
     // Move right.
+    arrpush(path, cur_page_id);
     cur_page_id = BTreePageGetRight(cur_page);
     cur_page = ReadPage(index_def->index_table_def_idx, cur_page_id);
     i = GetInsertionIdx(index_def, &new_tuple_sk, cur_page);
@@ -1127,6 +1131,20 @@ void BTreeIndexInsert(const IndexDef* index_def, Tuple* table_tuple) {
       // Write out the modified pages.
       WritePage(index_def->index_table_def_idx, cur_page_id, cur_page_new);
       WritePage(index_def->index_table_def_idx, new_page_id, new_page);
+
+      // ASSUMPTION: Assuming we always split root. This is just to get things working at first.
+      // {
+      //   PageId num_pages = SMNumPages(sm);
+      //   PageId new_root_page_id = num_pages;
+
+      //   // Initialize new root page.
+      //   Page new_root_page = (Page)calloc(PAGE_SIZE, sizeof(byte));
+      //   BTreePageInit(new_root_page, BTreePageGetLevel(cur_page) + 1, false);
+      //   BTreePageInfo* new_root_page_info = PageGetBTreePageInfo(new_root_page);
+      //   cur_page_id = new_root_page_id;
+      //   cur_page = new_root_page;
+      // }
+
       return;
     }
   }
